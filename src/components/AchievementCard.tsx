@@ -2,11 +2,18 @@
 // src/components/AchievementCard.tsx
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Calendar, Paperclip, Pencil, Clock, Trophy, Medal, Award, Trash2 } from 'lucide-react';
+import { Calendar, Paperclip, Pencil, Clock, Trophy, Medal, Award, Trash2, Video } from 'lucide-react';
 import { doc, deleteDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { db } from '../lib/firebase';
 import AddAchievementModal from './AddAchievementModal';
+
+
+const isVideoUrl = (url: string) => {
+  if (!url) return false;
+  if (url.match(/\.(mp4|webm|mov|ogg|avi|flv|mkv)/i)) return true;
+  return url.includes('/video/upload/');
+};
 
 const getBadge = (score: number | null) => {
   if (score === null) return { icon: <Clock size={20} className="text-gray-400" />, text: "Pending", style: "bg-gray-100 text-gray-500 border-gray-200" };
@@ -102,12 +109,12 @@ export default function AchievementCard({ data }: { data: any }) {
             {data.attachmentUrls && data.attachmentUrls.length > 0 ? (
               data.attachmentUrls.map((url: string, index: number) => (
               <a key={index} href={url} onClick={(e) => e.stopPropagation()} target="_blank" rel="noopener noreferrer" className="text-[#0087ed] hover:text-[#4a154b] transition-colors" title={`مرفق ${index + 1}`}>
-                  <Paperclip size={18} />
+                  {isVideoUrl(url) ? <Video size={18} /> : <Paperclip size={18} />}
                 </a>
               ))
             ) : data.attachmentUrl ? (
             <a href={data.attachmentUrl} onClick={(e) => e.stopPropagation()} target="_blank" rel="noopener noreferrer" className="text-[#0087ed] hover:text-[#4a154b] transition-colors">
-                <Paperclip size={18} />
+                {isVideoUrl(data.attachmentUrl) ? <Video size={18} /> : <Paperclip size={18} />}
               </a>
             ) : (
             <button onClick={(e) => e.stopPropagation()} className="hover:text-[#4a154b] transition-colors"><Paperclip size={18} /></button>

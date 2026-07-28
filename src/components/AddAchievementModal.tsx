@@ -224,7 +224,7 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
               className="hidden" 
               ref={fileInputRef} 
               onChange={handleFileChange} 
-              accept="image/*,.pdf" 
+              accept="*/*" 
               multiple
             />
             <CloudUpload size={32} className="text-[#0087ed] mx-auto mb-2 cursor-pointer" onClick={() => fileInputRef.current?.click()} />
