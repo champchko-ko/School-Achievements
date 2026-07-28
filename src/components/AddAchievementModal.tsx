@@ -144,20 +144,20 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in duration-200">
       
       {/* Modal Container */}
-      <div className="bg-white w-full max-w-lg rounded-[2rem] shadow-2xl relative overflow-hidden animate-in zoom-in-95 duration-300">
+      <div className="bg-white w-full max-w-lg rounded-[2rem] shadow-2xl relative overflow-hidden animate-in zoom-in-95 duration-300 mx-4 max-h-[90vh] overflow-y-auto">
         
         {/* Header - Kahoot Purple */}
-        <div className="bg-[#4a154b] p-6 text-white flex justify-between items-center">
-          <h2 className="text-xl font-bold flex items-center gap-2">{docId ? "✏️ تعديل الإنجاز" : "✨ إضافة إنجاز جديد"}</h2>
+        <div className="bg-[#4a154b] p-4 md:p-6 text-white flex justify-between items-center">
+          <h2 className="text-lg md:text-xl font-bold flex items-center gap-2">{docId ? "✏️ تعديل الإنجاز" : "✨ إضافة إنجاز جديد"}</h2>
           <button onClick={onClose} className="hover:bg-white/20 p-2 rounded-full transition-colors">
             <X size={24} />
           </button>
         </div>
 
         {/* Form Body */}
-        <div className="p-6 space-y-4">
+        <div className="p-4 md:p-6 space-y-4">
           
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-1">الاسم</label>
               {teachersList.length > 0 ? (
@@ -218,7 +218,7 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
           </div>
 
           {/* Drag & Drop Zone */}
-          <div className="border-2 border-dashed border-[#0087ed]/40 bg-blue-50/50 rounded-2xl p-6 text-center transition-colors">
+          <div className="border-2 border-dashed border-[#0087ed]/40 bg-blue-50/50 rounded-2xl p-4 md:p-6 text-center transition-colors">
             <input 
               type="file" 
               className="hidden" 
@@ -269,7 +269,7 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
           </div>
 
           {/* PIN Code Field */}
-          <div className="bg-orange-50 border border-orange-100 rounded-2xl p-4 flex items-center gap-4">
+          <div className="bg-orange-50 border border-orange-100 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
             <div className="bg-orange-100 p-3 rounded-xl text-orange-600"><Lock size={20} /></div>
             <div className="flex-1">
               <label className="block text-sm font-bold text-orange-900 mb-1">رمز الحماية السري (PIN)</label>
