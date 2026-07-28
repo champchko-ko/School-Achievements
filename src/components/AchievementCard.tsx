@@ -61,9 +61,9 @@ export default function AchievementCard({ data }: { data: any }) {
       <div className={`h-2 w-full ${data.deptColor}`}></div>
       
       <div className="p-4 md:p-5">
-        <div className="flex justify-between items-start mb-4">
+        <div className="flex justify-between items-start mb-3 md:mb-4">
           <div>
-            <h4 className="font-bold text-[#4a154b] text-lg">{data.teacherName}</h4>
+            <h4 className="font-bold text-[#4a154b] text-base md:text-lg">{data.teacherName}</h4>
             <span className="inline-block px-3 py-1 bg-gray-100 text-gray-600 text-xs rounded-full mt-1 font-bold">
               {data.department}
             </span>
