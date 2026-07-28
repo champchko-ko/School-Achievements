@@ -65,7 +65,7 @@ function HomeContent() {
   return (
     <div className="space-y-6 md:space-y-8 animate-in fade-in duration-500 pb-10 w-full max-w-full overflow-hidden">
       
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-4 bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-gray-100">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-4 bg-white p-3 md:p-6 rounded-2xl shadow-sm border border-gray-100">
         <div className="flex items-center gap-4">
           {schoolSettings?.logoUrl && (
             <img src={schoolSettings.logoUrl} alt="School Logo" className="w-16 h-16 md:w-20 md:h-20 object-contain rounded-xl border border-gray-100 shadow-sm p-1 max-w-full" />
@@ -78,7 +78,7 @@ function HomeContent() {
         
         <button 
           onClick={() => router.push('/?add=true', { scroll: false })}
-          className="flex bg-[#0087ed] hover:bg-[#0073cc] text-white px-4 md:px-6 py-2.5 md:py-3 rounded-xl font-bold shadow-md transition-transform hover:scale-105 text-sm md:text-base"
+          className="w-full md:w-auto flex bg-[#0087ed] hover:bg-[#0073cc] text-white px-4 md:px-6 py-2.5 md:py-3 rounded-xl font-bold shadow-md transition-transform hover:scale-105 text-sm md:text-base justify-center"
         >
           + إنجاز جديد
         </button>

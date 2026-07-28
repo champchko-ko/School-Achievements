@@ -7,6 +7,17 @@ body {
   color: #1f2937;
 }
 
+/* منع تجاوز المحتوى للشاشات الصغيرة */
+html {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+img, video, iframe, table, svg {
+  max-width: 100%;
+  height: auto;
+}
+
 /* تخصيص شريط التمرير ليكون عصرياً */
 ::-webkit-scrollbar {
   width: 8px;
