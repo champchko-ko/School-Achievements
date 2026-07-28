@@ -10,6 +10,12 @@ import { db } from '../lib/firebase';
 function HomeContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+
+  useEffect(() => {
+    if (!sessionStorage.getItem('introSeen')) {
+      router.replace('/intro');
+    }
+  }, [router]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [achievements, setAchievements] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
