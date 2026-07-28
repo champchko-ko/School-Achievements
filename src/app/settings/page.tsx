@@ -11,6 +11,9 @@ export default function SettingsPage() {
     schoolName: string;
     managerName: string;
     viceManagerName: string;
+    assistantManager2: string;
+    vision: string;
+    message: string;
     address: string;
     phone: string;
     logoUrl: string;
@@ -20,6 +23,9 @@ export default function SettingsPage() {
     schoolName: '',
     managerName: '',
     viceManagerName: '',
+    assistantManager2: '',
+    vision: '',
+    message: '',
     address: '',
     phone: '',
     logoUrl: '',
@@ -222,6 +228,39 @@ export default function SettingsPage() {
               onChange={(e) => setFormData({...formData, viceManagerName: e.target.value})}
               placeholder="اسم الوكيل" 
               className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-[#0087ed] outline-none transition-all" 
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-gray-700 flex items-center gap-2"><User size={16}/> النائب الثاني</label>
+            <input 
+              type="text" 
+              value={formData.assistantManager2}
+              onChange={(e) => setFormData({...formData, assistantManager2: e.target.value})}
+              placeholder="اسم النائب الثاني" 
+              className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-[#0087ed] outline-none transition-all" 
+            />
+          </div>
+
+          <div className="space-y-2 md:col-span-2">
+            <label className="text-sm font-bold text-gray-700 flex items-center gap-2"><BookOpen size={16}/> رؤية المدرسة</label>
+            <textarea 
+              rows={3}
+              value={formData.vision}
+              onChange={(e) => setFormData({...formData, vision: e.target.value})}
+              placeholder="اكتب رؤية المدرسة هنا..."
+              className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-[#0087ed] outline-none transition-all resize-none" 
+            />
+          </div>
+
+          <div className="space-y-2 md:col-span-2">
+            <label className="text-sm font-bold text-gray-700 flex items-center gap-2"><BookOpen size={16}/> رسالة المدرسة</label>
+            <textarea 
+              rows={3}
+              value={formData.message}
+              onChange={(e) => setFormData({...formData, message: e.target.value})}
+              placeholder="اكتب رسالة المدرسة هنا..."
+              className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-[#0087ed] outline-none transition-all resize-none" 
             />
           </div>
 
