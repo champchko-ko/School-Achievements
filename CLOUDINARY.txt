@@ -1,0 +1,32 @@
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCjMmsJBpQg8jI6l-Q8sGbnRISraMm56Bc",
+  authDomain: "school-achieve.firebaseapp.com",
+  projectId: "school-achieve",
+  storageBucket: "school-achieve.firebasestorage.app",
+  messagingSenderId: "1085110639891",
+  appId: "1:1085110639891:web:de64bbfaaedaa0a5ce8ee6",
+  measurementId: "G-9XLJ9DDYMK"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+
+
+CLOUDINARY_URL=cloudinary://<your_api_key>:<your_api_secret>@dofklo13s
+
+Cloud name  dofklo13s
+
+API Key   358874312931163
+API Secret   NbAxRIdzuYcCHGaS9d_kcOCQAiE
+
+ 
+Upload preset name    school_achievements
+
+
+
+
+

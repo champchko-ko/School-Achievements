@@ -1,0 +1,169 @@
+"use client";
+import { Suspense, useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import { Home, PlusCircle, BookOpen, Printer, Trophy, ShieldCheck, LogOut, Settings, MonitorPlay } from 'lucide-react';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../lib/firebase';
+
+function SidebarLinks({ isAdmin }: { isAdmin: boolean }) {
+  const pathname = usePathname();
+
+  return (
+    <nav className="flex-1 p-4 space-y-2 mt-4">
+      <Link href="/" className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${pathname === '/' ? 'bg-white/10 hover:bg-white/20' : 'hover:bg-white/10'}`}>
+        <Home size={20} />
+        <span className="font-bold">الرئيسية</span>
+      </Link>
+      
+      <Link href="/?add=true" className="flex items-center gap-3 p-3 rounded-xl transition-all hover:bg-white/10">
+        <PlusCircle size={20} className="text-green-400" />
+        <span className="font-bold">إضافة إنجاز</span>
+      </Link>
+
+      <Link href="/full-record" className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${pathname === '/full-record' ? 'bg-white/10 hover:bg-white/20' : 'hover:bg-white/10'}`}>
+        <BookOpen size={20} className="text-orange-300" />
+        <span className="font-bold">السجل الكامل</span>
+      </Link>
+      
+      <Link href="/honor-roll" className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${pathname === '/honor-roll' ? 'bg-white/10 hover:bg-white/20' : 'hover:bg-white/10'}`}>
+        <Trophy size={20} />
+        <span className="font-bold">لوحة الشرف</span>
+      </Link>
+      
+      {isAdmin && (
+        <>
+          <Link href="/reports" className={`flex items-center gap-3 p-3 rounded-xl transition-all ${pathname === '/reports' ? 'bg-white/10 hover:bg-white/20' : 'hover:bg-white/10'}`}>
+            <Printer size={20} className="text-pink-300" />
+            <span className="font-bold">طباعة التقارير</span>
+          </Link>
+          <Link href="/settings" className={`flex items-center gap-3 p-3 rounded-xl transition-all ${pathname === '/settings' ? 'bg-white/10 hover:bg-white/20' : 'hover:bg-white/10'}`}>
+            <Settings size={20} className="text-slate-300" />
+            <span className="font-bold">إعدادات المدرسة</span>
+          </Link>
+          <Link href="/kiosk" target="_blank" className="flex items-center gap-3 p-3 rounded-xl transition-all hover:bg-white/10">
+            <MonitorPlay size={20} className="text-indigo-300" />
+            <span className="font-bold">وضع العرض (Kiosk)</span>
+          </Link>
+        </>
+      )}
+    </nav>
+  );
+}
+
+export default function Sidebar() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const [showAdminPrompt, setShowAdminPrompt] = useState(false);
+  const [pinInput, setPinInput] = useState('');
+  const [pinError, setPinError] = useState('');
+  const [mounted, setMounted] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [schoolSettings, setSchoolSettings] = useState<{ schoolName?: string, logoUrl?: string } | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+    setIsAdmin(localStorage.getItem('isAdmin') === 'true');
+
+    const fetchSettings = async () => {
+      try {
+        const docRef = doc(db, "settings", "global_info");
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setSchoolSettings(docSnap.data() as any);
+        }
+      } catch (error) {
+        console.error("Error loading settings:", error);
+      }
+    };
+    fetchSettings();
+  }, []);
+
+  const handleAdminSubmit = () => {
+    // Default admin PIN is 9999 (you can change this or move it to .env later)
+    if (pinInput === '9999') {
+      setShowAdminPrompt(false);
+      setPinInput('');
+      setPinError('');
+      localStorage.setItem('isAdmin', 'true');
+      setIsAdmin(true);
+      router.push('/admin'); // Redirects to the admin dashboard
+    } else {
+      setPinError('رمز المرور غير صحيح!');
+    }
+  };
+
+  if (pathname === '/kiosk') return null;
+
+  const handleLogout = () => {
+    localStorage.removeItem('isAdmin');
+    setIsAdmin(false);
+    router.push('/');
+  };
+
+  return (
+    <aside className="w-64 bg-[#4a154b] text-white flex flex-col shadow-2xl z-20 print:hidden">
+      <div className="p-6 text-center border-b border-purple-800/50 flex flex-col items-center">
+        {schoolSettings?.logoUrl && (
+          <img src={schoolSettings.logoUrl} alt="School Logo" className="w-20 h-20 object-contain bg-white rounded-2xl mb-3 shadow-md p-1" />
+        )}
+        <h1 className="text-2xl font-black text-yellow-400 drop-shadow-md leading-tight">{schoolSettings?.schoolName || 'إنجازاتنا 🌟'}</h1>
+        <p className="text-sm mt-3 text-purple-200">المنصة الرقمية للتميز</p>
+      </div>
+      
+      <Suspense fallback={<nav className="flex-1 p-4 space-y-2 mt-4"></nav>}>
+        <SidebarLinks isAdmin={isAdmin} />
+      </Suspense>
+
+      <div className="p-4 border-t border-purple-800/50">
+        {!isAdmin ? (
+          <button 
+            onClick={() => setShowAdminPrompt(true)}
+            className="flex w-full items-center gap-3 p-3 rounded-xl bg-purple-900/50 hover:bg-purple-800 transition-all text-sm font-bold text-gray-300"
+          >
+            <ShieldCheck size={18} /> دخول الإدارة
+          </button>
+        ) : (
+          <div className="flex flex-col gap-2">
+            <Link href="/admin" className="flex w-full items-center gap-3 p-3 rounded-xl bg-green-900/50 hover:bg-green-800 transition-all text-sm font-bold text-green-400">
+              <ShieldCheck size={18} /> لوحة الإدارة
+            </Link>
+            <button onClick={handleLogout} className="flex w-full items-center gap-3 p-3 rounded-xl bg-red-900/50 hover:bg-red-800 transition-all text-sm font-bold text-red-400">
+              <LogOut size={18} /> تسجيل الخروج
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Admin Login Modal Portal */}
+      {mounted && createPortal(
+        showAdminPrompt && (
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[70] animate-in fade-in duration-200 text-gray-800">
+            <div className="bg-white p-8 rounded-3xl shadow-2xl max-w-sm w-full mx-4 text-center animate-in zoom-in-95 duration-300" onClick={e => e.stopPropagation()}>
+              <h3 className="text-xl font-black text-[#4a154b] mb-2">دخول الإدارة 🛡️</h3>
+              <p className="text-sm text-gray-500 mb-6">الرجاء إدخال رمز المرور الخاص بإدارة المدرسة.</p>
+              
+              <input 
+                type="password" 
+                maxLength={4} 
+                value={pinInput} 
+                onChange={e => setPinInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleAdminSubmit()}
+                placeholder="****"
+                className={`w-full text-center tracking-[1em] font-mono font-bold text-2xl bg-gray-50 border-2 rounded-xl p-3 outline-none transition-all ${pinError ? 'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100' : 'border-gray-200 focus:border-[#4a154b] focus:ring-4 focus:ring-purple-100'}`}
+              />
+              {pinError && <p className="text-red-500 font-bold text-sm mt-3 animate-in slide-in-from-top-1">{pinError}</p>}
+              
+              <div className="flex gap-3 mt-6">
+                <button onClick={() => { setShowAdminPrompt(false); setPinError(''); setPinInput(''); }} className="flex-1 py-3 rounded-xl font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 transition-colors">إلغاء</button>
+                <button onClick={handleAdminSubmit} className="flex-1 py-3 rounded-xl font-bold text-white bg-[#4a154b] hover:bg-[#3a103a] border-b-4 border-[#2a0b2a] active:border-b-0 active:translate-y-1 transition-all">تأكيد</button>
+              </div>
+            </div>
+          </div>
+        ),
+        document.body
+      )}
+    </aside>
+  );
+}
