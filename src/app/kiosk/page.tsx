@@ -64,9 +64,9 @@ export default function KioskModePage() {
   // Loading State
   if (isLoading) {
     return (
-      <div className="fixed inset-0 z-[100] h-screen w-screen m-0 p-0 overflow-hidden bg-slate-950 flex flex-col items-center justify-center text-white">
-        <Loader2 className="animate-spin mb-4 text-purple-400" size={64} />
-        <p className="text-2xl font-bold animate-pulse">جاري تحميل الإنجازات المتميزة...</p>
+      <div className="fixed inset-0 z-[100] h-screen w-screen m-0 p-4 overflow-hidden bg-slate-950 flex flex-col items-center justify-center text-white">
+        <Loader2 className="animate-spin mb-4 text-purple-400" size={40} />
+        <p className="text-lg md:text-2xl font-bold animate-pulse text-center px-4">جاري تحميل الإنجازات المتميزة...</p>
       </div>
     );
   }
@@ -74,9 +74,9 @@ export default function KioskModePage() {
   // Empty State
   if (achievements.length === 0) {
     return (
-      <div className="fixed inset-0 z-[100] h-screen w-screen m-0 p-0 overflow-hidden bg-slate-950 flex flex-col items-center justify-center text-white">
-        <Star className="mb-4 text-yellow-400 opacity-50" size={64} />
-        <p className="text-3xl font-black text-gray-400">لا توجد إنجازات متميزة للعرض حالياً</p>
+      <div className="fixed inset-0 z-[100] h-screen w-screen m-0 p-4 overflow-hidden bg-slate-950 flex flex-col items-center justify-center text-white">
+        <Star className="mb-4 text-yellow-400 opacity-50" size={40} />
+        <p className="text-xl md:text-3xl font-black text-gray-400 text-center px-4">لا توجد إنجازات متميزة للعرض حالياً</p>
       </div>
     );
   }
@@ -108,16 +108,16 @@ export default function KioskModePage() {
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/20 blur-[120px] rounded-full pointer-events-none" />
 
       {/* Kiosk Header */}
-      <header className="px-12 py-8 flex items-center justify-between z-10 border-b border-white/10 bg-black/30 backdrop-blur-md shadow-lg">
+      <header className="px-4 md:px-12 py-3 md:py-8 flex items-center justify-between z-10 border-b border-white/10 bg-black/30 backdrop-blur-md shadow-lg">
         <div className="flex items-center gap-6">
-          {logoUrl && <img src={logoUrl} alt="School Logo" className="w-24 h-24 object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]" />}
+          {logoUrl && <img src={logoUrl} alt="School Logo" className="w-10 h-10 md:w-24 md:h-24 object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]" />}
           <div>
             {schoolName && (
-              <h1 className="text-4xl font-black tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-200 drop-shadow-sm">
+              <h1 className="text-base md:text-4xl font-black tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-200 drop-shadow-sm">
                 {schoolName}
               </h1>
             )}
-            <p className="text-purple-200 font-bold text-xl mt-2 flex items-center gap-2">
+            <p className="text-purple-200 font-bold text-xs md:text-xl mt-0 md:mt-2 flex items-center gap-2">
               <Sparkles size={24} className="text-yellow-400 animate-pulse" />
               لوحة الشرف والإنجازات المتميزة
             </p>
@@ -128,33 +128,33 @@ export default function KioskModePage() {
       {/* Carousel Body */}
       <main className="flex-1 flex items-center justify-center p-8 lg:p-12 relative z-10 overflow-hidden w-full">
         {/* The key prop forces React to re-mount the div, triggering the animate-in classes automatically */}
-        <div key={current.id + currentIndex} className="w-full max-w-[95vw] animate-in fade-in zoom-in-95 slide-in-from-bottom-8 duration-1000 flex flex-col lg:flex-row gap-12 items-center justify-center relative">
+        <div key={current.id + currentIndex} className="w-full max-w-[98vw] md:max-w-[95vw] animate-in fade-in zoom-in-95 slide-in-from-bottom-8 duration-1000 flex flex-col lg:flex-row gap-4 md:gap-12 items-center justify-center relative">
           
           {/* Content Left (Info Card Alone) */}
-          <div className="flex-1 w-full max-w-4xl bg-white/95 backdrop-blur-2xl border border-white/20 rounded-[3rem] p-12 shadow-[0_0_50px_rgba(0,0,0,0.5)] space-y-8 z-10 relative overflow-hidden">
+          <div className="flex-1 w-full max-w-4xl bg-white/95 backdrop-blur-2xl border border-white/20 rounded-2xl md:rounded-[3rem] p-4 md:p-12 shadow-[0_0_50px_rgba(0,0,0,0.5)] space-y-3 md:space-y-8 z-10 relative overflow-hidden">
             {/* Subtle shine effect on the card */}
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-white/40 to-transparent"></div>
 
-            <div className={`inline-flex items-center gap-3 px-8 py-4 rounded-full text-2xl font-black shadow-xl border border-white/20 ${isGold ? 'bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 text-yellow-950' : 'bg-gradient-to-r from-slate-200 via-slate-300 to-slate-400 text-slate-900'}`}>
-              {isGold ? <Trophy size={32} /> : <Medal size={32} />}
+            <div className={`inline-flex items-center gap-2 md:gap-3 px-4 md:px-8 py-2 md:py-4 rounded-full text-sm md:text-2xl font-black shadow-xl border border-white/20 ${isGold ? 'bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 text-yellow-950' : 'bg-gradient-to-r from-slate-200 via-slate-300 to-slate-400 text-slate-900'}`}>
+              {isGold ? <Trophy size={18} className="md:size-[32px]" /> : <Medal size={18} className="md:size-[32px]" />}
               {isGold ? "إنجاز ذهبي متميز" : "إنجاز فضي متميز"}
             </div>
 
-            <h2 className="text-5xl lg:text-7xl font-black leading-tight text-transparent bg-clip-text bg-gradient-to-br from-yellow-500 to-yellow-700 drop-shadow-sm pb-2">
+            <h2 className="text-xl md:text-5xl lg:text-7xl font-black leading-tight text-transparent bg-clip-text bg-gradient-to-br from-yellow-500 to-yellow-700 drop-shadow-sm pb-0 md:pb-2">
               {current.title}
             </h2>
             
-            <p className="text-3xl text-yellow-900 leading-relaxed font-bold line-clamp-6">
+            <p className="text-sm md:text-3xl text-yellow-900 leading-relaxed font-bold line-clamp-4 md:line-clamp-6">
               {current.desc || current.description}
             </p>
 
-            <div className="flex flex-wrap items-center gap-6 pt-8 border-t border-slate-200 text-2xl font-bold text-slate-800">
-              <div className="flex items-center gap-3 bg-slate-50 backdrop-blur-sm px-8 py-4 rounded-2xl border border-slate-200 shadow-inner">
-                <User size={28} className="text-pink-600" /> 
+            <div className="flex flex-wrap items-center gap-2 md:gap-6 pt-3 md:pt-8 border-t border-slate-200 text-sm md:text-2xl font-bold text-slate-800">
+              <div className="flex items-center gap-1 md:gap-3 bg-slate-50 backdrop-blur-sm px-3 md:px-8 py-2 md:py-4 rounded-xl md:rounded-2xl border border-slate-200 shadow-inner">
+                <User size={16} className="md:size-[28px] text-pink-600" /> 
                 {current.teacherName}
               </div>
-              <div className="flex items-center gap-3 bg-slate-50 backdrop-blur-sm px-8 py-4 rounded-2xl border border-slate-200 shadow-inner">
-                <Building size={28} className="text-blue-600" /> 
+              <div className="flex items-center gap-1 md:gap-3 bg-slate-50 backdrop-blur-sm px-3 md:px-8 py-2 md:py-4 rounded-xl md:rounded-2xl border border-slate-200 shadow-inner">
+                <Building size={16} className="md:size-[28px] text-blue-600" /> 
                 {current.department}
               </div>
             </div>
