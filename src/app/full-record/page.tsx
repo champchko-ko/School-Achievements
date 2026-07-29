@@ -338,7 +338,7 @@ export default function FullRecordPage() {
                         <button onClick={() => { setSelectedDoc(row); setShowEditModal(true); }} className="text-gray-400 hover:text-green-500 p-2 rounded-lg hover:bg-green-50 transition-colors" title="تعديل">
                           <Pencil size={18} />
                         </button>
-                        <button onClick={() => handleDeleteClick(row.id)} className="text-gray-400 hover:text-red-500 p-2 rounded-lg hover:bg-red-50 transition-colors" title="حذف">
+                        <button onClick={() => handleDeleteClick(row.id)} className="text-blue-400 hover:text-red-500 p-2 rounded-lg hover:bg-red-50 transition-colors" title="حذف">
                           <Trash2 size={18} />
                         </button>
                       </div>
