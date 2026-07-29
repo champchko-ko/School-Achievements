@@ -76,7 +76,7 @@ export default function ReportsPage() {
             {schoolSettings?.logoUrl && <img src={schoolSettings.logoUrl} alt="School Logo" className="w-24 h-24 object-contain" />}
             {schoolSettings?.schoolName && <h2 className="text-4xl font-black text-gray-800">{schoolSettings.schoolName}</h2>}
           </div>
-          <h2 className="text-3xl font-black text-[#4a154b] mb-2">تقرير أداء الأقسام</h2>
+          <h2 className="text-3xl font-black text-[#46178f] mb-2">تقرير أداء الأقسام</h2>
           <p className="text-gray-500">مقارنة تفصيلية لعدد الإنجازات ومتوسط التقييم لكل قسم</p>
           <p className="text-xs text-gray-400 mt-4 hidden print:block">
             {mounted && `تاريخ الطباعة: ${new Date().toLocaleDateString('ar-SA')} - الوقت: ${new Date().toLocaleTimeString('ar-SA')}`}
@@ -250,7 +250,7 @@ export default function ReportsPage() {
       {/* Header & Print Button */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 print:hidden">
         <div>
-          <h2 className="text-2xl font-black text-[#4a154b] flex items-center gap-2">
+          <h2 className="text-2xl font-black text-[#46178f] flex items-center gap-2">
             <Printer className="text-pink-400" size={28} />
             طباعة التقارير
           </h2>
@@ -288,10 +288,10 @@ export default function ReportsPage() {
             <p className="text-xs text-gray-500 mt-1">تقرير فردي مفصل</p>
           </div>
         </button>
-        <button onClick={() => setActiveReport('master')} className={`p-4 rounded-2xl border-2 transition-all text-right flex flex-col gap-3 ${activeReport === 'master' ? 'border-[#e21b3c] bg-red-50/50' : 'border-gray-100 bg-white hover:border-gray-200'}`}>
-          <FileSpreadsheet size={24} className={activeReport === 'master' ? 'text-[#e21b3c]' : 'text-gray-400'} />
+        <button onClick={() => setActiveReport('master')} className={`p-4 rounded-2xl border-2 transition-all text-right flex flex-col gap-3 ${activeReport === 'master' ? 'border-[#1368ce] bg-blue-50/50' : 'border-gray-100 bg-white hover:border-gray-200'}`}>
+          <FileSpreadsheet size={24} className={activeReport === 'master' ? 'text-[#1368ce]' : 'text-gray-400'} />
           <div>
-            <h3 className={`font-bold ${activeReport === 'master' ? 'text-[#e21b3c]' : 'text-gray-700'}`}>السجل الشامل</h3>
+            <h3 className={`font-bold ${activeReport === 'master' ? 'text-[#1368ce]' : 'text-gray-700'}`}>السجل الشامل</h3>
             <p className="text-xs text-gray-500 mt-1">تصدير البيانات الخام</p>
           </div>
         </button>
@@ -300,7 +300,7 @@ export default function ReportsPage() {
       {/* Report Content Area */}
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-20 text-gray-400">
-          <Loader2 className="animate-spin mb-4 text-[#4a154b]" size={40} />
+          <Loader2 className="animate-spin mb-4 text-yellow-400" size={40} />
           <p className="font-bold">جاري تجميع بيانات التقارير...</p>
         </div>
       ) : (
@@ -310,10 +310,10 @@ export default function ReportsPage() {
           {activeReport === 'individual' && renderIndividualReport()}
           {activeReport === 'master' && (
             <div className="bg-white rounded-2xl shadow-lg border border-purple-100/50 p-12 text-center print:hidden">
-              <FileSpreadsheet className="mx-auto text-[#e21b3c] mb-4" size={48} />
+              <FileSpreadsheet className="mx-auto text-[#1368ce] mb-4" size={48} />
               <h2 className="text-2xl font-black text-gray-800 mb-2">السجل الشامل وتصدير البيانات</h2>
               <p className="text-gray-500 mb-6">للوصول إلى السجل الشامل مع خيارات الفلترة المتقدمة والتصدير إلى Excel و PDF، يرجى الانتقال إلى صفحة السجل الكامل.</p>
-              <a href="/full-record" className="inline-block bg-[#e21b3c] hover:bg-red-600 text-white px-6 py-3 rounded-xl font-bold transition-colors shadow-md">الانتقال إلى السجل الكامل</a>
+              <a href="/full-record" className="inline-block bg-[#1368ce] hover:bg-[#0f56b0] text-white px-6 py-3 rounded-xl font-bold transition-colors shadow-md">الانتقال إلى السجل الكامل</a>
             </div>
           )}
         </div>
