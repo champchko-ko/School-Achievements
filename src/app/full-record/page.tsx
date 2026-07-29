@@ -25,6 +25,15 @@ export default function FullRecordPage() {
   const [achievements, setAchievements] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
+  const [notification, setNotification] = useState<{ type: string, message: string } | null>(null);
+
+  // Auto-dismiss notification
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => setNotification(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
 
   // PIN and Edit Modal States
   const [selectedDoc, setSelectedDoc] = useState<any>(null);
@@ -168,10 +177,10 @@ export default function FullRecordPage() {
     setShowConfirm(false);
     try {
       await deleteDoc(doc(db, "achievements", pendingDeleteId));
-      alert("تم حذف الإنجاز بنجاح! 🗑️");
+      setNotification({ type: "success", message: "تم حذف الإنجاز بنجاح! 🗑️" });
     } catch (error) {
       console.error("Error deleting document:", error);
-      alert("حدث خطأ أثناء الحذف.");
+      setNotification({ type: "error", message: "حدث خطأ أثناء الحذف." });
     }
     setPendingDeleteId(null);
   };
@@ -433,6 +442,15 @@ export default function FullRecordPage() {
           )}
 
           
+          {notification && (
+            <div className="fixed top-4 right-4 left-4 md:left-auto md:right-4 md:w-96 z-[200] p-4 rounded-2xl shadow-2xl font-bold text-white animate-in slide-in-from-top-2 duration-300" style={{ background: notification.type === "success" ? "#26890c" : "#ef4444" }}>
+              <div className="flex items-center gap-3">
+                <span>{notification.type === "success" ? "✅" : "❌"}</span>
+                <span>{notification.message}</span>
+                <button onClick={() => setNotification(null)} className="mr-auto text-white/70 hover:text-white">✕</button>
+              </div>
+            </div>
+          )}
           {showConfirm && (
             <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[70] animate-in fade-in duration-200" onClick={() => { setShowConfirm(false); setPendingDeleteId(null); }}>
               <div className="bg-white p-8 rounded-3xl shadow-2xl max-w-sm w-full mx-4 text-center animate-in zoom-in-95 duration-300" onClick={e => e.stopPropagation()}>

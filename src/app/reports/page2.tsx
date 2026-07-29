@@ -7,7 +7,15 @@ import { FileSpreadsheet, Printer, Users, Trophy, Loader2, DownloadCloud } from 
 
 export default function ReportsPage() {
   const [isExporting, setIsExporting] = useState(false);
+  const [notification, setNotification] = useState<{ type: string, message: string } | null>(null);
   const [schoolSettings, setSchoolSettings] = useState<{ schoolName?: string, logoUrl?: string } | null>(null);
+
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => setNotification(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -33,7 +41,7 @@ export default function ReportsPage() {
       const snapshot = await getDocs(q);
       
       if (snapshot.empty) {
-        alert("لا توجد بيانات معتمدة لتصديرها.");
+        setNotification({ type: "error", message: "لا توجد بيانات معتمدة لتصديرها." });
         setIsExporting(false);
         return;
       }
@@ -62,7 +70,7 @@ export default function ReportsPage() {
 
     } catch (error) {
       console.error("Error exporting data:", error);
-      alert("حدث خطأ أثناء تصدير البيانات.");
+      setNotification({ type: "error", message: "حدث خطأ أثناء تصدير البيانات." });
     } finally {
       setIsExporting(false);
     }
