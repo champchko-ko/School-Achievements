@@ -166,7 +166,7 @@ export default function Sidebar() {
           {/* Backdrop */}
           <div className="absolute inset-0 bg-black/50" onClick={closeMobile} />
           {/* Sidebar panel */}
-          <div className="absolute inset-y-0 right-0 w-64 max-w-[75vw] animate-in slide-in-from-left duration-200">
+          <div className="absolute inset-y-0 right-0 w-64 max-w-[75vw] animate-in slide-in-from-left duration-200 overflow-y-auto">
             {sidebarContent}
           </div>
         </div>,
@@ -174,7 +174,7 @@ export default function Sidebar() {
       )}
 
       {/* Desktop sidebar: hidden on mobile, visible on sm+ */}
-      <div className="hidden sm:flex sm:flex-col sm:w-64 flex-shrink-0">
+      <div className="hidden sm:flex sm:flex-col sm:w-64 flex-shrink-0 h-full overflow-y-auto">
         {sidebarContent}
 
       {/* Admin PIN prompt modal */}
