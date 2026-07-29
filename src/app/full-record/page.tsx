@@ -211,7 +211,7 @@ export default function FullRecordPage() {
         <div>
           <h2 className="text-2xl font-black text-yellow-400 flex items-center gap-2">
             <FileText className="text-yellow-400" size={28} />
-            السجل الكامل
+              السجل الكامل  
           </h2>
           <p className="text-gray-500 font-bold mt-1">إدارة وتصدير جميع الإنجازات الموثقة.</p>
         </div>
