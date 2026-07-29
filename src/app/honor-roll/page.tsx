@@ -59,7 +59,7 @@ export default function HonorRoll() {
 
       {/* Kahoot-Style Podium */}
       {isLoading ? (
-        <div className="flex flex-col items-center justify-center pt-20 text-gray-400">
+        <div className="flex flex-col items-center justify-center pt-20 text-purple-200">
           <Loader2 className="animate-spin mb-4 text-[#ffb000]" size={40} />
           <p className="font-bold">جاري تحميل لوحة الشرف المباشرة...</p>
         </div>

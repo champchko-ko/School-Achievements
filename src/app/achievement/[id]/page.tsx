@@ -95,10 +95,10 @@ export default function AchievementDetailsPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-gray-500">
         <div className="bg-white p-8 rounded-3xl shadow-lg border border-purple-100/50 text-center max-w-md">
-          <FileText className="mx-auto text-gray-300 mb-4" size={48} />
+          <FileText className="mx-auto text-purple-400 mb-4" size={48} />
           <h2 className="text-2xl font-black mb-2 text-gray-800">عذراً</h2>
           <p className="font-bold mb-6">{error}</p>
-          <button onClick={() => router.back()} className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-3 rounded-xl font-bold transition-colors w-full">
+          <button onClick={() => router.back()} className="bg-gray-100 hover:bg-gray-200 text-white bg-[#380e6e] hover:bg-[#2a0a54] px-6 py-3 rounded-xl font-bold transition-colors w-full">
             العودة للسابق
           </button>
         </div>
