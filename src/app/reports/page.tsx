@@ -252,7 +252,7 @@ export default function ReportsPage() {
         <div>
           <h2 className="text-2xl font-black text-yellow-400 flex items-center gap-2">
             <Printer className="text-pink-400" size={28} />
-            طباعة التقارير
+              طباعة التقارير.    
           </h2>
           <p className="text-gray-500 font-bold mt-1">اختر التقرير المطلوب وقم بطباعته أو تصديره.</p>
         </div>
