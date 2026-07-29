@@ -96,7 +96,7 @@ export default function AdminDashboard() {
     <div className="space-y-6 animate-in fade-in duration-500 pb-10">
       
       {/* Admin Header */}
-      <div className="bg-[#4a154b] rounded-2xl p-8 shadow-md text-center text-white relative overflow-hidden">
+      <div className="bg-[#380e6e] rounded-2xl p-8 shadow-md text-center text-white relative overflow-hidden">
         <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-full -translate-y-16 translate-x-16"></div>
         <div className="absolute bottom-0 left-0 w-24 h-24 bg-white opacity-5 rounded-full translate-y-8 -translate-x-8"></div>
         
@@ -110,21 +110,21 @@ export default function AdminDashboard() {
       {/* Analytics Overview */}
       {!isLoading && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 my-8">
-          <div className="bg-white rounded-2xl p-6 shadow-sm border-t-4 border-purple-500 flex items-center gap-4 hover:shadow-md transition-shadow">
+          <div className="bg-white rounded-2xl p-6 shadow-lg border-t-4 border-purple-500 flex items-center gap-4 hover:shadow-md transition-shadow">
             <div className="bg-purple-100 p-4 rounded-xl text-purple-600"><TrendingUp size={32} /></div>
             <div>
               <p className="text-gray-500 text-sm font-bold">القسم الأنشط هذا الشهر</p>
               <p className="text-2xl font-black text-gray-800">{mostActiveDept}</p>
             </div>
           </div>
-          <div className="bg-white rounded-2xl p-6 shadow-sm border-t-4 border-blue-500 flex items-center gap-4 hover:shadow-md transition-shadow">
+          <div className="bg-white rounded-2xl p-6 shadow-lg border-t-4 border-blue-500 flex items-center gap-4 hover:shadow-md transition-shadow">
             <div className="bg-blue-100 p-4 rounded-xl text-blue-600"><Files size={32} /></div>
             <div>
               <p className="text-gray-500 text-sm font-bold">إجمالي الملفات المرفوعة</p>
               <p className="text-3xl font-black text-gray-800">{totalFiles}</p>
             </div>
           </div>
-          <div className="bg-white rounded-2xl p-6 shadow-sm border-t-4 border-red-500 flex items-center gap-4 min-w-0 hover:shadow-md transition-shadow">
+          <div className="bg-white rounded-2xl p-6 shadow-lg border-t-4 border-red-500 flex items-center gap-4 min-w-0 hover:shadow-md transition-shadow">
             <div className="bg-red-100 p-4 rounded-xl text-red-600 shrink-0"><UserX size={32} /></div>
             <div className="min-w-0 flex-1">
               <p className="text-gray-500 text-sm font-bold">معلمون بلا إنجازات</p>
@@ -162,13 +162,13 @@ export default function AdminDashboard() {
         ) : (
           <div className="grid grid-cols-1 gap-4">
             {pendingAchievements.map((item) => (
-              <div key={item.id} className="bg-white rounded-2xl p-5 md:p-6 shadow-sm border border-gray-100 flex flex-col md:flex-row gap-6 items-start md:items-center">
+              <div key={item.id} className="bg-white rounded-2xl p-5 md:p-6 shadow-lg border border-purple-100/50 flex flex-col md:flex-row gap-6 items-start md:items-center">
                 
                 {/* Details */}
                 <div className="flex-1 space-y-2">
                   <div className="flex items-center gap-3">
-                    <h4 className="text-lg font-black text-[#4a154b]">{item.title}</h4>
-                    <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-md text-xs font-bold">{item.department}</span>
+                    <h4 className="text-lg font-black text-[#46178f]">{item.title}</h4>
+                    <span className="bg-purple-50 text-[#46178f] px-2 py-1 rounded-md text-xs font-bold">{item.department}</span>
                   </div>
                   <p className="text-gray-600 text-sm font-medium leading-relaxed">{item.desc}</p>
                   

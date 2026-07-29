@@ -105,8 +105,8 @@ export default function Sidebar() {
 
   // The sidebar content (shared between desktop and mobile)
   const sidebarContent = (
-    <aside className={`h-full bg-[#4a154b] text-white flex flex-col shadow-2xl print:hidden ${mobileOpen ? '' : ''}`}>
-      <div className="p-4 sm:p-6 text-center border-b border-purple-800/50 flex flex-col items-center relative">
+    <aside className={`h-full bg-[#380e6e] text-white flex flex-col shadow-2xl print:hidden ${mobileOpen ? '' : ''}`}>
+      <div className="p-4 sm:p-6 text-center border-b border-purple-700/30 flex flex-col items-center relative">
         {/* Mobile close button */}
         <button onClick={closeMobile} className="absolute top-2 left-2 sm:hidden p-1 rounded-lg hover:bg-white/10">
           <X size={20} />
@@ -125,10 +125,10 @@ export default function Sidebar() {
         <SidebarLinks isAdmin={isAdmin} onClose={closeMobile} />
       </Suspense>
 
-      <div className="p-3 sm:p-4 border-t border-purple-800/50">
+      <div className="p-3 sm:p-4 border-t border-purple-700/30">
         {!isAdmin ? (
           <button onClick={() => { setShowAdminPrompt(true); closeMobile(); }}
-            className="flex w-full items-center gap-3 p-2 sm:p-3 rounded-xl bg-purple-900/50 hover:bg-purple-800 transition-all text-xs sm:text-sm font-bold text-gray-300"
+            className="flex w-full items-center gap-3 p-2 sm:p-3 rounded-xl bg-[#46178f]/50 hover:bg-[#46178f] transition-all text-xs sm:text-sm font-bold text-gray-300"
           >
             <ShieldCheck size={16} className="sm:size-[18px]" /> دخول الإدارة
           </button>
@@ -155,7 +155,7 @@ export default function Sidebar() {
       {/* Mobile hamburger button */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="fixed top-3 right-3 z-30 sm:hidden bg-[#4a154b] text-white p-2.5 rounded-xl shadow-lg"
+        className="fixed top-3 right-3 z-30 sm:hidden bg-[#380e6e] text-white p-2.5 rounded-xl shadow-lg"
       >
         <Menu size={22} />
       </button>
@@ -181,7 +181,7 @@ export default function Sidebar() {
       {mounted && showAdminPrompt && createPortal(
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60] animate-in fade-in duration-200">
           <div className="bg-white p-8 rounded-3xl shadow-2xl max-w-sm w-full mx-4 text-center animate-in zoom-in-95 duration-300" onClick={e => e.stopPropagation()}>
-            <h3 className="text-xl font-black text-[#4a154b] mb-2">دخول الإدارة 🔐</h3>
+            <h3 className="text-xl font-black text-[#46178f] mb-2">دخول الإدارة 🔐</h3>
             <p className="text-sm text-gray-500 mb-6">الرجاء إدخال رمز الدخول المكون من 4 أرقام</p>
             
             <input 

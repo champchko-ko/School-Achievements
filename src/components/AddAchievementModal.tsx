@@ -218,7 +218,7 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
           </div>
 
           {/* Drag & Drop Zone */}
-          <div className="border-2 border-dashed border-[#0087ed]/40 bg-blue-50/50 rounded-2xl p-4 md:p-6 text-center transition-colors">
+          <div className="border-2 border-dashed border-[#46178f]/40 bg-purple-50/50 rounded-2xl p-4 md:p-6 text-center transition-colors">
             <input 
               type="file" 
               className="hidden" 
@@ -227,14 +227,14 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
               accept="*/*" 
               multiple
             />
-            <CloudUpload size={32} className="text-[#0087ed] mx-auto mb-2 cursor-pointer" onClick={() => fileInputRef.current?.click()} />
+            <CloudUpload size={32} className="text-[#46178f] mx-auto mb-2 cursor-pointer" onClick={() => fileInputRef.current?.click()} />
             
             {files.length > 0 ? (
               <div className="space-y-3 mt-2">
-                <p className="text-sm font-bold text-blue-900">{files.length} ملفات تم اختيارها</p>
+                <p className="text-sm font-bold text-[#46178f]">{files.length} ملفات تم اختيارها</p>
                 <div className="flex flex-wrap gap-2 justify-center max-h-24 overflow-y-auto px-2">
                   {files.map((f, i) => (
-                    <span key={i} className="bg-white text-xs font-bold px-2 py-1 rounded-md border border-blue-200 flex items-center gap-2 shadow-sm">
+                    <span key={i} className="bg-white text-xs font-bold px-2 py-1 rounded-md border border-purple-200 flex items-center gap-2 shadow-sm">
                       <span className="truncate max-w-[120px]" title={f.name}>{f.name}</span>
                       <button
                         type="button"
@@ -255,32 +255,32 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
                     e.stopPropagation();
                     fileInputRef.current?.click();
                   }}
-                  className="bg-[#0087ed] hover:bg-[#0073cc] text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors inline-block shadow-sm"
+                  className="bg-[#1368ce] hover:bg-[#0f56b0] text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors inline-block shadow-sm"
                 >
                   + إضافة المزيد من الملفات
                 </button>
               </div>
             ) : (
               <div className="cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                <p className="text-sm font-bold text-blue-900">أرفق الصور أو المستندات</p>
-                <p className="text-xs text-blue-600/70 mt-1">اضغط هنا أو اسحب الملفات</p>
+                <p className="text-sm font-bold text-[#46178f]">أرفق الصور أو المستندات</p>
+                <p className="text-xs text-purple-600/70 mt-1">اضغط هنا أو اسحب الملفات</p>
               </div>
             )}
           </div>
 
           {/* PIN Code Field */}
-          <div className="bg-orange-50 border border-orange-100 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
-            <div className="bg-orange-100 p-3 rounded-xl text-orange-600"><Lock size={20} /></div>
+          <div className="bg-purple-50 border border-purple-100 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+            <div className="bg-[#46178f]/10 p-3 rounded-xl text-[#46178f]"><Lock size={20} /></div>
             <div className="flex-1">
-              <label className="block text-sm font-bold text-orange-900 mb-1">رمز الحماية السري (PIN)</label>
-              <p className="text-xs text-orange-700 mb-2">اختر 4 أرقام لتتمكن من تعديل الإنجاز لاحقاً</p>
+              <label className="block text-sm font-bold text-[#46178f] mb-1">رمز الحماية السري (PIN)</label>
+              <p className="text-xs text-[#380e6e] mb-2">اختر 4 أرقام لتتمكن من تعديل الإنجاز لاحقاً</p>
             <input 
                 type="password" 
                 maxLength={4} 
                 value={formData.pin}
                 onChange={(e) => setFormData({...formData, pin: e.target.value})}
                 placeholder="****" 
-                className="w-24 text-center tracking-[0.5em] font-mono font-bold text-lg bg-white border border-orange-200 rounded-xl p-2 focus:ring-2 focus:ring-orange-400 outline-none" />            </div>
+                className="w-24 text-center tracking-[0.5em] font-mono font-bold text-lg bg-white border border-purple-200 rounded-xl p-2 focus:ring-2 focus:ring-[#e21b3c] outline-none" />            </div>
           </div>
 
         </div>

@@ -35,3 +35,7 @@ img {
   height: auto;
 }
 
+/* Kahoot Base Background for main content area */
+.kahoot-bg {
+  background: linear-gradient(135deg, #46178f 0%, #380e6e 50%, #2a0a54 100%);
+}
