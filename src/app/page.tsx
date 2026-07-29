@@ -77,7 +77,7 @@ function HomeContent() {
             <img src={schoolSettings.logoUrl} alt="School Logo" className="w-16 h-16 md:w-20 md:h-20 object-contain rounded-xl border border-gray-100 shadow-sm p-1 max-w-full" />
           )}
           <div>
-            <h2 className="text-xl md:text-2xl font-black text-[#46178f] break-words">{schoolSettings?.schoolName || "مرحباً بك في منصة إنجازاتنا 👋"}</h2>
+            <h2 className="text-xl md:text-2xl font-black text-[#46178f] break-words">{schoolSettings?.schoolName?.trim() || "مرحباً بك في منصة إنجازاتنا 👋"}</h2>
             <p className="text-gray-500 font-bold mt-1 text-xs md:text-sm">وثّق، شارك، واحتفل بالتميز المدرسي</p>
           </div>
         </div>
