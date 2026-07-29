@@ -64,7 +64,7 @@ export default function KioskModePage() {
   // Loading State
   if (isLoading) {
     return (
-      <div className="fixed inset-0 z-[100] h-screen w-screen m-0 p-4 overflow-hidden bg-slate-950 flex flex-col items-center justify-center text-white">
+      <div className="fixed inset-0 z-[100] h-screen w-screen m-0 p-4 overflow-y-auto bg-slate-950 flex flex-col items-center justify-center text-white">
         <Loader2 className="animate-spin mb-4 text-purple-400" size={40} />
         <p className="text-lg md:text-2xl font-bold animate-pulse text-center px-4">جاري تحميل الإنجازات المتميزة...</p>
       </div>
@@ -74,7 +74,7 @@ export default function KioskModePage() {
   // Empty State
   if (achievements.length === 0) {
     return (
-      <div className="fixed inset-0 z-[100] h-screen w-screen m-0 p-4 overflow-hidden bg-slate-950 flex flex-col items-center justify-center text-white">
+      <div className="fixed inset-0 z-[100] h-screen w-screen m-0 p-4 overflow-y-auto bg-slate-950 flex flex-col items-center justify-center text-white">
         <Star className="mb-4 text-yellow-400 opacity-50" size={40} />
         <p className="text-xl md:text-3xl font-black text-gray-400 text-center px-4">لا توجد إنجازات متميزة للعرض حالياً</p>
       </div>
@@ -101,7 +101,7 @@ export default function KioskModePage() {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] h-screen w-screen m-0 p-0 overflow-hidden bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-purple-950 to-black text-white flex flex-col">
+    <div className="fixed inset-0 z-[100] h-screen w-screen m-0 p-0 overflow-y-auto bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-purple-950 to-black text-white flex flex-col">
       
       {/* Decorative background glows */}
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-purple-600/20 blur-[120px] rounded-full pointer-events-none" />
@@ -126,7 +126,7 @@ export default function KioskModePage() {
       </header>
 
       {/* Carousel Body */}
-      <main className="flex-1 flex items-center justify-center p-8 lg:p-12 relative z-10 overflow-hidden w-full">
+      <main className="flex-1 flex items-center justify-center p-4 md:p-8 lg:p-12 relative z-10 w-full">
         {/* The key prop forces React to re-mount the div, triggering the animate-in classes automatically */}
         <div key={current.id + currentIndex} className="w-full max-w-[98vw] md:max-w-[95vw] animate-in fade-in zoom-in-95 slide-in-from-bottom-8 duration-1000 flex flex-col lg:flex-row gap-4 md:gap-12 items-center justify-center relative">
           
