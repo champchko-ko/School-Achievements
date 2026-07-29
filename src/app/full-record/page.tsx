@@ -298,9 +298,7 @@ export default function FullRecordPage() {
 
       {/* The Data Table */}
       <div className="bg-white rounded-2xl shadow-lg border border-purple-100/50 print:shadow-none print:border-none print:w-full w-full overflow-hidden">
-        {/* max-w-full and overflow-x-auto forces horizontal scroll instead of breaking the layout */}
         <div className="w-full max-w-full overflow-x-auto block">
-          {/* min-w-max prevents columns from squishing together */}
           <table className="w-full min-w-max text-right border-collapse">
             <thead>
               <tr className="bg-purple-50 border-b border-purple-100 text-gray-500 text-sm print:bg-white print:text-black print:border-b-2 print:border-black">
@@ -308,7 +306,8 @@ export default function FullRecordPage() {
                 <th className="p-4 font-bold whitespace-nowrap">القسم</th>
                 <th className="p-4 font-bold min-w-[200px]">الإنجاز</th>
                 <th className="p-4 font-bold whitespace-nowrap">التاريخ</th>
-                <th className="p-4 font-bold whitespace-nowrap">التقييم</th>
+                {/* تم إخفاء عمود التقييم على الشاشات الصغيرة لتوفير المساحة */}
+                <th className="p-4 font-bold whitespace-nowrap hidden lg:table-cell">التقييم</th>
                 <th className="p-4 font-bold text-center print:hidden whitespace-nowrap">إجراء</th>
               </tr>
             </thead>
@@ -330,7 +329,10 @@ export default function FullRecordPage() {
                     </Link>
                   </td>
                   <td className="p-4 text-sm text-gray-500 whitespace-nowrap">{row.date}</td>
-                  <td className="p-4 whitespace-nowrap">{getScoreBadge(row.score)}</td>
+                  
+                  {/* إخفاء محتوى التقييم على الشاشات الصغيرة */}
+                  <td className="p-4 whitespace-nowrap hidden lg:table-cell">{getScoreBadge(row.score)}</td>
+                  
                   <td className="p-4 text-center print:hidden whitespace-nowrap">
                     {isAdmin ? (
                       <div className="flex items-center justify-center gap-2">
