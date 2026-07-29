@@ -169,7 +169,7 @@ export default function FullRecordPage() {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 pb-10">
+    <div className="space-y-6 animate-in fade-in duration-500 pb-10 w-full max-w-full overflow-hidden">
       
       {/* Hides the browser's default date/title text */}
       <style dangerouslySetInnerHTML={{__html: `
@@ -297,19 +297,19 @@ export default function FullRecordPage() {
       </div>
 
       {/* The Data Table */}
-      <div className="bg-white rounded-2xl shadow-lg border border-purple-100/50 overflow-hidden print:shadow-none print:border-none print:w-full">
-        {/* Added overflow-x-auto for mobile devices */}
-        <div className="w-full overflow-x-auto print:overflow-visible">
-          {/* min-w-[800px] ensures the table columns don't crush together on small screens */}
-          <table className="w-full min-w-[800px] text-right border-collapse">
+      <div className="bg-white rounded-2xl shadow-lg border border-purple-100/50 print:shadow-none print:border-none print:w-full w-full overflow-hidden">
+        {/* max-w-full and overflow-x-auto forces horizontal scroll instead of breaking the layout */}
+        <div className="w-full max-w-full overflow-x-auto block">
+          {/* min-w-max prevents columns from squishing together */}
+          <table className="w-full min-w-max text-right border-collapse">
             <thead>
               <tr className="bg-purple-50 border-b border-purple-100 text-gray-500 text-sm print:bg-white print:text-black print:border-b-2 print:border-black">
-                <th className="p-4 font-bold">المعلم</th>
-                <th className="p-4 font-bold">القسم</th>
-                <th className="p-4 font-bold w-1/3">الإنجاز</th>
-                <th className="p-4 font-bold">التاريخ</th>
-                <th className="p-4 font-bold">التقييم</th>
-                <th className="p-4 font-bold text-center print:hidden">إجراء</th>
+                <th className="p-4 font-bold whitespace-nowrap">المعلم</th>
+                <th className="p-4 font-bold whitespace-nowrap">القسم</th>
+                <th className="p-4 font-bold min-w-[200px]">الإنجاز</th>
+                <th className="p-4 font-bold whitespace-nowrap">التاريخ</th>
+                <th className="p-4 font-bold whitespace-nowrap">التقييم</th>
+                <th className="p-4 font-bold text-center print:hidden whitespace-nowrap">إجراء</th>
               </tr>
             </thead>
             <tbody>
@@ -323,18 +323,17 @@ export default function FullRecordPage() {
               ) : filteredData.map((row) => (
                 <tr key={row.id} className="border-b border-gray-50 hover:bg-blue-50/30 transition-colors group">
                   <td className="p-4 font-bold text-[#4a154b] whitespace-nowrap">{row.teacherName}</td>
-                  <td className="p-4"><span className="bg-purple-50 text-[#46178f] px-2 py-1 rounded-md text-xs font-bold whitespace-nowrap">{row.department}</span></td>
-                  <td className="p-4 text-sm font-bold text-gray-700">
-                    <Link href={`/achievement/${row.id}`} className="hover:text-[#0087ed] hover:underline transition-colors">
+                  <td className="p-4 whitespace-nowrap"><span className="bg-purple-50 text-[#46178f] px-2 py-1 rounded-md text-xs font-bold whitespace-nowrap">{row.department}</span></td>
+                  <td className="p-4 text-sm font-bold text-gray-700 min-w-[200px] whitespace-normal">
+                    <Link href={`/achievement/${row.id}`} className="hover:text-[#0087ed] hover:underline transition-colors block">
                       {row.title}
                     </Link>
                   </td>
                   <td className="p-4 text-sm text-gray-500 whitespace-nowrap">{row.date}</td>
                   <td className="p-4 whitespace-nowrap">{getScoreBadge(row.score)}</td>
-                  <td className="p-4 text-center print:hidden">
+                  <td className="p-4 text-center print:hidden whitespace-nowrap">
                     {isAdmin ? (
                       <div className="flex items-center justify-center gap-2">
-                        {/* View Button - Blue */}
                         <Link 
                           href={`/achievement/${row.id}`} 
                           className="flex items-center justify-center text-blue-600 bg-blue-50 hover:bg-blue-100 hover:text-blue-700 p-2.5 rounded-lg transition-colors" 
@@ -343,7 +342,6 @@ export default function FullRecordPage() {
                           <Eye size={18} />
                         </Link>
                         
-                        {/* Edit Button - Green */}
                         <button 
                           onClick={() => { setSelectedDoc(row); setShowEditModal(true); }} 
                           className="flex items-center justify-center text-green-600 bg-green-50 hover:bg-green-100 hover:text-green-700 p-2.5 rounded-lg transition-colors" 
@@ -352,7 +350,6 @@ export default function FullRecordPage() {
                           <Pencil size={18} />
                         </button>
                         
-                        {/* Delete Button - Red */}
                         <button 
                           onClick={() => handleDeleteClick(row.id)} 
                           className="flex items-center justify-center text-red-600 bg-red-50 hover:bg-red-100 hover:text-red-700 p-2.5 rounded-lg transition-colors" 
@@ -363,7 +360,6 @@ export default function FullRecordPage() {
                       </div>
                     ) : (
                       <div className="flex items-center justify-center gap-2">
-                        {/* View Button - Blue */}
                         <Link 
                           href={`/achievement/${row.id}`} 
                           className="flex items-center justify-center text-blue-600 bg-blue-50 hover:bg-blue-100 hover:text-blue-700 p-2.5 rounded-lg transition-colors" 
@@ -372,7 +368,6 @@ export default function FullRecordPage() {
                           <Eye size={18} />
                         </Link>
                         
-                        {/* PIN Edit Button - Purple */}
                         <button 
                           onClick={() => handleActionClick(row)} 
                           className="flex items-center justify-center text-purple-600 bg-purple-50 hover:bg-purple-100 hover:text-purple-700 p-2.5 rounded-lg transition-colors" 
@@ -399,5 +394,47 @@ export default function FullRecordPage() {
       {mounted && createPortal(
         <>
           {showPinPrompt && (
-            <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60] animate-in fade-in duration-200">
-              <div className="bg-white p-8 rounded-3xl shadow-2xl max-w-sm w-full mx-4 text-center animate-in zoom-in-95 duration-300" onClick={e => e.stopProp
+            <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60] animate-in fade-in duration-200 p-4">
+              <div className="bg-white p-8 rounded-3xl shadow-2xl max-w-sm w-full text-center animate-in zoom-in-95 duration-300" onClick={e => e.stopPropagation()}>
+                <h3 className="text-xl font-black text-[#4a154b] mb-2">تعديل الإنجاز ✏️</h3>
+                <p className="text-sm text-gray-500 mb-6">الرجاء إدخال رمز الحماية (PIN) الخاص بهذا الإنجاز لتتمكن من تعديله.</p>
+                
+                <input 
+                  type="password" 
+                  maxLength={4} 
+                  value={pinInput} 
+                  onChange={e => setPinInput(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handlePinSubmit()}
+                  placeholder="****"
+                  className={`w-full text-center tracking-[1em] font-mono font-bold text-2xl bg-gray-50 border-2 rounded-xl p-3 outline-none transition-all ${pinError ? 'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100' : 'border-gray-200 focus:border-[#e21b3c] focus:ring-4 focus:ring-red-100'}`}
+                />
+                {pinError && <p className="text-red-500 font-bold text-sm mt-3 animate-in slide-in-from-top-1">{pinError}</p>}
+                
+                <div className="flex gap-3 mt-6">
+                  <button onClick={() => { setShowPinPrompt(false); setPinError(''); setPinInput(''); }} className="flex-1 py-3 rounded-xl font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 transition-colors">
+                    إلغاء
+                  </button>
+                  <button onClick={handlePinSubmit} className="flex-1 py-3 rounded-xl font-bold text-white bg-[#4a154b] hover:bg-[#3a103a] transition-colors">
+                    تأكيد
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {showEditModal && selectedDoc && (
+            <AddAchievementModal
+              isOpen={showEditModal}
+              onClose={() => {
+                setShowEditModal(false);
+                setSelectedDoc(null);
+              }}
+              editData={selectedDoc}
+            />
+          )}
+        </>,
+        document.body
+      )}
+    </div>
+  );
+}
