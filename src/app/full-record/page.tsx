@@ -171,7 +171,7 @@ export default function FullRecordPage() {
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-10">
       
-      {/* ADD THIS STYLE BLOCK: Hides the browser's default date/title text */}
+      {/* Hides the browser's default date/title text */}
       <style dangerouslySetInnerHTML={{__html: `
         @media print {
           @page { margin: 0; } /* Removes default browser headers */
@@ -332,25 +332,53 @@ export default function FullRecordPage() {
                   <td className="p-4 text-center print:hidden">
                     {isAdmin ? (
                       <div className="flex items-center justify-center gap-2">
-                      <Link href={`/achievement/${row.id}`} className="text-gray-400 hover:text-[#0087ed] p-2 rounded-lg hover:bg-blue-50 transition-colors" title="عرض التفاصيل">
-                        <Eye size={18} />
-                      </Link>
-                        <button onClick={() => { setSelectedDoc(row); setShowEditModal(true); }} className="text-gray-400 hover:text-green-500 p-2 rounded-lg hover:bg-green-50 transition-colors" title="تعديل">
+                        {/* View Button - Blue */}
+                        <Link 
+                          href={`/achievement/${row.id}`} 
+                          className="flex items-center justify-center text-blue-600 bg-blue-50 hover:bg-blue-100 hover:text-blue-700 p-2.5 rounded-lg transition-colors" 
+                          title="عرض التفاصيل"
+                        >
+                          <Eye size={18} />
+                        </Link>
+                        
+                        {/* Edit Button - Green */}
+                        <button 
+                          onClick={() => { setSelectedDoc(row); setShowEditModal(true); }} 
+                          className="flex items-center justify-center text-green-600 bg-green-50 hover:bg-green-100 hover:text-green-700 p-2.5 rounded-lg transition-colors" 
+                          title="تعديل"
+                        >
                           <Pencil size={18} />
                         </button>
-                        <button onClick={() => handleDeleteClick(row.id)} className="text-blue-400 hover:text-red-500 p-2 rounded-lg hover:bg-red-50 transition-colors" title="حذف">
+                        
+                        {/* Delete Button - Red */}
+                        <button 
+                          onClick={() => handleDeleteClick(row.id)} 
+                          className="flex items-center justify-center text-red-600 bg-red-50 hover:bg-red-100 hover:text-red-700 p-2.5 rounded-lg transition-colors" 
+                          title="حذف"
+                        >
                           <Trash2 size={18} />
                         </button>
                       </div>
                     ) : (
-                    <div className="flex items-center justify-center gap-2">
-                      <Link href={`/achievement/${row.id}`} className="text-gray-400 hover:text-[#0087ed] p-2 rounded-lg hover:bg-blue-50 transition-colors" title="عرض التفاصيل">
-                        <Eye size={18} />
-                      </Link>
-                      <button onClick={() => handleActionClick(row)} className="text-gray-400 hover:text-[#0087ed] p-2 rounded-lg hover:bg-blue-100 transition-colors" title="خيارات الإنجاز">
-                        <MoreHorizontal size={20} />
-                      </button>
-                    </div>
+                      <div className="flex items-center justify-center gap-2">
+                        {/* View Button - Blue */}
+                        <Link 
+                          href={`/achievement/${row.id}`} 
+                          className="flex items-center justify-center text-blue-600 bg-blue-50 hover:bg-blue-100 hover:text-blue-700 p-2.5 rounded-lg transition-colors" 
+                          title="عرض التفاصيل"
+                        >
+                          <Eye size={18} />
+                        </Link>
+                        
+                        {/* PIN Edit Button - Purple */}
+                        <button 
+                          onClick={() => handleActionClick(row)} 
+                          className="flex items-center justify-center text-purple-600 bg-purple-50 hover:bg-purple-100 hover:text-purple-700 p-2.5 rounded-lg transition-colors" 
+                          title="تعديل الإنجاز (يتطلب رمز الحماية)"
+                        >
+                          <Pencil size={18} />
+                        </button>
+                      </div>
                     )}
                   </td>
                 </tr>
@@ -386,14 +414,26 @@ export default function FullRecordPage() {
                 {pinError && <p className="text-red-500 font-bold text-sm mt-3 animate-in slide-in-from-top-1">{pinError}</p>}
                 
                 <div className="flex gap-3 mt-6">
-                  <button onClick={() => { setShowPinPrompt(false); setPinError(''); setPinInput(''); }} className="flex-1 py-3 rounded-xl font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 transition-colors">إلغاء</button>
-                  <button onClick={handlePinSubmit} className="flex-1 py-3 rounded-xl font-bold text-white bg-orange-500 hover:bg-orange-600 border-b-4 border-orange-700 active:border-b-0 active:translate-y-1 transition-all">تأكيد</button>
+                  <button onClick={() => { setShowPinPrompt(false); setPinError(''); setPinInput(''); }} className="flex-1 py-3 rounded-xl font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 transition-colors">
+                    إلغاء
+                  </button>
+                  <button onClick={handlePinSubmit} className="flex-1 py-3 rounded-xl font-bold text-white bg-[#4a154b] hover:bg-[#3a103a] transition-colors">
+                    تأكيد
+                  </button>
                 </div>
               </div>
             </div>
           )}
+
           {showEditModal && selectedDoc && (
-            <AddAchievementModal isOpen={showEditModal} onClose={() => setShowEditModal(false)} initialData={selectedDoc} docId={selectedDoc.id} />
+            <AddAchievementModal
+              isOpen={showEditModal}
+              onClose={() => {
+                setShowEditModal(false);
+                setSelectedDoc(null);
+              }}
+              editData={selectedDoc}
+            />
           )}
         </>,
         document.body
