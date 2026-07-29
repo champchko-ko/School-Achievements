@@ -70,7 +70,7 @@ export default function ReportsPage() {
     })).sort((a, b) => b.count - a.count); // Sort by most active department
 
     return (
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 print:shadow-none print:border-none print:p-0">
+      <div className="bg-white rounded-2xl shadow-lg border border-purple-100/50 p-8 print:shadow-none print:border-none print:p-0">
         <div className="text-center mb-8 pb-6 border-b-2 border-gray-200">
           <div className="hidden print:flex items-center justify-start gap-4 mb-6">
             {schoolSettings?.logoUrl && <img src={schoolSettings.logoUrl} alt="School Logo" className="w-24 h-24 object-contain" />}
@@ -85,7 +85,7 @@ export default function ReportsPage() {
         
         <table className="w-full text-right border-collapse">
           <thead>
-            <tr className="bg-gray-50 border-b-2 border-gray-200 text-gray-700 print:bg-white print:text-black">
+            <tr className="bg-purple-50 border-b-2 border-purple-200 text-[#46178f] print:bg-white print:text-black">
               <th className="p-4 font-bold">القسم</th>
               <th className="p-4 font-bold text-center">إجمالي الإنجازات</th>
               <th className="p-4 font-bold text-center">متوسط التقييم</th>
@@ -93,7 +93,7 @@ export default function ReportsPage() {
           </thead>
           <tbody>
             {statsArray.map((stat, idx) => (
-              <tr key={idx} className="border-b border-gray-100 hover:bg-gray-50 transition-colors print:border-b-2">
+              <tr key={idx} className="border-b border-purple-100 hover:bg-purple-50/50 transition-colors print:border-b-2">
                 <td className="p-4 font-bold text-gray-800">{stat.department}</td>
                 <td className="p-4 text-center font-bold text-[#0087ed] text-lg">{stat.count}</td>
                 <td className="p-4 text-center">
@@ -140,7 +140,7 @@ export default function ReportsPage() {
     })).sort((a, b) => b.count - a.count).slice(0, 10);
 
     return (
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 print:shadow-none print:border-none print:p-0">
+      <div className="bg-white rounded-2xl shadow-lg border border-purple-100/50 p-8 print:shadow-none print:border-none print:p-0">
         <div className="text-center mb-8 pb-6 border-b-2 border-gray-200">
           <div className="hidden print:flex items-center justify-start gap-4 mb-6">
             {schoolSettings?.logoUrl && <img src={schoolSettings.logoUrl} alt="School Logo" className="w-24 h-24 object-contain" />}
@@ -155,7 +155,7 @@ export default function ReportsPage() {
         
         <table className="w-full text-right border-collapse">
           <thead>
-            <tr className="bg-gray-50 border-b-2 border-gray-200 text-gray-700 print:bg-white print:text-black">
+            <tr className="bg-purple-50 border-b-2 border-purple-200 text-[#46178f] print:bg-white print:text-black">
               <th className="p-4 font-bold">الترتيب</th>
               <th className="p-4 font-bold">المعلم</th>
               <th className="p-4 font-bold">القسم</th>
@@ -164,7 +164,7 @@ export default function ReportsPage() {
           </thead>
           <tbody>
             {honorList.map((stat, idx) => (
-              <tr key={idx} className="border-b border-gray-100 hover:bg-gray-50 transition-colors print:border-b-2">
+              <tr key={idx} className="border-b border-purple-100 hover:bg-purple-50/50 transition-colors print:border-b-2">
                 <td className="p-4 font-black text-gray-400">#{idx + 1}</td>
                 <td className="p-4 font-bold text-gray-800 flex items-center gap-2">
                   {idx === 0 && <Medal className="text-yellow-500" size={20} />}
@@ -187,8 +187,8 @@ export default function ReportsPage() {
     const filteredData = selectedTeacher === "all" ? [] : achievements.filter(a => a.teacherName === selectedTeacher).sort((a,b) => b.date.localeCompare(a.date));
 
     return (
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 print:shadow-none print:border-none print:p-0">
-        <div className="print:hidden mb-8 bg-gray-50 p-6 rounded-xl border border-gray-200">
+      <div className="bg-white rounded-2xl shadow-lg border border-purple-100/50 p-8 print:shadow-none print:border-none print:p-0">
+        <div className="print:hidden mb-8 bg-purple-50 p-6 rounded-xl border border-purple-100">
            <label className="block text-sm font-bold text-gray-700 mb-2">اختر المعلم لعرض وطباعة السجل الفردي:</label>
            <select 
              value={selectedTeacher} 
@@ -216,7 +216,7 @@ export default function ReportsPage() {
 
             <div className="space-y-6">
               {filteredData.map((ach, idx) => (
-                <div key={idx} className="p-6 bg-gray-50 rounded-2xl border border-gray-100 print:bg-white print:border-b-2 print:border-gray-300 print:rounded-none break-inside-avoid">
+                <div key={idx} className="p-6 bg-purple-50 rounded-2xl border border-purple-100 print:bg-white print:border-b-2 print:border-gray-300 print:rounded-none break-inside-avoid">
                   <div className="flex justify-between items-start mb-3">
                     <h3 className="text-lg font-bold text-gray-800">{ach.title}</h3>
                     <span className="text-sm font-bold text-gray-500 bg-white px-3 py-1 rounded-full border">{ach.date}</span>
@@ -226,7 +226,7 @@ export default function ReportsPage() {
                      {ach.score ? (
                        <span className="text-xs font-bold px-3 py-1 rounded-full bg-blue-100 text-blue-700">التقييم: {ach.score}%</span>
                      ) : (
-                       <span className="text-xs font-bold px-3 py-1 rounded-full bg-gray-200 text-gray-600">قيد المراجعة</span>
+                       <span className="text-xs font-bold px-3 py-1 rounded-full bg-purple-100 text-[#46178f]">قيد المراجعة</span>
                      )}
                      <span className="text-xs font-bold px-3 py-1 rounded-full bg-purple-100 text-purple-700">{ach.department}</span>
                   </div>
@@ -259,7 +259,7 @@ export default function ReportsPage() {
         
         <button 
           onClick={() => window.print()}
-          className="flex items-center justify-center gap-2 bg-[#4a154b] hover:bg-[#3a103a] text-white px-6 py-3 rounded-xl font-bold transition-all shadow-md active:scale-95"
+          className="flex items-center justify-center gap-2 bg-[#380e6e] hover:bg-[#2a0a54] text-white px-6 py-3 rounded-xl font-bold transition-all shadow-md active:scale-95"
         >
           <Printer size={18} /> طباعة التقرير الحالي
         </button>
@@ -309,7 +309,7 @@ export default function ReportsPage() {
           {activeReport === 'honor' && renderHonorReport()}
           {activeReport === 'individual' && renderIndividualReport()}
           {activeReport === 'master' && (
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center print:hidden">
+            <div className="bg-white rounded-2xl shadow-lg border border-purple-100/50 p-12 text-center print:hidden">
               <FileSpreadsheet className="mx-auto text-[#e21b3c] mb-4" size={48} />
               <h2 className="text-2xl font-black text-gray-800 mb-2">السجل الشامل وتصدير البيانات</h2>
               <p className="text-gray-500 mb-6">للوصول إلى السجل الشامل مع خيارات الفلترة المتقدمة والتصدير إلى Excel و PDF، يرجى الانتقال إلى صفحة السجل الكامل.</p>

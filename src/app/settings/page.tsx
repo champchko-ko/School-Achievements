@@ -145,17 +145,17 @@ export default function SettingsPage() {
     <div className="space-y-6 animate-in fade-in duration-500 pb-10 max-w-4xl mx-auto">
       
       {/* Header */}
-      <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 flex items-center gap-4">
+      <div className="bg-white rounded-2xl p-8 shadow-lg border border-purple-100/50 flex items-center gap-4">
         <div className="bg-gray-100 p-4 rounded-xl">
           <Settings className="text-gray-700" size={32} />
         </div>
         <div>
-          <h2 className="text-2xl font-black text-[#4a154b]">إعدادات المدرسة</h2>
+          <h2 className="text-2xl font-black text-[#46178f]">إعدادات المدرسة</h2>
           <p className="text-gray-500 font-bold mt-1">تحديث البيانات الأساسية والشعار الرسمي.</p>
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 space-y-8">
+      <div className="bg-white rounded-2xl shadow-lg border border-purple-100/50 p-8 space-y-8">
         
         {/* Logo Upload Section */}
         <div className="flex flex-col md:flex-row gap-8 items-center border-b border-gray-100 pb-8">
@@ -194,7 +194,7 @@ export default function SettingsPage() {
               value={formData.schoolName}
               onChange={(e) => setFormData({...formData, schoolName: e.target.value})}
               placeholder="مثال: مدرسة الأجيال الأهلية" 
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-[#0087ed] outline-none transition-all" 
+              className="w-full bg-gray-50 border border-purple-100 rounded-xl p-3 focus:ring-2 focus:ring-[#46178f] outline-none transition-all" 
             />
           </div>
 
@@ -205,7 +205,7 @@ export default function SettingsPage() {
               value={formData.phone}
               onChange={(e) => setFormData({...formData, phone: e.target.value})}
               placeholder="مثال: 05xxxxxxx" 
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-[#0087ed] outline-none transition-all" 
+              className="w-full bg-gray-50 border border-purple-100 rounded-xl p-3 focus:ring-2 focus:ring-[#46178f] outline-none transition-all" 
             />
           </div>
 
@@ -216,7 +216,7 @@ export default function SettingsPage() {
               value={formData.managerName}
               onChange={(e) => setFormData({...formData, managerName: e.target.value})}
               placeholder="اسم المدير" 
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-[#0087ed] outline-none transition-all" 
+              className="w-full bg-gray-50 border border-purple-100 rounded-xl p-3 focus:ring-2 focus:ring-[#46178f] outline-none transition-all" 
             />
           </div>
 
@@ -227,7 +227,7 @@ export default function SettingsPage() {
               value={formData.viceManagerName}
               onChange={(e) => setFormData({...formData, viceManagerName: e.target.value})}
               placeholder="اسم الوكيل" 
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-[#0087ed] outline-none transition-all" 
+              className="w-full bg-gray-50 border border-purple-100 rounded-xl p-3 focus:ring-2 focus:ring-[#46178f] outline-none transition-all" 
             />
           </div>
 
@@ -238,7 +238,7 @@ export default function SettingsPage() {
               value={formData.assistantManager2}
               onChange={(e) => setFormData({...formData, assistantManager2: e.target.value})}
               placeholder="اسم النائب الثاني" 
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-[#0087ed] outline-none transition-all" 
+              className="w-full bg-gray-50 border border-purple-100 rounded-xl p-3 focus:ring-2 focus:ring-[#46178f] outline-none transition-all" 
             />
           </div>
 
@@ -249,7 +249,7 @@ export default function SettingsPage() {
               value={formData.vision}
               onChange={(e) => setFormData({...formData, vision: e.target.value})}
               placeholder="اكتب رؤية المدرسة هنا..."
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-[#0087ed] outline-none transition-all resize-none" 
+              className="w-full bg-gray-50 border border-purple-100 rounded-xl p-3 focus:ring-2 focus:ring-[#46178f] outline-none transition-all resize-none" 
             />
           </div>
 
@@ -260,7 +260,7 @@ export default function SettingsPage() {
               value={formData.message}
               onChange={(e) => setFormData({...formData, message: e.target.value})}
               placeholder="اكتب رسالة المدرسة هنا..."
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-[#0087ed] outline-none transition-all resize-none" 
+              className="w-full bg-gray-50 border border-purple-100 rounded-xl p-3 focus:ring-2 focus:ring-[#46178f] outline-none transition-all resize-none" 
             />
           </div>
 
@@ -271,7 +271,7 @@ export default function SettingsPage() {
               value={formData.address}
               onChange={(e) => setFormData({...formData, address: e.target.value})}
               placeholder="المدينة، الحي، الشارع..." 
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-[#0087ed] outline-none transition-all" 
+              className="w-full bg-gray-50 border border-purple-100 rounded-xl p-3 focus:ring-2 focus:ring-[#46178f] outline-none transition-all" 
             />
           </div>
         </div>
@@ -296,11 +296,11 @@ export default function SettingsPage() {
                   }
                 }}
                 placeholder="اسم القسم الجديد" 
-                className="flex-1 bg-gray-50 border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-[#0087ed] outline-none transition-all text-sm" 
+                className="flex-1 bg-gray-50 border border-purple-100 rounded-xl p-3 focus:ring-2 focus:ring-[#46178f] outline-none transition-all text-sm" 
               />
               <button type="button" onClick={() => { if(newDept.trim() && !formData.departments.includes(newDept.trim())) { setFormData({...formData, departments: [...formData.departments, newDept.trim()]}); setNewDept(''); } }} className="bg-[#0087ed] text-white px-4 py-2 rounded-xl font-bold hover:bg-[#0073cc] transition-colors whitespace-nowrap">إضافة</button>
             </div>
-            <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto p-2 border border-gray-100 rounded-xl bg-gray-50/50">
+            <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto p-2 border border-purple-100 rounded-xl bg-purple-50/50">
               {formData.departments.map(dept => (
                 <span key={dept} className="bg-white border border-gray-200 text-gray-700 text-sm font-bold px-3 py-1.5 rounded-lg flex items-center gap-2 shadow-sm">
                   {dept}
@@ -329,11 +329,11 @@ export default function SettingsPage() {
                   }
                 }}
                 placeholder="اسم المعلم الجديد" 
-                className="flex-1 bg-gray-50 border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-[#26890c] outline-none transition-all text-sm" 
+                className="flex-1 bg-gray-50 border border-purple-100 rounded-xl p-3 focus:ring-2 focus:ring-[#46178f] outline-none transition-all text-sm" 
               />
               <button type="button" onClick={() => { if(newTeacher.trim() && !formData.teachers.includes(newTeacher.trim())) { setFormData({...formData, teachers: [...formData.teachers, newTeacher.trim()]}); setNewTeacher(''); } }} className="bg-[#26890c] text-white px-4 py-2 rounded-xl font-bold hover:bg-[#20730a] transition-colors whitespace-nowrap">إضافة</button>
             </div>
-            <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto p-2 border border-gray-100 rounded-xl bg-gray-50/50">
+            <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto p-2 border border-purple-100 rounded-xl bg-purple-50/50">
               {formData.teachers.map(teacher => (
                 <span key={teacher} className="bg-white border border-gray-200 text-gray-700 text-sm font-bold px-3 py-1.5 rounded-lg flex items-center gap-2 shadow-sm">
                   {teacher}

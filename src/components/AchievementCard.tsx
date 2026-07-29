@@ -63,15 +63,15 @@ export default function AchievementCard({ data }: { data: any }) {
   return (
     <div 
       onClick={() => router.push(`/achievement/${data.id}`)}
-      className="group bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative cursor-pointer transition-all duration-300 hover:-translate-y-2 hover:shadow-xl w-full max-w-full"
+      className="group bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg border border-purple-100/50 overflow-hidden relative cursor-pointer transition-all duration-300 hover:-translate-y-2 hover:shadow-xl w-full max-w-full"
     >
       <div className={`h-2 w-full ${data.deptColor}`}></div>
       
       <div className="p-4 md:p-5">
         <div className="flex justify-between items-start mb-3 md:mb-4">
           <div>
-            <h4 className="font-bold text-[#4a154b] text-base md:text-lg">{data.teacherName}</h4>
-            <span className="inline-block px-3 py-1 bg-gray-100 text-gray-600 text-xs rounded-full mt-1 font-bold">
+            <h4 className="font-bold text-[#46178f] text-base md:text-lg">{data.teacherName}</h4>
+            <span className="inline-block px-3 py-1 bg-purple-50 text-[#46178f] text-xs rounded-full mt-1 font-bold">
               {data.department}
             </span>
           </div>
@@ -87,7 +87,7 @@ export default function AchievementCard({ data }: { data: any }) {
             )}
             <button 
               onClick={(e) => { e.stopPropagation(); if (isAdmin) { setShowEditModal(true); } else { setShowPinPrompt(true); } }} 
-              className="text-gray-400 hover:text-[#0087ed] opacity-0 group-hover:opacity-100 transition-opacity"
+              className="text-gray-400 hover:text-[#1368ce] opacity-0 group-hover:opacity-100 transition-opacity"
               title="تعديل الإنجاز"
             >
               <Pencil size={18} />
@@ -108,16 +108,16 @@ export default function AchievementCard({ data }: { data: any }) {
           <div className="flex items-center gap-3 text-gray-400">
             {data.attachmentUrls && data.attachmentUrls.length > 0 ? (
               data.attachmentUrls.map((url: string, index: number) => (
-              <a key={index} href={url} onClick={(e) => e.stopPropagation()} target="_blank" rel="noopener noreferrer" className="text-[#0087ed] hover:text-[#4a154b] transition-colors" title={`مرفق ${index + 1}`}>
+              <a key={index} href={url} onClick={(e) => e.stopPropagation()} target="_blank" rel="noopener noreferrer" className="text-[#1368ce] hover:text-[#46178f] transition-colors" title={`مرفق ${index + 1}`}>
                   {isVideoUrl(url) ? <Video size={18} /> : <Paperclip size={18} />}
                 </a>
               ))
             ) : data.attachmentUrl ? (
-            <a href={data.attachmentUrl} onClick={(e) => e.stopPropagation()} target="_blank" rel="noopener noreferrer" className="text-[#0087ed] hover:text-[#4a154b] transition-colors">
+            <a href={data.attachmentUrl} onClick={(e) => e.stopPropagation()} target="_blank" rel="noopener noreferrer" className="text-[#1368ce] hover:text-[#46178f] transition-colors">
                 {isVideoUrl(data.attachmentUrl) ? <Video size={18} /> : <Paperclip size={18} />}
               </a>
             ) : (
-            <button onClick={(e) => e.stopPropagation()} className="hover:text-[#4a154b] transition-colors"><Paperclip size={18} /></button>
+            <button onClick={(e) => e.stopPropagation()} className="hover:text-[#46178f] transition-colors"><Paperclip size={18} /></button>
             )}
             <div className="flex items-center gap-1 text-xs"><Calendar size={14} /> {data.date}</div>
           </div>
@@ -129,7 +129,7 @@ export default function AchievementCard({ data }: { data: any }) {
           {showPinPrompt && (
             <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60] animate-in fade-in duration-200">
               <div className="bg-white p-8 rounded-3xl shadow-2xl max-w-sm w-full mx-4 text-center animate-in zoom-in-95 duration-300" onClick={e => e.stopPropagation()}>
-                <h3 className="text-xl font-black text-[#4a154b] mb-2">تعديل الإنجاز ✏️</h3>
+                <h3 className="text-xl font-black text-[#46178f] mb-2">تعديل الإنجاز ✏️</h3>
                 <p className="text-sm text-gray-500 mb-6">الرجاء إدخال رمز الحماية (PIN) الخاص بهذا الإنجاز لتتمكن من تعديله.</p>
                 
                 <input 

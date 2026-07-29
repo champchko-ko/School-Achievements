@@ -71,27 +71,27 @@ function HomeContent() {
   return (
     <div className="space-y-6 md:space-y-8 animate-in fade-in duration-500 pb-10 w-full max-w-full overflow-hidden">
       
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-4 bg-white p-3 md:p-6 rounded-2xl shadow-sm border border-gray-100">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-4 bg-white/95 backdrop-blur-sm p-3 md:p-6 rounded-2xl shadow-lg border border-purple-100/50">
         <div className="flex items-center gap-4">
           {schoolSettings?.logoUrl && (
             <img src={schoolSettings.logoUrl} alt="School Logo" className="w-16 h-16 md:w-20 md:h-20 object-contain rounded-xl border border-gray-100 shadow-sm p-1 max-w-full" />
           )}
           <div>
-            <h2 className="text-xl md:text-2xl font-black text-[#4a154b] break-words">{schoolSettings?.schoolName || "مرحباً بك في منصة إنجازاتنا 👋"}</h2>
+            <h2 className="text-xl md:text-2xl font-black text-[#46178f] break-words">{schoolSettings?.schoolName || "مرحباً بك في منصة إنجازاتنا 👋"}</h2>
             <p className="text-gray-500 font-bold mt-1 text-xs md:text-sm">وثّق، شارك، واحتفل بالتميز المدرسي</p>
           </div>
         </div>
         
         <button 
           onClick={() => router.push('/?add=true', { scroll: false })}
-          className="w-full md:w-auto flex bg-[#0087ed] hover:bg-[#0073cc] text-white px-4 md:px-6 py-2.5 md:py-3 rounded-xl font-bold shadow-md transition-transform hover:scale-105 text-sm md:text-base justify-center"
+          className="w-full md:w-auto flex bg-[#e21b3c] hover:bg-[#c71734] text-white px-4 md:px-6 py-2.5 md:py-3 rounded-xl font-bold shadow-lg border-b-4 border-[#a8132a] hover:border-b-2 transition-all active:border-b-0 active:translate-y-1 text-sm md:text-base justify-center"
         >
           + إنجاز جديد
         </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-        <div className="bg-white rounded-2xl p-4 md:p-6 shadow-sm border-t-4 border-[#0087ed] flex items-center gap-3 md:gap-4 min-w-0">
+        <div className="bg-white rounded-2xl p-4 md:p-6 shadow-lg border-t-4 border-[#0087ed] flex items-center gap-3 md:gap-4 min-w-0">
           <div className="bg-blue-100 p-3 md:p-4 rounded-xl text-[#0087ed] shrink-0"><Award size={24} className="md:size-[32px]" /></div>
           <div>
             <p className="text-gray-500 text-xs md:text-sm font-bold truncate">إجمالي الإنجازات</p>
@@ -100,7 +100,7 @@ function HomeContent() {
             </p>
           </div>
         </div>
-        <div className="bg-white rounded-2xl p-4 md:p-6 shadow-sm border-t-4 border-[#26890c] flex items-center gap-3 md:gap-4 min-w-0">
+        <div className="bg-white rounded-2xl p-4 md:p-6 shadow-lg border-t-4 border-[#26890c] flex items-center gap-3 md:gap-4 min-w-0">
           <div className="bg-green-100 p-3 md:p-4 rounded-xl text-[#26890c] shrink-0"><Users size={24} className="md:size-[32px]" /></div>
           <div>
             <p className="text-gray-500 text-xs md:text-sm font-bold truncate">المعلمون المشاركون</p>
@@ -109,7 +109,7 @@ function HomeContent() {
             </p>
           </div>
         </div>
-        <div className="bg-white rounded-2xl p-4 md:p-6 shadow-sm border-t-4 border-[#ffb000] flex items-center gap-3 md:gap-4 min-w-0">
+        <div className="bg-white rounded-2xl p-4 md:p-6 shadow-lg border-t-4 border-[#ffb000] flex items-center gap-3 md:gap-4 min-w-0">
           <div className="bg-yellow-100 p-3 md:p-4 rounded-xl text-[#ffb000] shrink-0"><Star size={24} className="md:size-[32px]" /></div>
           <div>
             <p className="text-gray-500 text-xs md:text-sm font-bold truncate">إنجازات مميزة</p>
@@ -128,7 +128,7 @@ function HomeContent() {
         
         {teacherFilter && (
           <div className="mb-6 flex items-center gap-2">
-            <button onClick={() => router.push('/')} className="bg-red-100 hover:bg-red-200 text-red-600 px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors">
+            <button onClick={() => router.push('/')} className="bg-red-100 hover:bg-red-200 text-[#e21b3c] px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors">
               <X size={16} /> إلغاء التصفية
             </button>
           </div>
@@ -141,7 +141,7 @@ function HomeContent() {
               <p className="font-bold">جاري تحميل الإنجازات المباشرة...</p>
             </div>
           ) : displayedAchievements.length === 0 ? (
-            <div className="col-span-full bg-white rounded-2xl p-10 border border-dashed border-gray-300 text-center text-gray-400">
+            <div className="col-span-full bg-white/95 backdrop-blur-sm rounded-2xl p-10 border-2 border-dashed border-purple-200 text-center text-gray-400 shadow-lg">
               <p className="font-bold">{teacherFilter ? "لا توجد إنجازات لهذا المعلم حالياً." : "لا توجد إنجازات حتى الآن. كن أول من يضيف إنجازاً! 🚀"}</p>
             </div>
           ) : (

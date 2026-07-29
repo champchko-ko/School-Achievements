@@ -48,7 +48,7 @@ export default function HonorRoll() {
     <div className="space-y-8 animate-in fade-in duration-500 pb-10">
       
       {/* Header */}
-      <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 text-center">
+      <div className="bg-white rounded-2xl p-8 shadow-lg border border-purple-100/50 text-center">
         <h2 className="text-3xl font-black text-[#4a154b] mb-2 flex justify-center items-center gap-3">
           <Trophy className="text-[#ffb000]" size={36} />
           لوحة الشرف
@@ -64,7 +64,7 @@ export default function HonorRoll() {
           <p className="font-bold">جاري تحميل لوحة الشرف المباشرة...</p>
         </div>
       ) : podiumData.length === 0 ? (
-        <div className="bg-white rounded-2xl p-10 border border-dashed border-gray-300 text-center text-gray-400 mt-10">
+        <div className="bg-white rounded-2xl p-10 border-2 border-dashed border-purple-200 text-center text-gray-400 mt-10 shadow-lg">
           <p className="font-bold">لا توجد إنجازات حتى الآن. بادر بإضافة الإنجاز الأول!</p>
         </div>
       ) : (
@@ -73,7 +73,7 @@ export default function HonorRoll() {
           <Link href={`/?teacher=${encodeURIComponent(teacher.name)}`} key={teacher.id} className="flex flex-col items-center group w-28 md:w-40 cursor-pointer">
             
             {/* Floating Info Card */}
-            <div className="bg-white w-full p-3 md:p-4 rounded-xl shadow-md border border-gray-100 mb-4 text-center transform transition-all duration-300 group-hover:-translate-y-3 hover:shadow-xl hover:border-orange-200 relative z-10">
+            <div className="bg-white w-full p-3 md:p-4 rounded-xl shadow-lg border border-purple-100/50 mb-4 text-center transform transition-all duration-300 group-hover:-translate-y-3 hover:shadow-xl hover:border-orange-200 relative z-10">
                <div className="flex justify-center text-gray-800 mb-2">{teacher.icon}</div>
                <div className="font-black text-[#4a154b] text-sm md:text-base leading-tight mb-1">{teacher.name}</div>
                <div className="text-xs text-gray-500 font-bold">{teacher.dept}</div>

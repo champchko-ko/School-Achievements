@@ -85,7 +85,7 @@ export default function AchievementDetailsPage() {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-gray-400">
-        <Loader2 className="animate-spin mb-4 text-[#0087ed]" size={48} />
+        <Loader2 className="animate-spin mb-4 text-[#1368ce]" size={48} />
         <p className="font-bold text-lg">جاري تحميل تفاصيل الإنجاز...</p>
       </div>
     );
@@ -94,7 +94,7 @@ export default function AchievementDetailsPage() {
   if (error || !achievement) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-gray-500">
-        <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 text-center max-w-md">
+        <div className="bg-white p-8 rounded-3xl shadow-lg border border-purple-100/50 text-center max-w-md">
           <FileText className="mx-auto text-gray-300 mb-4" size={48} />
           <h2 className="text-2xl font-black mb-2 text-gray-800">عذراً</h2>
           <p className="font-bold mb-6">{error}</p>
@@ -136,7 +136,7 @@ export default function AchievementDetailsPage() {
       <div className="flex justify-between items-center mb-2 print:hidden">
         <button 
           onClick={() => router.back()}
-          className="flex items-center gap-2 text-gray-500 hover:text-[#0087ed] font-bold transition-colors bg-white px-4 py-2 rounded-xl border border-gray-100 shadow-sm w-fit hover:shadow-md"
+          className="flex items-center gap-2 text-gray-500 hover:text-[#1368ce] font-bold transition-colors bg-white px-4 py-2 rounded-xl border border-gray-100 shadow-sm w-fit hover:shadow-md"
         >
           <ArrowRight size={20} />
           العودة
@@ -144,19 +144,19 @@ export default function AchievementDetailsPage() {
 
         <button 
           onClick={() => window.print()}
-          className="flex items-center gap-2 bg-[#4a154b] hover:bg-[#3a103a] text-white px-4 py-2 rounded-xl font-bold transition-all shadow-sm hover:shadow-md active:scale-95"
+          className="flex items-center gap-2 bg-[#380e6e] hover:bg-[#2a0a54] text-white px-4 py-2 rounded-xl font-bold transition-all shadow-sm hover:shadow-md active:scale-95"
         >
           <Printer size={20} />
           طباعة كملف PDF
         </button>
       </div>
 
-      <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden print:shadow-none print:border-none print:rounded-none">
+      <div className="bg-white rounded-3xl shadow-lg border border-purple-100/50 overflow-hidden print:shadow-none print:border-none print:rounded-none">
         
         {/* Header Details */}
         <div className="p-8 border-b border-gray-50 bg-gray-50/50">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-            <h1 className="text-3xl font-black text-[#4a154b] leading-tight flex-1">
+            <h1 className="text-3xl font-black text-[#46178f] leading-tight flex-1">
               {achievement.title}
             </h1>
             <div>{getScoreBadge(achievement.score)}</div>
@@ -164,7 +164,7 @@ export default function AchievementDetailsPage() {
           
           <div className="flex flex-wrap items-center gap-6 text-gray-600 font-bold text-sm">
             <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-gray-100">
-              <User size={16} className="text-[#0087ed]" />
+              <User size={16} className="text-[#1368ce]" />
               {achievement.teacherName || "غير محدد"}
             </div>
             <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-gray-100">
@@ -191,7 +191,7 @@ export default function AchievementDetailsPage() {
 
         {/* Media / Attachment Handling */}
         {(images.length > 0 || videos.length > 0 || documents.length > 0) && (
-          <div className="p-8 bg-gray-50 border-t border-gray-100 print:bg-white print:border-t-2 print:border-gray-200">
+          <div className="p-8 bg-purple-50 border-t border-purple-100 print:bg-white print:border-t-2 print:border-gray-200">
              <h3 className="text-lg font-black text-gray-800 mb-4 flex items-center gap-2">
               <ImageIcon size={20} className="text-gray-400" />
               المرفقات:
@@ -245,13 +245,13 @@ export default function AchievementDetailsPage() {
             {documents.length > 0 && (
               <div className="flex flex-col gap-6 mt-6">
                 {documents.map((docUrl, idx) => (
-                  <div key={idx} className="bg-white border-2 border-gray-200 rounded-2xl overflow-hidden shadow-sm flex flex-col break-inside-avoid print:border-gray-300 print:shadow-none">
-                    <div className="bg-gray-100/50 px-6 py-4 border-b border-gray-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                  <div key={idx} className="bg-white border-2 border-purple-100/50 rounded-2xl overflow-hidden shadow-sm flex flex-col break-inside-avoid print:border-gray-300 print:shadow-none">
+                    <div className="bg-purple-50/50 px-6 py-4 border-b border-purple-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                       <div className="flex items-center gap-3 overflow-hidden w-full">
-                        <FileText size={24} className="text-[#0087ed] shrink-0" />
+                        <FileText size={24} className="text-[#1368ce] shrink-0" />
                         <span className="font-bold text-gray-700 truncate block" dir="ltr">{getFileName(docUrl)}</span>
                       </div>
-                      <a href={getDownloadUrl(docUrl)} target="_blank" rel="noopener noreferrer" className="shrink-0 inline-flex items-center justify-center gap-2 bg-[#0087ed] hover:bg-[#0073cc] text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-sm active:scale-95 w-full md:w-auto print:hidden">
+                      <a href={getDownloadUrl(docUrl)} target="_blank" rel="noopener noreferrer" className="shrink-0 inline-flex items-center justify-center gap-2 bg-[#1368ce] hover:bg-[#0f56b0] text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-sm active:scale-95 w-full md:w-auto print:hidden">
                         <DownloadCloud size={18} />
                         تحميل المستند
                       </a>
@@ -259,7 +259,7 @@ export default function AchievementDetailsPage() {
                     {/* Google Docs Viewer Iframe for showing the actual document preview */}
                     <div className="w-full h-[60vh] bg-gray-50 relative print:hidden">
                       <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400 z-0">
-                        <Loader2 className="animate-spin mb-2 text-[#0087ed]" size={32} />
+                        <Loader2 className="animate-spin mb-2 text-[#1368ce]" size={32} />
                         <p className="font-bold text-sm">جاري تحميل عرض المستند...</p>
                       </div>
                       <iframe 

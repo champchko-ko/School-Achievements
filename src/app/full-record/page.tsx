@@ -233,7 +233,7 @@ export default function FullRecordPage() {
       </div>
 
       {/* Search & Filters Control Panel */}
-      <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-4 print:hidden">
+      <div className="bg-white p-4 rounded-2xl shadow-lg border border-purple-100/50 flex flex-col gap-4 print:hidden">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
@@ -242,13 +242,13 @@ export default function FullRecordPage() {
               placeholder="ابحث بالاسم، الإنجاز، أو القسم..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 pr-10 pl-4 focus:ring-2 focus:ring-[#0087ed] outline-none transition-all font-bold text-sm"
+              className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 pr-10 pl-4 focus:ring-2 focus:ring-[#46178f] outline-none transition-all font-bold text-sm"
             />
           </div>
           
           <button 
             onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-            className={`flex items-center justify-center gap-2 border px-6 py-3 rounded-xl font-bold transition-colors whitespace-nowrap ${showAdvancedFilters ? 'bg-[#0087ed] border-[#0087ed] text-white' : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'}`}
+            className={`flex items-center justify-center gap-2 border px-6 py-3 rounded-xl font-bold transition-colors whitespace-nowrap ${showAdvancedFilters ? 'bg-[#e21b3c] border-[#e21b3c] text-white' : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'}`}
           >
             <Filter size={18} /> تصفية متقدمة
           </button>
@@ -260,7 +260,7 @@ export default function FullRecordPage() {
             <div>
               <label className="block text-xs font-bold text-gray-500 mb-1">القسم</label>
               <select value={filterDepartment} onChange={(e) => setFilterDepartment(e.target.value)}
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl p-2 focus:ring-2 focus:ring-[#0087ed] outline-none transition-all text-sm cursor-pointer"
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl p-2 focus:ring-2 focus:ring-[#46178f] outline-none transition-all text-sm cursor-pointer"
               >
                 <option value="all">جميع الأقسام</option>
                 {availableDepartments.map(dept => (
@@ -271,19 +271,19 @@ export default function FullRecordPage() {
             <div>
               <label className="block text-xs font-bold text-gray-500 mb-1">من تاريخ</label>
               <input type="date" value={filterDateFrom} onChange={(e) => setFilterDateFrom(e.target.value)}
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl p-2 focus:ring-2 focus:ring-[#0087ed] outline-none transition-all text-sm"
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl p-2 focus:ring-2 focus:ring-[#46178f] outline-none transition-all text-sm"
               />
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-500 mb-1">إلى تاريخ</label>
               <input type="date" value={filterDateTo} onChange={(e) => setFilterDateTo(e.target.value)}
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl p-2 focus:ring-2 focus:ring-[#0087ed] outline-none transition-all text-sm"
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl p-2 focus:ring-2 focus:ring-[#46178f] outline-none transition-all text-sm"
               />
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-500 mb-1">التقييم</label>
               <select value={filterScore} onChange={(e) => setFilterScore(e.target.value)}
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl p-2 focus:ring-2 focus:ring-[#0087ed] outline-none transition-all text-sm cursor-pointer"
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl p-2 focus:ring-2 focus:ring-[#46178f] outline-none transition-all text-sm cursor-pointer"
               >
                 <option value="all">الكل</option>
                 <option value="gold">ذهبي (90+)</option>
@@ -297,11 +297,11 @@ export default function FullRecordPage() {
       </div>
 
       {/* The Data Table */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden print:shadow-none print:border-none print:w-full">
+      <div className="bg-white rounded-2xl shadow-lg border border-purple-100/50 overflow-hidden print:shadow-none print:border-none print:w-full">
         <div className="overflow-x-auto print:overflow-visible">
           <table className="w-full text-right border-collapse">
             <thead>
-              <tr className="bg-gray-50 border-b border-gray-100 text-gray-500 text-sm print:bg-white print:text-black print:border-b-2 print:border-black">
+              <tr className="bg-purple-50 border-b border-purple-100 text-gray-500 text-sm print:bg-white print:text-black print:border-b-2 print:border-black">
                 <th className="p-4 font-bold">المعلم</th>
                 <th className="p-4 font-bold">القسم</th>
                 <th className="p-4 font-bold w-1/3">الإنجاز</th>
@@ -321,7 +321,7 @@ export default function FullRecordPage() {
               ) : filteredData.map((row) => (
                 <tr key={row.id} className="border-b border-gray-50 hover:bg-blue-50/30 transition-colors group">
                   <td className="p-4 font-bold text-[#4a154b] whitespace-nowrap">{row.teacherName}</td>
-                  <td className="p-4"><span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-md text-xs font-bold">{row.department}</span></td>
+                  <td className="p-4"><span className="bg-purple-50 text-[#46178f] px-2 py-1 rounded-md text-xs font-bold">{row.department}</span></td>
                   <td className="p-4 text-sm font-bold text-gray-700">
                     <Link href={`/achievement/${row.id}`} className="hover:text-[#0087ed] hover:underline transition-colors">
                       {row.title}
@@ -381,7 +381,7 @@ export default function FullRecordPage() {
                   onChange={e => setPinInput(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handlePinSubmit()}
                   placeholder="****"
-                  className={`w-full text-center tracking-[1em] font-mono font-bold text-2xl bg-gray-50 border-2 rounded-xl p-3 outline-none transition-all ${pinError ? 'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100' : 'border-gray-200 focus:border-orange-400 focus:ring-4 focus:ring-orange-100'}`}
+                  className={`w-full text-center tracking-[1em] font-mono font-bold text-2xl bg-gray-50 border-2 rounded-xl p-3 outline-none transition-all ${pinError ? 'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100' : 'border-gray-200 focus:border-[#e21b3c] focus:ring-4 focus:ring-red-100'}`}
                 />
                 {pinError && <p className="text-red-500 font-bold text-sm mt-3 animate-in slide-in-from-top-1">{pinError}</p>}
                 
