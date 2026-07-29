@@ -128,7 +128,7 @@ export default function Sidebar() {
       <div className="p-3 sm:p-4 border-t border-purple-700/30">
         {!isAdmin ? (
           <button onClick={() => { setShowAdminPrompt(true); closeMobile(); }}
-            className="flex w-full items-center gap-3 p-2 sm:p-3 rounded-xl bg-[#46178f]/50 hover:bg-[#46178f] transition-all text-xs sm:text-sm font-bold text-gray-300"
+            className="flex w-full items-center gap-3 p-2 sm:p-3 rounded-xl bg-[#5b1fa8]/50 hover:bg-[#5b1fa8] transition-all text-xs sm:text-sm font-bold text-purple-200"
           >
             <ShieldCheck size={16} className="sm:size-[18px]" /> دخول الإدارة
           </button>

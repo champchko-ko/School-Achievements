@@ -248,7 +248,7 @@ export default function FullRecordPage() {
           
           <button 
             onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-            className={`flex items-center justify-center gap-2 border px-6 py-3 rounded-xl font-bold transition-colors whitespace-nowrap ${showAdvancedFilters ? 'bg-[#e21b3c] border-[#e21b3c] text-white' : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'}`}
+            className={`flex items-center justify-center gap-2 border px-6 py-3 rounded-xl font-bold transition-colors whitespace-nowrap ${showAdvancedFilters ? 'bg-[#1368ce] border-[#1368ce] text-white' : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'}`}
           >
             <Filter size={18} /> تصفية متقدمة
           </button>
@@ -314,7 +314,7 @@ export default function FullRecordPage() {
               {isLoading ? (
                 <tr>
                   <td colSpan={6} className="p-12 text-center text-gray-400">
-                    <Loader2 className="animate-spin mx-auto mb-3 text-[#0087ed]" size={32} />
+                    <Loader2 className="animate-spin mx-auto mb-3 text-yellow-400" size={32} />
                     <p className="font-bold">جاري تحميل السجل...</p>
                   </td>
                 </tr>

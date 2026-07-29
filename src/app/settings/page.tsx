@@ -134,9 +134,9 @@ export default function SettingsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-gray-400">
-        <Loader2 className="animate-spin mb-4 text-[#0087ed]" size={40} />
-        <p className="font-bold">جاري تحميل إعدادات المدرسة...</p>
+      <div className="flex flex-col items-center justify-center py-20 text-purple-200">
+        <Loader2 className="animate-spin mb-4 text-yellow-400" size={40} />
+        <p className="font-bold text-purple-200">جاري تحميل إعدادات المدرسة...</p>
       </div>
     );
   }

@@ -236,7 +236,7 @@ export default function ReportsPage() {
             </div>
           </div>
         ) : (
-          <div className="text-center py-12 text-gray-400 font-bold print:hidden">
+          <div className="text-center py-12 text-purple-200 font-bold print:hidden">
             يرجى اختيار معلم من القائمة أعلاه لعرض وطباعة سجله.
           </div>
         )}

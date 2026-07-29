@@ -149,8 +149,8 @@ export default function AdminDashboard() {
         </h3>
 
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-12 text-gray-400">
-            <Loader2 className="animate-spin mb-4 text-[#0087ed]" size={40} />
+          <div className="flex flex-col items-center justify-center py-12 text-purple-200">
+            <Loader2 className="animate-spin mb-4 text-yellow-400" size={40} />
             <p className="font-bold">جاري تحميل السجلات...</p>
           </div>
         ) : pendingAchievements.length === 0 ? (

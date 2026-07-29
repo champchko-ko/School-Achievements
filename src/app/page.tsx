@@ -121,14 +121,14 @@ function HomeContent() {
       </div>
 
       <div>
-        <h3 className="text-xl font-bold text-gray-700 mb-6 flex items-center gap-2">
+        <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
           <span className="bg-[#e21b3c] w-2 h-6 rounded-full inline-block"></span>
           {teacherFilter ? `إنجازات المعلم: ${teacherFilter}` : 'أحدث الإنجازات المعتمدة'}
         </h3>
         
         {teacherFilter && (
           <div className="mb-6 flex items-center gap-2">
-            <button onClick={() => router.push('/')} className="bg-red-100 hover:bg-red-200 text-[#e21b3c] px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors">
+            <button onClick={() => router.push('/')} className="bg-red-100 hover:bg-red-200 text-red-700 px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors">
               <X size={16} /> إلغاء التصفية
             </button>
           </div>
@@ -136,9 +136,9 @@ function HomeContent() {
         
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
           {isLoading ? (
-            <div className="col-span-full flex flex-col items-center justify-center py-12 text-gray-400">
-              <Loader2 className="animate-spin mb-4 text-[#0087ed]" size={40} />
-              <p className="font-bold">جاري تحميل الإنجازات المباشرة...</p>
+            <div className="col-span-full flex flex-col items-center justify-center py-12 text-purple-200">
+              <Loader2 className="animate-spin mb-4 text-yellow-400" size={40} />
+              <p className="font-bold text-purple-200">جاري تحميل الإنجازات المباشرة...</p>
             </div>
           ) : displayedAchievements.length === 0 ? (
             <div className="col-span-full bg-white/95 backdrop-blur-sm rounded-2xl p-10 border-2 border-dashed border-purple-200 text-center text-gray-400 shadow-lg">
