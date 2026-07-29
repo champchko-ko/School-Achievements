@@ -350,7 +350,7 @@ className="flex-1 bg-gray-50 border border-purple-100 rounded-xl p-3 focus:ring-
 <button
 onClick={handleSave}
 disabled={isSaving}
-className={px-8 py-3 rounded-xl font-bold text-white flex items-center gap-2 transition-all${
+className={`px-8 py-3 rounded-xl font-bold text-white flex items-center gap-2 transition-all${
 isSaving
 ? "bg-gray-400 cursor-not-allowed"
 : "bg-[#26890c] hover:bg-[#20730a] border-b-4 border-[#165406] active:border-b-0 active:translate-y-1"
