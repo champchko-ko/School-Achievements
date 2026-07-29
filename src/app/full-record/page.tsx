@@ -431,7 +431,7 @@ export default function FullRecordPage() {
                 setShowEditModal(false);
                 setSelectedDoc(null);
               }}
-              editData={selectedDoc}
+              initialData={selectedDoc} docId={selectedDoc.id}
             />
           )}
         </>,
