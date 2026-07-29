@@ -32,6 +32,8 @@ export default function FullRecordPage() {
   const [pinInput, setPinInput] = useState('');
   const [pinError, setPinError] = useState('');
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [schoolSettings, setSchoolSettings] = useState<{ schoolName?: string, logoUrl?: string, departments?: string[] } | null>(null);
 
@@ -157,15 +159,21 @@ export default function FullRecordPage() {
   };
 
   const handleDeleteClick = async (id: string) => {
-    if (confirm("هل أنت متأكد من حذف هذا الإنجاز بشكل نهائي؟ لا يمكن التراجع عن هذه الخطوة.")) {
-      try {
-        await deleteDoc(doc(db, "achievements", id));
-        alert("تم حذف الإنجاز بنجاح! 🗑️");
-      } catch (error) {
-        console.error("Error deleting document:", error);
-        alert("حدث خطأ أثناء الحذف.");
-      }
+    setPendingDeleteId(id);
+    setShowConfirm(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!pendingDeleteId) return;
+    setShowConfirm(false);
+    try {
+      await deleteDoc(doc(db, "achievements", pendingDeleteId));
+      alert("تم حذف الإنجاز بنجاح! 🗑️");
+    } catch (error) {
+      console.error("Error deleting document:", error);
+      alert("حدث خطأ أثناء الحذف.");
     }
+    setPendingDeleteId(null);
   };
 
   return (
@@ -424,6 +432,22 @@ export default function FullRecordPage() {
             </div>
           )}
 
+          
+          {showConfirm && (
+            <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[70] animate-in fade-in duration-200" onClick={() => { setShowConfirm(false); setPendingDeleteId(null); }}>
+              <div className="bg-white p-8 rounded-3xl shadow-2xl max-w-sm w-full mx-4 text-center animate-in zoom-in-95 duration-300" onClick={e => e.stopPropagation()}>
+                <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+                  <Trash2 className="text-red-500" size={32} />
+                </div>
+                <h3 className="text-xl font-black text-[#4a154b] mb-2">تأكيد الحذف</h3>
+                <p className="text-gray-500 font-bold mb-6">هل أنت متأكد من حذف هذا الإنجاز بشكل نهائي؟ لا يمكن التراجع عن هذه الخطوة.</p>
+                <div className="flex gap-3">
+                  <button onClick={() => { setShowConfirm(false); setPendingDeleteId(null); }} className="flex-1 py-3 rounded-xl font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 transition-colors">إلغاء</button>
+                  <button onClick={handleConfirmDelete} className="flex-1 py-3 rounded-xl font-bold text-white bg-red-500 hover:bg-red-600 transition-colors">حذف</button>
+                </div>
+              </div>
+            </div>
+          )}
           {showEditModal && selectedDoc && (
             <AddAchievementModal
               isOpen={showEditModal}
