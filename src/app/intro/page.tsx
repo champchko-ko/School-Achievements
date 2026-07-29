@@ -33,6 +33,7 @@ export default function IntroPage() {
 
   const handleEnter = () => {
     sessionStorage.setItem('introSeen', 'true');
+    document.cookie = 'introSeen=true; path=/; max-age=86400';
     router.push('/');
   };
 

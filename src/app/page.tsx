@@ -11,18 +11,10 @@ function HomeContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  useEffect(() => {
-    if (!sessionStorage.getItem('introSeen')) {
-      router.replace('/intro');
-    } else {
-      setIntroChecked(true);
-    }
-  }, [router]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [achievements, setAchievements] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [schoolSettings, setSchoolSettings] = useState<{ schoolName?: string, logoUrl?: string } | null>(null);
-  const [introChecked, setIntroChecked] = useState(false);
 
   const teacherFilter = searchParams.get('teacher');
 
@@ -71,7 +63,6 @@ function HomeContent() {
     fetchSettings();
   }, []);
 
-  if (!introChecked) return null;
 
   return (
     <div className="space-y-6 md:space-y-8 animate-in fade-in duration-500 pb-10 w-full max-w-full overflow-hidden">

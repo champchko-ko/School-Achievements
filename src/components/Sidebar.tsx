@@ -101,7 +101,7 @@ export default function Sidebar() {
 
   const closeMobile = () => setMobileOpen(false);
 
-  if (pathname === '/kiosk') return null;
+  if (pathname === '/kiosk' || pathname === '/intro') return null;
 
   // The sidebar content (shared between desktop and mobile)
   const sidebarContent = (
