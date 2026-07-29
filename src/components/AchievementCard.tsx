@@ -1,5 +1,5 @@
 "use client";
-// src/components/AchievementCard.tsx
+
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Calendar, Paperclip, Pencil, Clock, Trophy, Medal, Award, Trash2, Video } from 'lucide-react';
@@ -31,6 +31,8 @@ export default function AchievementCard({ data }: { data: any }) {
   const [showEditModal, setShowEditModal] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const router = useRouter();
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -49,15 +51,21 @@ export default function AchievementCard({ data }: { data: any }) {
   };
 
   const handleDeleteClick = async (id: string) => {
-    if (confirm("هل أنت متأكد من حذف هذا الإنجاز بشكل نهائي؟ لا يمكن التراجع عن هذه الخطوة.")) {
-      try {
-        await deleteDoc(doc(db, "achievements", id));
-        alert("تم حذف الإنجاز بنجاح! 🗑️");
-      } catch (error) {
-        console.error("Error deleting document:", error);
-        alert("حدث خطأ أثناء الحذف.");
-      }
+    setPendingDeleteId(id);
+    setShowConfirm(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!pendingDeleteId) return;
+    setShowConfirm(false);
+    try {
+      await deleteDoc(doc(db, "achievements", pendingDeleteId));
+      alert("تم حذف الإنجاز بنجاح! 🗑️");
+    } catch (error) {
+      console.error("Error deleting document:", error);
+      alert("حدث خطأ أثناء الحذف.");
     }
+    setPendingDeleteId(null);
   };
 
   return (
@@ -133,8 +141,8 @@ export default function AchievementCard({ data }: { data: any }) {
                 <p className="text-sm text-gray-500 mb-6">الرجاء إدخال رمز الحماية (PIN) الخاص بهذا الإنجاز لتتمكن من تعديله.</p>
                 
                 <input 
-                  type="password" 
-                  maxLength={4} 
+                  type="password"
+                  maxLength={4}
                   value={pinInput} 
                   onChange={e => setPinInput(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handlePinSubmit()}
@@ -150,6 +158,23 @@ export default function AchievementCard({ data }: { data: any }) {
               </div>
             </div>
           )}
+
+          {showConfirm && (
+            <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[70] animate-in fade-in duration-200" onClick={() => { setShowConfirm(false); setPendingDeleteId(null); }}>
+              <div className="bg-white p-8 rounded-3xl shadow-2xl max-w-sm w-full mx-4 text-center animate-in zoom-in-95 duration-300" onClick={e => e.stopPropagation()}>
+                <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+                  <Trash2 className="text-red-500" size={32} />
+                </div>
+                <h3 className="text-xl font-black text-[#46178f] mb-2">تأكيد الحذف</h3>
+                <p className="text-gray-500 font-bold mb-6">هل أنت متأكد من حذف هذا الإنجاز بشكل نهائي؟ لا يمكن التراجع عن هذه الخطوة.</p>
+                <div className="flex gap-3">
+                  <button onClick={() => { setShowConfirm(false); setPendingDeleteId(null); }} className="flex-1 py-3 rounded-xl font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 transition-colors">إلغاء</button>
+                  <button onClick={handleConfirmDelete} className="flex-1 py-3 rounded-xl font-bold text-white bg-red-500 hover:bg-red-600 transition-colors">حذف</button>
+                </div>
+              </div>
+            </div>
+          )}
+
           <AddAchievementModal 
             isOpen={showEditModal} 
             onClose={() => setShowEditModal(false)} 
