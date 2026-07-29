@@ -2,7 +2,7 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Search, Filter, DownloadCloud, FileText, MoreHorizontal, Trophy, Clock, Medal, Award, Loader2, Pencil, Trash2, Eye } from 'lucide-react';
+import { Search, Filter, DownloadCloud, FileText, Trophy, Clock, Medal, Award, Loader2, Pencil, Trash2, Eye } from 'lucide-react';
 import Link from 'next/link';
 import { collection, onSnapshot, query, orderBy, doc, deleteDoc, getDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
@@ -298,8 +298,10 @@ export default function FullRecordPage() {
 
       {/* The Data Table */}
       <div className="bg-white rounded-2xl shadow-lg border border-purple-100/50 overflow-hidden print:shadow-none print:border-none print:w-full">
-        <div className="overflow-x-auto print:overflow-visible">
-          <table className="w-full text-right border-collapse">
+        {/* Added overflow-x-auto for mobile devices */}
+        <div className="w-full overflow-x-auto print:overflow-visible">
+          {/* min-w-[800px] ensures the table columns don't crush together on small screens */}
+          <table className="w-full min-w-[800px] text-right border-collapse">
             <thead>
               <tr className="bg-purple-50 border-b border-purple-100 text-gray-500 text-sm print:bg-white print:text-black print:border-b-2 print:border-black">
                 <th className="p-4 font-bold">المعلم</th>
@@ -321,14 +323,14 @@ export default function FullRecordPage() {
               ) : filteredData.map((row) => (
                 <tr key={row.id} className="border-b border-gray-50 hover:bg-blue-50/30 transition-colors group">
                   <td className="p-4 font-bold text-[#4a154b] whitespace-nowrap">{row.teacherName}</td>
-                  <td className="p-4"><span className="bg-purple-50 text-[#46178f] px-2 py-1 rounded-md text-xs font-bold">{row.department}</span></td>
+                  <td className="p-4"><span className="bg-purple-50 text-[#46178f] px-2 py-1 rounded-md text-xs font-bold whitespace-nowrap">{row.department}</span></td>
                   <td className="p-4 text-sm font-bold text-gray-700">
                     <Link href={`/achievement/${row.id}`} className="hover:text-[#0087ed] hover:underline transition-colors">
                       {row.title}
                     </Link>
                   </td>
                   <td className="p-4 text-sm text-gray-500 whitespace-nowrap">{row.date}</td>
-                  <td className="p-4">{getScoreBadge(row.score)}</td>
+                  <td className="p-4 whitespace-nowrap">{getScoreBadge(row.score)}</td>
                   <td className="p-4 text-center print:hidden">
                     {isAdmin ? (
                       <div className="flex items-center justify-center gap-2">
@@ -398,46 +400,4 @@ export default function FullRecordPage() {
         <>
           {showPinPrompt && (
             <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60] animate-in fade-in duration-200">
-              <div className="bg-white p-8 rounded-3xl shadow-2xl max-w-sm w-full mx-4 text-center animate-in zoom-in-95 duration-300" onClick={e => e.stopPropagation()}>
-                <h3 className="text-xl font-black text-[#4a154b] mb-2">تعديل الإنجاز ✏️</h3>
-                <p className="text-sm text-gray-500 mb-6">الرجاء إدخال رمز الحماية (PIN) الخاص بهذا الإنجاز لتتمكن من تعديله.</p>
-                
-                <input 
-                  type="password" 
-                  maxLength={4} 
-                  value={pinInput} 
-                  onChange={e => setPinInput(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handlePinSubmit()}
-                  placeholder="****"
-                  className={`w-full text-center tracking-[1em] font-mono font-bold text-2xl bg-gray-50 border-2 rounded-xl p-3 outline-none transition-all ${pinError ? 'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100' : 'border-gray-200 focus:border-[#e21b3c] focus:ring-4 focus:ring-red-100'}`}
-                />
-                {pinError && <p className="text-red-500 font-bold text-sm mt-3 animate-in slide-in-from-top-1">{pinError}</p>}
-                
-                <div className="flex gap-3 mt-6">
-                  <button onClick={() => { setShowPinPrompt(false); setPinError(''); setPinInput(''); }} className="flex-1 py-3 rounded-xl font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 transition-colors">
-                    إلغاء
-                  </button>
-                  <button onClick={handlePinSubmit} className="flex-1 py-3 rounded-xl font-bold text-white bg-[#4a154b] hover:bg-[#3a103a] transition-colors">
-                    تأكيد
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {showEditModal && selectedDoc && (
-            <AddAchievementModal
-              isOpen={showEditModal}
-              onClose={() => {
-                setShowEditModal(false);
-                setSelectedDoc(null);
-              }}
-              editData={selectedDoc}
-            />
-          )}
-        </>,
-        document.body
-      )}
-    </div>
-  );
-}
+              <div className="bg-white p-8 rounded-3xl shadow-2xl max-w-sm w-full mx-4 text-center animate-in zoom-in-95 duration-300" onClick={e => e.stopProp
