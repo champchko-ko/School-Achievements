@@ -71,7 +71,7 @@ function HomeContent() {
   return (
     <div className="space-y-6 md:space-y-8 animate-in fade-in duration-500 pb-10 w-full max-w-full overflow-hidden">
       
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-4 bg-white/95 backdrop-blur-sm p-3 md:p-6 rounded-2xl shadow-lg border border-purple-100/50">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-4 bg-white/95 backdrop-blur-sm p-3 md:p-6 pr-14 sm:pr-3 md:pr-6 rounded-2xl shadow-lg border border-purple-100/50">
         <div className="flex items-center gap-4">
           {schoolSettings?.logoUrl && (
             <img src={schoolSettings.logoUrl} alt="School Logo" className="w-16 h-16 md:w-20 md:h-20 object-contain rounded-xl border border-gray-100 shadow-sm p-1 max-w-full" />
