@@ -305,7 +305,7 @@ export default function FullRecordPage() {
                 <th className="p-4 font-bold whitespace-nowrap">المعلم</th>
                 <th className="p-4 font-bold whitespace-nowrap">القسم</th>
                 <th className="p-4 font-bold min-w-[200px]">الإنجاز</th>
-                <th className="p-4 font-bold whitespace-nowrap">التاريخ</th>
+                <th className="p-4 font-bold whitespace-nowrap hidden sm:table-cell">التاريخ</th>
                 {/* تم إخفاء عمود التقييم على الشاشات الصغيرة لتوفير المساحة */}
                 <th className="p-4 font-bold whitespace-nowrap hidden lg:table-cell">التقييم</th>
                 <th className="p-4 font-bold text-center print:hidden whitespace-nowrap">إجراء</th>
@@ -328,7 +328,7 @@ export default function FullRecordPage() {
                       {row.title}
                     </Link>
                   </td>
-                  <td className="p-4 text-sm text-gray-500 whitespace-nowrap">{row.date}</td>
+                  <td className="p-4 text-sm text-gray-500 whitespace-nowrap hidden sm:table-cell">{row.date}</td>
                   
                   {/* إخفاء محتوى التقييم على الشاشات الصغيرة */}
                   <td className="p-4 whitespace-nowrap hidden lg:table-cell">{getScoreBadge(row.score)}</td>
