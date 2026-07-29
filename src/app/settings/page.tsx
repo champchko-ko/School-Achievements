@@ -82,7 +82,7 @@ cloudData.append("file", selectedFile);
 cloudData.append("upload_preset", process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET as string);
 
 const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-const uploadRes = await fetch(https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
+const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
 method: "POST",
 body: cloudData,
 });
