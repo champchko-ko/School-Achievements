@@ -76,7 +76,7 @@ export default function ReportsPage() {
             {schoolSettings?.logoUrl && <img src={schoolSettings.logoUrl} alt="School Logo" className="w-24 h-24 object-contain" />}
             {schoolSettings?.schoolName && <h2 className="text-4xl font-black text-gray-800">{schoolSettings.schoolName}</h2>}
           </div>
-          <h2 className="text-3xl font-black text-[#46178f] mb-2">تقرير أداء الأقسام</h2>
+          <h2 className="text-3xl font-black text-yellow-400 mb-2">تقرير أداء الأقسام</h2>
           <p className="text-gray-500">مقارنة تفصيلية لعدد الإنجازات ومتوسط التقييم لكل قسم</p>
           <p className="text-xs text-gray-400 mt-4 hidden print:block">
             {mounted && `تاريخ الطباعة: ${new Date().toLocaleDateString('ar-SA')} - الوقت: ${new Date().toLocaleTimeString('ar-SA')}`}
@@ -250,7 +250,7 @@ export default function ReportsPage() {
       {/* Header & Print Button */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 print:hidden">
         <div>
-          <h2 className="text-2xl font-black text-[#46178f] flex items-center gap-2">
+          <h2 className="text-2xl font-black text-yellow-400 flex items-center gap-2">
             <Printer className="text-pink-400" size={28} />
             طباعة التقارير
           </h2>
