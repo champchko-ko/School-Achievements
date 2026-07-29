@@ -39,7 +39,16 @@ export default function SettingsPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [notification, setNotification] = useState<{ type: string, message: string } | null>(null);
   const router = useRouter();
+
+  // Auto-dismiss notification
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => setNotification(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
 
   // Load existing settings on page load
   useEffect(() => {
@@ -120,13 +129,13 @@ export default function SettingsPage() {
       const docRef = doc(db, "settings", "global_info");
       await setDoc(docRef, finalData, { merge: true }); // Merge ensures we don't accidentally delete fields we didn't update
 
-      alert("تم حفظ الإعدادات بنجاح! ✅");
+      setNotification({ type: "success", message: "تم حفظ الإعدادات بنجاح! ✅" });
       setSelectedFile(null); // Clear the file input
       setFormData(finalData); // Update UI with new logo and flush the lists
       
     } catch (error) {
       console.error("Error saving settings:", error);
-      alert("حدث خطأ أثناء حفظ البيانات.");
+      setNotification({ type: "error", message: "حدث خطأ أثناء حفظ البيانات." });
     } finally {
       setIsSaving(false);
     }
@@ -143,6 +152,19 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-10 max-w-4xl mx-auto">
+      
+      {/* Success/Error Notification */}
+      {notification && (
+        <div className={`fixed top-4 right-4 left-4 md:left-auto md:right-4 md:w-96 z-[100] p-4 rounded-2xl shadow-2xl font-bold text-white animate-in slide-in-from-top-2 duration-300 ${
+          notification.type === "success" ? "bg-[#26890c]" : "bg-red-500"
+        }`}>
+          <div className="flex items-center gap-3">
+            <span>{notification.type === "success" ? "✅" : "❌"}</span>
+            <span>{notification.message}</span>
+            <button onClick={() => setNotification(null)} className="mr-auto text-white/70 hover:text-white">✕</button>
+          </div>
+        </div>
+      )}
       
       {/* Header */}
       <div className="bg-white rounded-2xl p-8 shadow-lg border border-purple-100/50 flex items-center gap-4">

@@ -20,10 +20,18 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
     pin: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [alertMsg, setAlertMsg] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (alertMsg) {
+      const timer = setTimeout(() => setAlertMsg(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [alertMsg]);
 
   useEffect(() => {
     if (isOpen) {
@@ -75,7 +83,7 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
   const handleSubmit = async () => {
     // Basic validation
     if (!formData.teacherName || !formData.title || !formData.desc || !formData.pin) {
-      alert("Please fill in all required fields.");
+      setAlertMsg("يرجى ملء جميع الحقول المطلوبة.");
       return;
     }
 
@@ -132,7 +140,7 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
       onClose();
     } catch (error) {
       console.error("Error saving to database: ", error);
-      alert("Something went wrong. Check your Firebase permissions.");
+      setAlertMsg("حدث خطأ. تحقق من أذونات Firebase.");
     } finally {
       setIsSubmitting(false);
     }

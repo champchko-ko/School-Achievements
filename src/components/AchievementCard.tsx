@@ -33,11 +33,20 @@ export default function AchievementCard({ data }: { data: any }) {
   const router = useRouter();
   const [showConfirm, setShowConfirm] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [notification, setNotification] = useState<{ type: string, message: string } | null>(null);
 
   useEffect(() => {
     setMounted(true);
     setIsAdmin(localStorage.getItem('isAdmin') === 'true');
   }, []);
+
+  // Auto-dismiss notification
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => setNotification(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
 
   const handlePinSubmit = () => {
     if (pinInput === data.pin) {
@@ -60,10 +69,10 @@ export default function AchievementCard({ data }: { data: any }) {
     setShowConfirm(false);
     try {
       await deleteDoc(doc(db, "achievements", pendingDeleteId));
-      alert("تم حذف الإنجاز بنجاح! 🗑️");
+      setNotification({ type: "success", message: "تم حذف الإنجاز بنجاح! 🗑️" });
     } catch (error) {
       console.error("Error deleting document:", error);
-      alert("حدث خطأ أثناء الحذف.");
+      setNotification({ type: "error", message: "حدث خطأ أثناء الحذف." });
     }
     setPendingDeleteId(null);
   };
@@ -175,6 +184,15 @@ export default function AchievementCard({ data }: { data: any }) {
             </div>
           )}
 
+          {notification && (
+            <div className="fixed top-4 right-4 left-4 md:left-auto md:right-4 md:w-96 z-[200] p-4 rounded-2xl shadow-2xl font-bold text-white animate-in slide-in-from-top-2 duration-300" style={{ background: notification.type === "success" ? "#26890c" : "#ef4444" }}>
+              <div className="flex items-center gap-3">
+                <span>{notification.type === "success" ? "✅" : "❌"}</span>
+                <span>{notification.message}</span>
+                <button onClick={() => setNotification(null)} className="mr-auto text-white/70 hover:text-white">✕</button>
+              </div>
+            </div>
+          )}
           <AddAchievementModal 
             isOpen={showEditModal} 
             onClose={() => setShowEditModal(false)} 

@@ -11,7 +11,15 @@ export default function AdminDashboard() {
   const [allTeachers, setAllTeachers] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [notification, setNotification] = useState<{ type: string, message: string } | null>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => setNotification(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
 
   useEffect(() => {
     if (localStorage.getItem('isAdmin') !== 'true') {
@@ -86,7 +94,7 @@ export default function AdminDashboard() {
       // The onSnapshot listener will automatically remove it from this list!
     } catch (error) {
       console.error("Error updating score:", error);
-      alert("حدث خطأ أثناء تقييم الإنجاز.");
+      setNotification({ type: "error", message: "حدث خطأ أثناء تقييم الإنجاز." });
     } finally {
       setProcessingId(null);
     }
@@ -94,6 +102,17 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-10">
+      
+      {/* Notification Toast */}
+      {notification && (
+        <div className="fixed top-4 right-4 left-4 md:left-auto md:right-4 md:w-96 z-[200] p-4 rounded-2xl shadow-2xl font-bold text-white animate-in slide-in-from-top-2 duration-300" style={{ background: notification.type === "success" ? "#26890c" : "#ef4444" }}>
+          <div className="flex items-center gap-3">
+            <span>{notification.type === "success" ? "✅" : "❌"}</span>
+            <span>{notification.message}</span>
+            <button onClick={() => setNotification(null)} className="mr-auto text-white/70 hover:text-white">✕</button>
+          </div>
+        </div>
+      )}
       
       {/* Admin Header */}
       <div className="bg-[#380e6e] rounded-2xl p-8 shadow-md text-center text-white relative overflow-hidden">
