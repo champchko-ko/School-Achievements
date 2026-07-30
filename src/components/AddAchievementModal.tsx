@@ -98,12 +98,13 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
   const handleSubmit = async () => {
     console.log('handleSubmit called', { docId, formData, files: files.length });
     // Basic validation
-    if (!formData.teacherName || !formData.title || !formData.desc) {
-      console.log('Validation failed', { teacher: !!formData.teacherName, title: !!formData.title, desc: !!formData.desc, docId });
+    if (!formData.teacherName || !formData.title || !formData.desc || (!docId && !formData.pin)) {
+      console.log('Validation failed', { teacher: !!formData.teacherName, title: !!formData.title, desc: !!formData.desc, pin: !!formData.pin, docId });
       const missing = [];
       if (!formData.teacherName) missing.push('اسم المعلمة');
       if (!formData.title) missing.push('عنوان الإنجاز');
       if (!formData.desc) missing.push('الوصف');
+      if (!docId && !formData.pin) missing.push('رمز الحماية (PIN)');
       setAlertMsg("الرجاء ملء: " + missing.join('، '));
       return;
     }
@@ -323,8 +324,8 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
           <div className="bg-purple-50 border border-purple-100 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
             <div className="bg-[#46178f]/10 p-3 rounded-xl text-[#46178f]"><Lock size={20} /></div>
             <div className="flex-1">
-              <label className="block text-sm font-bold text-[#46178f] mb-1">{docId ? "رمز الحماية (غير قابل للتغيير)" : "رمز الحماية السري (PIN) - اختياري"}</label>
-              <p className="text-xs text-[#380e6e] mb-2">{docId ? "رمز الحماية لا يمكن تغييره بعد إنشاء الإنجاز" : "اختياري: اختر 4 أرقام لتتمكن من تعديل الإنجاز لاحقاً"}</p>
+              <label className="block text-sm font-bold text-[#46178f] mb-1">{docId ? "رمز الحماية (غير قابل للتغيير)" : "رمز الحماية السري (PIN) * مطلوب"}</label>
+              <p className="text-xs text-[#380e6e] mb-2">{docId ? "رمز الحماية لا يمكن تغييره بعد إنشاء الإنجاز" : "مطلوب: يجب إدخال 4 أرقام لتتمكن من تعديل الإنجاز لاحقاً"}</p>
             <input 
                 type="password" 
                 maxLength={4} 
