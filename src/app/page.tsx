@@ -145,32 +145,26 @@ function HomeContent() {
 
       {/* Stats cards: horizontal scroll on mobile, grid on desktop */}
       <div className="flex overflow-x-auto overflow-y-hidden gap-4 snap-x snap-mandatory pb-2 md:grid md:grid-cols-3 md:overflow-visible md:pb-0 md:gap-6 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent -mx-4 px-4 md:mx-0 md:px-0">
-        <div className="bg-white rounded-2xl p-4 md:p-6 shadow-lg border-t-4 border-[#0087ed] flex items-center gap-3 md:gap-4 min-w-[200px] md:min-w-0 snap-center shrink-0">
-          <div className="bg-blue-100 p-3 md:p-4 rounded-xl text-[#0087ed] shrink-0"><Award size={24} className="md:size-[32px]" /></div>
-          <div>
-            <p className="text-gray-500 text-xs md:text-sm font-bold truncate">إجمالي الإنجازات</p>
-            <p className="text-3xl font-black text-gray-800">
-              {isLoading ? <Loader2 size={24} className="animate-spin mt-1" /> : displayedAchievements.length}
+        <div className="bg-white rounded-xl p-3 shadow border-r-4 border-[#0087ed] flex flex-col items-center gap-0.5 min-w-[120px] md:min-w-0 snap-center shrink-0">
+          <div className="bg-blue-100 p-1.5 rounded-lg text-[#0087ed]"><Award size={18} /></div>
+            <p className="text-[10px] md:text-xs text-gray-500 font-bold text-center leading-tight">إجمالي الإنجازات</p>
+            <p className="text-xl md:text-2xl font-black text-gray-800">
+              {isLoading ? <Loader2 size={16} className="animate-spin" /> : displayedAchievements.length}
             </p>
-          </div>
         </div>
-        <div className="bg-white rounded-2xl p-4 md:p-6 shadow-lg border-t-4 border-[#26890c] flex items-center gap-3 md:gap-4 min-w-[200px] md:min-w-0 snap-center shrink-0">
-          <div className="bg-green-100 p-3 md:p-4 rounded-xl text-[#26890c] shrink-0"><Users size={24} className="md:size-[32px]" /></div>
-          <div>
-            <p className="text-gray-500 text-xs md:text-sm font-bold truncate">المعلمات المشاركات</p>
-            <p className="text-3xl font-black text-gray-800">
-              {isLoading ? <Loader2 size={24} className="animate-spin mt-1" /> : new Set(achievements.map(a => a.teacherName).filter(Boolean)).size}
+        <div className="bg-white rounded-xl p-3 shadow border-r-4 border-[#26890c] flex flex-col items-center gap-0.5 min-w-[120px] md:min-w-0 snap-center shrink-0">
+          <div className="bg-green-100 p-1.5 rounded-lg text-[#26890c]"><Users size={18} /></div>
+            <p className="text-[10px] md:text-xs text-gray-500 font-bold text-center leading-tight">المعلمات المشاركات</p>
+            <p className="text-xl md:text-2xl font-black text-gray-800">
+              {isLoading ? <Loader2 size={16} className="animate-spin" /> : new Set(achievements.map(a => a.teacherName).filter(Boolean)).size}
             </p>
-          </div>
         </div>
-        <div className="bg-white rounded-2xl p-4 md:p-6 shadow-lg border-t-4 border-[#ffb000] flex items-center gap-3 md:gap-4 min-w-[200px] md:min-w-0 snap-center shrink-0">
-          <div className="bg-yellow-100 p-3 md:p-4 rounded-xl text-[#ffb000] shrink-0"><Star size={24} className="md:size-[32px]" /></div>
-          <div>
-            <p className="text-gray-500 text-xs md:text-sm font-bold truncate">إنجازات مميزة</p>
-            <p className="text-3xl font-black text-gray-800">
-              {isLoading ? <Loader2 size={24} className="animate-spin mt-1" /> : achievements.filter(a => a.score && a.score >= 90).length}
+        <div className="bg-white rounded-xl p-3 shadow border-r-4 border-[#ffb000] flex flex-col items-center gap-0.5 min-w-[120px] md:min-w-0 snap-center shrink-0">
+          <div className="bg-yellow-100 p-1.5 rounded-lg text-[#ffb000]"><Star size={18} /></div>
+            <p className="text-[10px] md:text-xs text-gray-500 font-bold text-center leading-tight">إنجازات مميزة</p>
+            <p className="text-xl md:text-2xl font-black text-gray-800">
+              {isLoading ? <Loader2 size={16} className="animate-spin" /> : achievements.filter(a => a.score && a.score >= 90).length}
             </p>
-          </div>
         </div>
       </div>
 
