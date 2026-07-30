@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Users, Star, Award, Loader2, X, Clock, Trophy, Medal } from 'lucide-react';
+import { Users, Star, Award, Loader2, X, Clock, Trophy, Medal, MapPin, Phone, BookOpen, Eye } from 'lucide-react';
 import AddAchievementModal from '../components/AddAchievementModal';
 import { collection, onSnapshot, query, orderBy, doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -36,7 +36,17 @@ function HomeContent() {
   const [hasAddParam, setHasAddParam] = useState(false);
   const [achievements, setAchievements] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [schoolSettings, setSchoolSettings] = useState<{ schoolName?: string, logoUrl?: string } | null>(null);
+  const [schoolSettings, setSchoolSettings] = useState<{
+    schoolName?: string;
+    logoUrl?: string;
+    address?: string;
+    phone?: string;
+    managerName?: string;
+    viceManagerName?: string;
+    assistantManager2?: string;
+    vision?: string;
+    message?: string;
+  } | null>(null);
   const [firebaseError, setFirebaseError] = useState<string | null>(null);
 
   // Score badge renderer for table
@@ -116,47 +126,98 @@ function HomeContent() {
         <SearchParamsWatcher onChange={handleParamsChange} />
       </Suspense>
 
+      {/* Header card */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-4 bg-white/95 backdrop-blur-sm p-3 md:p-6 pr-14 sm:pr-3 md:pr-6 rounded-2xl shadow-lg border border-purple-100/50">
         <div className="flex items-center gap-4">
           {schoolSettings?.logoUrl && (
             <img src={schoolSettings.logoUrl} alt="School Logo" className="w-16 h-16 md:w-20 md:h-20 object-contain rounded-xl border border-gray-100 shadow-sm p-1 max-w-full" />
           )}
           <div>
-            {schoolSettings?.schoolName && (
-              <p className="text-base md:text-lg font-bold text-[#e21b3c]">{cleanText(schoolSettings?.schoolName)}</p>
-            )}
-            <p className="text-gray-500 font-bold mt-1 text-xs md:text-sm">وثّق، شارك، واحتفل بالتميز المدرسي</p>
+            <h2 className="text-xl md:text-2xl font-black text-[#46178f]">مرحباً بك في منصة إنجازاتنا</h2>
+            <p className="text-xs md:text-sm text-gray-500 font-bold">وثق ، شارك ، وكن جزءاً من النجاح</p>
           </div>
         </div>
-        
-        <button 
-          onClick={() => router.push('/?add=true', { scroll: false })}
-          className="w-full md:w-auto flex bg-[#e21b3c] hover:bg-[#c71734] text-white px-4 md:px-6 py-2.5 md:py-3 rounded-xl font-bold shadow-lg border-b-4 border-[#a8132a] hover:border-b-2 transition-all active:border-b-0 active:translate-y-1 text-sm md:text-base justify-center"
-        >
-          + إنجاز جديد
-        </button>
       </div>
 
-      {firebaseError && (
-        <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-2xl text-sm font-bold text-center">
-          {firebaseError}
+      {/* School Info Card - below header, above stats */}
+      {schoolSettings && (schoolSettings.schoolName || schoolSettings.address || schoolSettings.phone || schoolSettings.managerName || schoolSettings.vision || schoolSettings.message) && (
+        <div className="bg-white/95 backdrop-blur-sm p-4 md:p-6 pr-14 sm:pr-3 md:pr-6 rounded-2xl shadow-lg border border-purple-100/50">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            {/* School name and logo */}
+            <div className="flex items-center gap-3 md:col-span-2 lg:col-span-1">
+              {schoolSettings.logoUrl && (
+                <img src={schoolSettings.logoUrl} alt="School Logo" className="w-12 h-12 md:w-14 md:h-14 object-contain rounded-xl border border-gray-100 shadow-sm p-1" />
+              )}
+              <div>
+                {schoolSettings.schoolName && (
+                  <h2 className="text-lg md:text-xl font-black text-[#46178f]">{schoolSettings.schoolName}</h2>
+                )}
+                {schoolSettings.managerName && (
+                  <p className="text-xs md:text-sm text-gray-500 font-bold flex items-center gap-1 mt-1">
+                    <Users size={14} className="text-[#0087ed]" />
+                    مديرة المدرسة: {schoolSettings.managerName}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Contact info */}
+            <div className="space-y-2">
+              {schoolSettings.address && (
+                <p className="text-xs md:text-sm text-gray-600 flex items-center gap-2">
+                  <MapPin size={16} className="text-[#e21b3c] shrink-0" />
+                  <span>{schoolSettings.address}</span>
+                </p>
+              )}
+              {schoolSettings.phone && (
+                <p className="text-xs md:text-sm text-gray-600 flex items-center gap-2">
+                  <Phone size={16} className="text-[#26890c] shrink-0" />
+                  <span dir="ltr">{schoolSettings.phone}</span>
+                </p>
+              )}
+              {(schoolSettings.viceManagerName || schoolSettings.assistantManager2) && (
+                <p className="text-xs md:text-sm text-gray-600 flex items-center gap-2">
+                  <Users size={16} className="text-[#ffb000] shrink-0" />
+                  <span>
+                    {[schoolSettings.viceManagerName, schoolSettings.assistantManager2].filter(Boolean).join(' - ')}
+                  </span>
+                </p>
+              )}
+            </div>
+
+            {/* Vision & Mission */}
+            <div className="space-y-2">
+              {schoolSettings.vision && (
+                <p className="text-xs md:text-sm text-gray-600 flex items-start gap-2">
+                  <Eye size={16} className="text-[#46178f] shrink-0 mt-0.5" />
+                  <span className="line-clamp-2">{schoolSettings.vision}</span>
+                </p>
+              )}
+              {schoolSettings.message && (
+                <p className="text-xs md:text-sm text-gray-600 flex items-start gap-2">
+                  <BookOpen size={16} className="text-[#0087ed] shrink-0 mt-0.5" />
+                  <span className="line-clamp-2">{schoolSettings.message}</span>
+                </p>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Stats cards: horizontal scroll on mobile, grid on desktop */}
-      <div className="flex overflow-x-auto overflow-y-hidden gap-4 snap-x snap-mandatory pb-2 md:grid md:grid-cols-3 md:overflow-visible md:pb-0 md:gap-6 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent -mx-4 px-4 md:mx-0 md:px-0">
+      {/* Stats cards */}
+      <div className="flex gap-3 md:gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-none pb-2 -mx-3 px-3 md:mx-0 md:px-0">
         <div className="bg-white rounded-xl p-3 shadow border-r-4 border-[#0087ed] flex flex-col items-center gap-0.5 min-w-[120px] md:min-w-0 snap-center shrink-0">
-          <div className="bg-blue-100 p-1.5 rounded-lg text-[#0087ed]"><Award size={18} /></div>
-            <p className="text-[10px] md:text-xs text-gray-500 font-bold text-center leading-tight">إجمالي الإنجازات</p>
+          <div className="bg-blue-100 p-1.5 rounded-lg text-[#0087ed]"><Users size={18} /></div>
+            <p className="text-[10px] md:text-xs text-gray-500 font-bold text-center leading-tight">المعلمات</p>
             <p className="text-xl md:text-2xl font-black text-gray-800">
-              {isLoading ? <Loader2 size={16} className="animate-spin" /> : displayedAchievements.length}
+              {isLoading ? <Loader2 size={16} className="animate-spin" /> : new Set(achievements.map(a => a.teacherName).filter(Boolean)).size}
             </p>
         </div>
         <div className="bg-white rounded-xl p-3 shadow border-r-4 border-[#26890c] flex flex-col items-center gap-0.5 min-w-[120px] md:min-w-0 snap-center shrink-0">
-          <div className="bg-green-100 p-1.5 rounded-lg text-[#26890c]"><Users size={18} /></div>
-            <p className="text-[10px] md:text-xs text-gray-500 font-bold text-center leading-tight">المعلمات المشاركات</p>
+          <div className="bg-green-100 p-1.5 rounded-lg text-[#26890c]"><Award size={18} /></div>
+            <p className="text-[10px] md:text-xs text-gray-500 font-bold text-center leading-tight">إجمالي المشاركات</p>
             <p className="text-xl md:text-2xl font-black text-gray-800">
-              {isLoading ? <Loader2 size={16} className="animate-spin" /> : new Set(achievements.map(a => a.teacherName).filter(Boolean)).size}
+              {isLoading ? <Loader2 size={16} className="animate-spin" /> : achievements.length}
             </p>
         </div>
         <div className="bg-white rounded-xl p-3 shadow border-r-4 border-[#ffb000] flex flex-col items-center gap-0.5 min-w-[120px] md:min-w-0 snap-center shrink-0">
