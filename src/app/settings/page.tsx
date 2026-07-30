@@ -243,23 +243,23 @@ export default function SettingsPage() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-bold text-gray-700 flex items-center gap-2"><User size={16}/> وكيل المدرسة</label>
+            <label className="text-sm font-bold text-gray-700 flex items-center gap-2"><User size={16}/> المدير المساعد ١</label>
             <input 
               type="text" 
               value={formData.viceManagerName}
               onChange={(e) => setFormData({...formData, viceManagerName: e.target.value})}
-              placeholder="اسم الوكيل" 
+              placeholder="اسم المدير المساعد ١" 
               className="w-full bg-gray-50 border border-purple-100 rounded-xl p-3 focus:ring-2 focus:ring-[#46178f] outline-none transition-all" 
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-bold text-gray-700 flex items-center gap-2"><User size={16}/> النائب الثاني</label>
+            <label className="text-sm font-bold text-gray-700 flex items-center gap-2"><User size={16}/> المدير المساعد ٢</label>
             <input 
               type="text" 
               value={formData.assistantManager2}
               onChange={(e) => setFormData({...formData, assistantManager2: e.target.value})}
-              placeholder="اسم النائب الثاني" 
+              placeholder="اسم المدير المساعد ٢" 
               className="w-full bg-gray-50 border border-purple-100 rounded-xl p-3 focus:ring-2 focus:ring-[#46178f] outline-none transition-all" 
             />
           </div>

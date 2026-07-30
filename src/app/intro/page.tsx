@@ -142,7 +142,7 @@ export default function IntroPage() {
               <div className="w-16 h-16 md:w-20 md:h-20 bg-purple-400/20 rounded-full flex items-center justify-center mx-auto mb-2 border-2 border-purple-400/50">
                 <Eye size={28} className="text-purple-300" />
               </div>
-              <p className="text-purple-300 font-bold text-sm">النائب</p>
+              <p className="text-purple-300 font-bold text-sm">المدير المساعد ١</p>
               <p className="text-white font-bold">{viceManager}</p>
             </div>
           )}
@@ -151,7 +151,7 @@ export default function IntroPage() {
               <div className="w-16 h-16 md:w-20 md:h-20 bg-purple-400/20 rounded-full flex items-center justify-center mx-auto mb-2 border-2 border-purple-400/50">
                 <Eye size={28} className="text-purple-300" />
               </div>
-              <p className="text-purple-300 font-bold text-sm">النائب الثاني</p>
+              <p className="text-purple-300 font-bold text-sm">المدير المساعد ٢</p>
               <p className="text-white font-bold">{assistant2}</p>
             </div>
           )}
