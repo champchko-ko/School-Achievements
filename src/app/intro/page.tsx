@@ -48,10 +48,10 @@ export default function IntroPage() {
     );
   }
 
-  const schoolName = settings?.schoolName || 'منصة إنجازاتنا';
+  const schoolName = settings?.schoolName?.trim() || null;
   const logoUrl = settings?.logoUrl;
-  const vision = settings?.vision || 'التميز في التعليم وبناء جيل مبدع';
-  const message = settings?.message || 'توفير بيئة تعليمية محفزة للإبداع والابتكار';
+  const vision = settings?.vision?.trim() || null;
+  const message = settings?.message?.trim() || null;
   const managerName = settings?.managerName;
   const viceManager = settings?.viceManagerName;
   const assistant2 = settings?.assistantManager2;
@@ -99,24 +99,32 @@ export default function IntroPage() {
         </div>
 
         {/* School Name */}
+        {schoolName && (
         <h1 className={`text-3xl md:text-5xl font-black text-yellow-400 text-center mb-4 drop-shadow-lg transition-all duration-1000 delay-400 ${fadeIn ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}>
           {schoolName}
         </h1>
+        )}
 
-        {/* Decorative Line */}
+        {/* Decorative Line - only show if school name is shown */}
+        {schoolName && (
         <div className={`w-24 h-1 bg-gradient-to-r from-transparent via-yellow-400 to-transparent rounded-full mb-8 transition-all duration-1000 delay-500 ${fadeIn ? 'opacity-100 w-48' : 'opacity-0 w-24'}`}></div>
+        )}
 
         {/* Vision */}
+        {vision && (
         <div className={`max-w-2xl text-center mb-4 transition-all duration-1000 delay-600 ${fadeIn ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}>
           <p className="text-purple-200/80 text-sm font-bold mb-2 tracking-wider">— رؤيتنا —</p>
           <p className="text-white text-lg md:text-xl font-bold leading-relaxed">{vision}</p>
         </div>
+        )}
 
         {/* Message */}
+        {message && (
         <div className={`max-w-2xl text-center mb-10 transition-all duration-1000 delay-700 ${fadeIn ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}>
           <p className="text-purple-200/80 text-sm font-bold mb-2 tracking-wider">— رسالتنا —</p>
           <p className="text-white/90 text-base md:text-lg leading-relaxed">{message}</p>
         </div>
+        )}
 
         {/* Leadership Team */}
         <div className={`flex flex-wrap justify-center gap-6 md:gap-10 mb-12 transition-all duration-1000 delay-800 ${fadeIn ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}>
