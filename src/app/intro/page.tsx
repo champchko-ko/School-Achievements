@@ -127,33 +127,39 @@ export default function IntroPage() {
         )}
 
         {/* Leadership Team */}
-        <div className={`flex flex-wrap justify-center gap-6 md:gap-10 mb-12 transition-all duration-1000 delay-800 ${fadeIn ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}>
+        <div className={`flex flex-col items-center gap-6 mb-12 transition-all duration-1000 delay-800 ${fadeIn ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}>
+          {/* Manager - alone on its own line */}
           {managerName && (
             <div className="text-center">
               <div className="w-16 h-16 md:w-20 md:h-20 bg-yellow-400/20 rounded-full flex items-center justify-center mx-auto mb-2 border-2 border-yellow-400/50">
                 <Eye size={28} className="text-yellow-400" />
               </div>
-              <p className="text-yellow-400 font-bold text-sm">مدير المدرسة</p>
+              <p className="text-yellow-400 font-bold text-sm">المديرة</p>
               <p className="text-white font-bold">{managerName}</p>
             </div>
           )}
-          {viceManager && (
-            <div className="text-center">
-              <div className="w-16 h-16 md:w-20 md:h-20 bg-purple-400/20 rounded-full flex items-center justify-center mx-auto mb-2 border-2 border-purple-400/50">
-                <Eye size={28} className="text-purple-300" />
+          {/* Assistants - side by side on one line */}
+          {(viceManager || assistant2) && (
+          <div className="flex flex-wrap justify-center gap-6 md:gap-10">
+            {viceManager && (
+              <div className="text-center">
+                <div className="w-16 h-16 md:w-20 md:h-20 bg-purple-400/20 rounded-full flex items-center justify-center mx-auto mb-2 border-2 border-purple-400/50">
+                  <Eye size={28} className="text-purple-300" />
+                </div>
+                <p className="text-purple-300 font-bold text-sm">المديرة المساعدة ١</p>
+                <p className="text-white font-bold">{viceManager}</p>
               </div>
-              <p className="text-purple-300 font-bold text-sm">المدير المساعد ١</p>
-              <p className="text-white font-bold">{viceManager}</p>
-            </div>
-          )}
-          {assistant2 && (
-            <div className="text-center">
-              <div className="w-16 h-16 md:w-20 md:h-20 bg-purple-400/20 rounded-full flex items-center justify-center mx-auto mb-2 border-2 border-purple-400/50">
-                <Eye size={28} className="text-purple-300" />
+            )}
+            {assistant2 && (
+              <div className="text-center">
+                <div className="w-16 h-16 md:w-20 md:h-20 bg-purple-400/20 rounded-full flex items-center justify-center mx-auto mb-2 border-2 border-purple-400/50">
+                  <Eye size={28} className="text-purple-300" />
+                </div>
+                <p className="text-purple-300 font-bold text-sm">المديرة المساعدة ٢</p>
+                <p className="text-white font-bold">{assistant2}</p>
               </div>
-              <p className="text-purple-300 font-bold text-sm">المدير المساعد ٢</p>
-              <p className="text-white font-bold">{assistant2}</p>
-            </div>
+            )}
+          </div>
           )}
         </div>
 

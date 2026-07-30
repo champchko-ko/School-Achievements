@@ -174,7 +174,7 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
                   onChange={(e) => setFormData({...formData, teacherName: e.target.value})}
                   className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-[#0087ed] outline-none transition-all cursor-pointer"
                 >
-                  <option value="" disabled>-- اختر المعلم --</option>
+                  <option value="" disabled>-- اختر المعلمة --</option>
                   {Array.from(new Set([...teachersList, formData.teacherName])).filter(Boolean).map(t => (
                     <option key={t} value={t}>{t}</option>
                   ))}
@@ -184,7 +184,7 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
                   type="text" 
                   value={formData.teacherName}
                   onChange={(e) => setFormData({...formData, teacherName: e.target.value})}
-                  placeholder="اسم المعلم" 
+                  placeholder="اسم المعلمة" 
                   className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-[#0087ed] outline-none transition-all" 
                 />
               )}

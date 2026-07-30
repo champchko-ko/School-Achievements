@@ -123,7 +123,7 @@ export default function AdminDashboard() {
           <ShieldCheck className="text-green-400" size={36} />
           لوحة تحكم الإدارة
         </h2>
-        <p className="text-purple-200 font-bold relative z-10">مركز الاعتماد وتقييم إنجازات المعلمين</p>
+        <p className="text-purple-200 font-bold relative z-10">مركز الاعتماد وتقييم إنجازات المعلمات</p>
       </div>
 
       {/* Analytics Overview */}

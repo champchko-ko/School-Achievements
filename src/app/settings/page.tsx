@@ -237,29 +237,29 @@ export default function SettingsPage() {
               type="text" 
               value={formData.managerName}
               onChange={(e) => setFormData({...formData, managerName: e.target.value})}
-              placeholder="اسم المدير" 
+              placeholder="اسم المديرة" 
               className="w-full bg-gray-50 border border-purple-100 rounded-xl p-3 focus:ring-2 focus:ring-[#46178f] outline-none transition-all" 
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-bold text-gray-700 flex items-center gap-2"><User size={16}/> المدير المساعد ١</label>
+            <label className="text-sm font-bold text-gray-700 flex items-center gap-2"><User size={16}/> المديرة المساعدة ١</label>
             <input 
               type="text" 
               value={formData.viceManagerName}
               onChange={(e) => setFormData({...formData, viceManagerName: e.target.value})}
-              placeholder="اسم المدير المساعد ١" 
+              placeholder="اسم المديرة المساعدة ١" 
               className="w-full bg-gray-50 border border-purple-100 rounded-xl p-3 focus:ring-2 focus:ring-[#46178f] outline-none transition-all" 
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-bold text-gray-700 flex items-center gap-2"><User size={16}/> المدير المساعد ٢</label>
+            <label className="text-sm font-bold text-gray-700 flex items-center gap-2"><User size={16}/> المديرة المساعدة ٢</label>
             <input 
               type="text" 
               value={formData.assistantManager2}
               onChange={(e) => setFormData({...formData, assistantManager2: e.target.value})}
-              placeholder="اسم المدير المساعد ٢" 
+              placeholder="اسم المديرة المساعدة ٢" 
               className="w-full bg-gray-50 border border-purple-100 rounded-xl p-3 focus:ring-2 focus:ring-[#46178f] outline-none transition-all" 
             />
           </div>
@@ -335,7 +335,7 @@ export default function SettingsPage() {
 
           {/* Teachers */}
           <div>
-            <h3 className="text-lg font-black text-gray-800 mb-4 flex items-center gap-2"><Users size={20} className="text-[#26890c]" /> إدارة المعلمين</h3>
+            <h3 className="text-lg font-black text-gray-800 mb-4 flex items-center gap-2"><Users size={20} className="text-[#26890c]" /> إدارة المعلمات</h3>
             <div className="flex gap-2 mb-4">
               <input 
                 type="text" 
@@ -350,7 +350,7 @@ export default function SettingsPage() {
                     }
                   }
                 }}
-                placeholder="اسم المعلم الجديد" 
+                placeholder="اسم المعلمة الجديدة" 
                 className="flex-1 bg-gray-50 border border-purple-100 rounded-xl p-3 focus:ring-2 focus:ring-[#46178f] outline-none transition-all text-sm" 
               />
               <button type="button" onClick={() => { if(newTeacher.trim() && !formData.teachers.includes(newTeacher.trim())) { setFormData({...formData, teachers: [...formData.teachers, newTeacher.trim()]}); setNewTeacher(''); } }} className="bg-[#26890c] text-white px-4 py-2 rounded-xl font-bold hover:bg-[#20730a] transition-colors whitespace-nowrap">إضافة</button>
