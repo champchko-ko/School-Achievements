@@ -134,7 +134,9 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
         // Save achievement WITHOUT the PIN — PIN is hashed separately via the API
         const { pin, ...achievementData } = formData;
         console.log('Saving achievement', achievementData);
-        const docRef = await addDoc(collection(db, "achievements"), {
+        let docRef: any;
+        try {
+        docRef = await addDoc(collection(db, "achievements"), {
           ...achievementData,
           attachmentUrls,
           score: null,
@@ -142,20 +144,22 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
           timestamp: serverTimestamp(),
         });
         
-        console.log('addDoc succeeded, docRef.id:', docRef.id);
-        // Store the PIN hash server-side only if a PIN was set
+        console.log('addDoc succeeded, docRef.id:', docRef.id, 'docRef.path:', docRef.path);
+        } catch (addErr) {
+          console.error('addDoc failed:', addErr);
+          setAlertMsg('فشل حفظ الإنجاز في قاعدة البيانات');
+          setIsSubmitting(false);
+          return;
+        }
+        // Store the PIN hash server-side only if a PIN was set (fire-and-forget)
         if (pin) {
-          try {
-            console.log('Calling /api/pin to store hash');
-            const pinRes = await fetch('/api/pin', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ achievementId: docRef.id, pin }),
-            });
-          } catch (pinErr) {
+          fetch('/api/pin', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ achievementId: docRef.id, pin }),
+          }).catch(pinErr => {
             console.error('Failed to store PIN hash:', pinErr);
-            setAlertMsg('تم حفظ الإنجاز، لكن حدث خطأ في حفظ رمز الحماية.');
-          }
+          });
         }
       }
       
