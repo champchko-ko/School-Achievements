@@ -3,6 +3,7 @@
 // DELETE: Delete an achievement (admin session required)
 
 import { NextResponse } from 'next/server';
+import { sanitizeAchievementPayload } from '../../../../lib/sanitize';
 import { pbkdf2Sync } from 'crypto';
 
 function getPepper(): string {
@@ -29,7 +30,9 @@ async function isAdminSession(): Promise<boolean> {
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const body = await request.json();
+    const rawBody = await request.json();
+    // Sanitize all user-supplied text fields
+    const body = sanitizeAchievementPayload(rawBody);
     const isAdmin = await isAdminSession();
 
     const { initializeApp, getApps, getApp } = await import('firebase/app');

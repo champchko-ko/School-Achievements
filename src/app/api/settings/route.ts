@@ -3,6 +3,7 @@
 // PUT: Update settings (admin session required)
 
 import { NextResponse } from 'next/server';
+import { sanitizeSettingsPayload } from '../../../lib/sanitize';
 
 async function isAdminSession(): Promise<boolean> {
   try {
@@ -61,7 +62,9 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: 'غير مصرح بهذا الإجراء. تسجيل الدخول كمدير مطلوب.' }, { status: 401 });
     }
 
-    const body = await request.json();
+    const rawBody = await request.json();
+    // Sanitize all user-supplied text fields
+    const body = sanitizeSettingsPayload(rawBody);
 
     const { initializeApp, getApps, getApp } = await import('firebase/app');
     const { getFirestore, doc, setDoc } = await import('firebase/firestore');
