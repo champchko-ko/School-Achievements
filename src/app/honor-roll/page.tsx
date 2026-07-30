@@ -54,7 +54,7 @@ export default function HonorRoll() {
           لوحة الشرف
           <Trophy className="text-[#ffb000]" size={36} />
         </h2>
-        <p className="text-gray-500 font-bold">أكثر المعلمين تميزاً وإنجازاً هذا الشهر 🌟</p>
+        <p className="text-gray-500 font-bold">أكثر المعلمات تميزاً وإنجازاً هذا الشهر 🌟</p>
       </div>
 
       {/* Kahoot-Style Podium */}

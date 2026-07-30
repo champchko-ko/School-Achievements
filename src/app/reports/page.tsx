@@ -147,7 +147,7 @@ export default function ReportsPage() {
             {schoolSettings?.schoolName && <h2 className="text-4xl font-black text-gray-800">{schoolSettings.schoolName}</h2>}
           </div>
           <h2 className="text-3xl font-black text-[#ffb000] mb-2">قائمة الشرف للمتميزين</h2>
-          <p className="text-gray-500">أكثر المعلمين إنجازاً وتميزاً في الأداء</p>
+          <p className="text-gray-500">أكثر المعلمات إنجازاً وتميزاً في الأداء</p>
           <p className="text-xs text-gray-400 mt-4 hidden print:block">
             {mounted && `تاريخ الطباعة: ${new Date().toLocaleDateString('ar-SA')} - الوقت: ${new Date().toLocaleTimeString('ar-SA')}`}
           </p>
@@ -157,7 +157,7 @@ export default function ReportsPage() {
           <thead>
             <tr className="bg-purple-50 border-b-2 border-purple-200 text-[#46178f] print:bg-white print:text-black">
               <th className="p-4 font-bold">الترتيب</th>
-              <th className="p-4 font-bold">المعلم</th>
+              <th className="p-4 font-bold">المعلمة</th>
               <th className="p-4 font-bold">القسم</th>
               <th className="p-4 font-bold text-center">إجمالي الإنجازات</th>
             </tr>
@@ -189,13 +189,13 @@ export default function ReportsPage() {
     return (
       <div className="bg-white rounded-2xl shadow-lg border border-purple-100/50 p-8 print:shadow-none print:border-none print:p-0">
         <div className="print:hidden mb-8 bg-purple-50 p-6 rounded-xl border border-purple-100">
-           <label className="block text-sm font-bold text-gray-700 mb-2">اختر المعلم لعرض وطباعة السجل الفردي:</label>
+           <label className="block text-sm font-bold text-gray-700 mb-2">اختر المعلمة لعرض وطباعة السجل الفردي:</label>
            <select 
              value={selectedTeacher} 
              onChange={(e) => setSelectedTeacher(e.target.value)}
              className="w-full md:w-1/2 bg-white border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-[#0087ed] outline-none cursor-pointer font-bold"
            >
-             <option value="all">-- يرجى اختيار المعلم --</option>
+             <option value="all">-- يرجى اختيار المعلمة --</option>
              {teachers.map(t => <option key={t} value={t}>{t}</option>)}
            </select>
         </div>
@@ -208,7 +208,7 @@ export default function ReportsPage() {
                 {schoolSettings?.schoolName && <h2 className="text-4xl font-black text-gray-800">{schoolSettings.schoolName}</h2>}
               </div>
               <h2 className="text-3xl font-black text-[#26890c] mb-2">السجل الفردي للإنجازات</h2>
-              <p className="text-xl font-bold text-gray-700">المعلم: {selectedTeacher}</p>
+              <p className="text-xl font-bold text-gray-700">المعلمة: {selectedTeacher}</p>
               <p className="text-xs text-gray-400 mt-4 hidden print:block">
                 {mounted && `تاريخ الطباعة: ${new Date().toLocaleDateString('ar-SA')} - الوقت: ${new Date().toLocaleTimeString('ar-SA')}`}
               </p>
@@ -278,13 +278,13 @@ export default function ReportsPage() {
           <Medal size={24} className={activeReport === 'honor' ? 'text-[#ffb000]' : 'text-gray-400'} />
           <div>
             <h3 className={`font-bold ${activeReport === 'honor' ? 'text-[#ffb000]' : 'text-gray-700'}`}>قائمة الشرف</h3>
-            <p className="text-xs text-gray-500 mt-1">المعلمون المتميزون</p>
+            <p className="text-xs text-gray-500 mt-1">المعلمات المتميزات</p>
           </div>
         </button>
         <button onClick={() => setActiveReport('individual')} className={`p-4 rounded-2xl border-2 transition-all text-right flex flex-col gap-3 ${activeReport === 'individual' ? 'border-[#26890c] bg-green-50/50' : 'border-gray-100 bg-white hover:border-gray-200'}`}>
           <UserSquare size={24} className={activeReport === 'individual' ? 'text-[#26890c]' : 'text-gray-400'} />
           <div>
-            <h3 className={`font-bold ${activeReport === 'individual' ? 'text-[#26890c]' : 'text-gray-700'}`}>سجل المعلم</h3>
+            <h3 className={`font-bold ${activeReport === 'individual' ? 'text-[#26890c]' : 'text-gray-700'}`}>سجل المعلمة</h3>
             <p className="text-xs text-gray-500 mt-1">تقرير فردي مفصل</p>
           </div>
         </button>

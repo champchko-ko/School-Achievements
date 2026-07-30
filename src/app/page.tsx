@@ -149,7 +149,7 @@ function HomeContent() {
         <div className="bg-white rounded-2xl p-4 md:p-6 shadow-lg border-t-4 border-[#26890c] flex items-center gap-3 md:gap-4 min-w-0">
           <div className="bg-green-100 p-3 md:p-4 rounded-xl text-[#26890c] shrink-0"><Users size={24} className="md:size-[32px]" /></div>
           <div>
-            <p className="text-gray-500 text-xs md:text-sm font-bold truncate">المعلمون المشاركون</p>
+            <p className="text-gray-500 text-xs md:text-sm font-bold truncate">المعلمات المشاركات</p>
             <p className="text-3xl font-black text-gray-800">
               {isLoading ? <Loader2 size={24} className="animate-spin mt-1" /> : new Set(achievements.map(a => a.teacherName).filter(Boolean)).size}
             </p>
@@ -169,7 +169,7 @@ function HomeContent() {
       <div>
         <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
           <span className="bg-[#e21b3c] w-2 h-6 rounded-full inline-block"></span>
-          {teacherFilter ? `إنجازات المعلم: ${teacherFilter}` : 'أحدث الإنجازات المعتمدة'}
+          {teacherFilter ? `إنجازات المعلمة: ${teacherFilter}` : 'أحدث الإنجازات المعتمدة'}
         </h3>
         
         {teacherFilter && (
@@ -192,7 +192,7 @@ function HomeContent() {
             </div>
           ) : displayedAchievements.length === 0 ? (
             <div className="col-span-full bg-white/95 backdrop-blur-sm rounded-2xl p-10 border-2 border-dashed border-purple-200 text-center text-gray-400 shadow-lg">
-              <p className="font-bold">{teacherFilter ? "لا توجد إنجازات لهذا المعلم حالياً." : "لا توجد إنجازات حتى الآن. كن أول من يضيف إنجازاً! 🚀"}</p>
+              <p className="font-bold">{teacherFilter ? "لا توجد إنجازات لهذه المعلمة حالياً." : "لا توجد إنجازات حتى الآن. كن أول من يضيف إنجازاً! 🚀"}</p>
             </div>
           ) : (
             displayedAchievements.map((achievement) => (

@@ -127,7 +127,7 @@ export default function FullRecordPage() {
       <body>
         <table>
           <thead>
-            <tr><th>المعلم</th><th>القسم</th><th>الإنجاز</th><th>التاريخ</th><th>التقييم</th><th>المرفقات</th></tr>
+            <tr><th>المعلمة</th><th>القسم</th><th>الإنجاز</th><th>التاريخ</th><th>التقييم</th><th>المرفقات</th></tr>
           </thead>
           <tbody>
             ${filteredData.map(row => {
@@ -319,7 +319,7 @@ export default function FullRecordPage() {
           <table className="w-full min-w-max text-right border-collapse">
             <thead>
               <tr className="bg-purple-50 border-b border-purple-100 text-gray-500 text-sm print:bg-white print:text-black print:border-b-2 print:border-black">
-                <th className="p-4 font-bold whitespace-nowrap">المعلم</th>
+                <th className="p-4 font-bold whitespace-nowrap">المعلمة</th>
                 <th className="p-4 font-bold whitespace-nowrap">القسم</th>
                 <th className="p-4 font-bold min-w-[200px]">الإنجاز</th>
                 <th className="p-4 font-bold whitespace-nowrap hidden sm:table-cell">التاريخ</th>
