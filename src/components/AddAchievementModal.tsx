@@ -116,16 +116,14 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
         const uploadPromises = files.map(async (f) => {
           const formDataUpload = new FormData();
           formDataUpload.append('file', f);
-          formDataUpload.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET as string);
 
-          const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-          const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
+          const res = await fetch('/api/upload', {
             method: 'POST',
             body: formDataUpload,
           });
           
           const uploadData = await res.json();
-          if (!res.ok) throw new Error(uploadData.error?.message || "Cloudinary upload failed");
+          if (!res.ok) throw new Error(uploadData.error || 'فشل رفع الملف');
           return uploadData.secure_url;
         });
         attachmentUrls = await Promise.all(uploadPromises);
