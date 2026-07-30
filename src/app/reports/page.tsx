@@ -114,6 +114,7 @@ export default function ReportsPage() {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
     );
   };
@@ -179,6 +180,7 @@ export default function ReportsPage() {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
     );
   };
