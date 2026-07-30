@@ -2,7 +2,7 @@
 // src/components/AddAchievementModal.tsx
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, CloudUpload, Loader2 } from 'lucide-react';
+import { X, CloudUpload, Lock, Loader2 } from 'lucide-react';
 import { collection, addDoc, serverTimestamp, doc, updateDoc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
@@ -17,7 +17,7 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
     department: 'الرياضيات',
     title: '',
     desc: '',
-    // pin removed - security
+    pin: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [alertMsg, setAlertMsg] = useState<string | null>(null);
@@ -41,10 +41,10 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
           department: initialData.department || departmentsList[0] || 'الرياضيات',
           title: initialData.title || '',
           desc: initialData.desc || '',
-          // pin field removed for security
+          pin: initialData.pin || ''
         });
       } else {
-        setFormData({ teacherName: '', department: departmentsList[0] || 'الرياضيات', title: '', desc: '' });
+        setFormData({ teacherName: '', department: departmentsList[0] || 'الرياضيات', title: '', desc: '', pin: '' });
       }
       setFiles([]);
 
@@ -82,7 +82,7 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
 
   const handleSubmit = async () => {
     // Basic validation
-    if (!formData.teacherName || !formData.title || !formData.desc) {
+    if (!formData.teacherName || !formData.title || !formData.desc || !formData.pin) {
       setAlertMsg("يرجى ملء جميع الحقول المطلوبة.");
       return;
     }
@@ -135,7 +135,7 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
       }
       
       // Clear form and close modal
-      setFormData({ teacherName: '', department: 'الرياضيات', title: '', desc: '' });
+      setFormData({ teacherName: '', department: 'الرياضيات', title: '', desc: '', pin: '' });
       setFiles([]);
       onClose();
     } catch (error) {
@@ -276,7 +276,21 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
             )}
           </div>
 
-          {/* PIN Code Field - removed for security */}
+          {/* PIN Code Field */}
+          <div className="bg-purple-50 border border-purple-100 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+            <div className="bg-[#46178f]/10 p-3 rounded-xl text-[#46178f]"><Lock size={20} /></div>
+            <div className="flex-1">
+              <label className="block text-sm font-bold text-[#46178f] mb-1">{docId ? "رمز الحماية (غير قابل للتغيير)" : "رمز الحماية السري (PIN)"}</label>
+              <p className="text-xs text-[#380e6e] mb-2">{docId ? "رمز الحماية لا يمكن تغييره بعد إنشاء الإنجاز" : "اختر 4 أرقام لتتمكن من تعديل الإنجاز لاحقاً"}</p>
+            <input 
+                type="password" 
+                maxLength={4} 
+                value={formData.pin}
+                onChange={(e) => setFormData({...formData, pin: e.target.value})}
+                placeholder="****" 
+                disabled={!!docId}
+                className="w-24 text-center tracking-[0.5em] font-mono font-bold text-lg bg-white border border-purple-200 rounded-xl p-2 focus:ring-2 focus:ring-[#e21b3c] outline-none disabled:opacity-50" />            </div>
+          </div>
 
         </div>
 

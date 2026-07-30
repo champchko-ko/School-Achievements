@@ -48,13 +48,27 @@ export default function AchievementCard({ data }: { data: any }) {
     }
   }, [notification]);
 
-  const handlePinSubmit = () => {
-    // Per-achievement PIN removed for security.
-    // Only server-side authenticated admins can edit.
-    setShowPinPrompt(false);
-    setShowEditModal(true);
-    setPinInput('');
-    setPinError('');
+  const handlePinSubmit = async () => {
+    try {
+      const res = await fetch('/api/pin', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ achievementId: data.id, pin: pinInput }),
+      });
+      const result = await res.json();
+      
+      if (result.valid) {
+        setShowPinPrompt(false);
+        setShowEditModal(true);
+        setPinInput('');
+        setPinError('');
+      } else {
+        setPinError('رمز الحماية غير صحيح!');
+      }
+    } catch (error) {
+      console.error('PIN verification error:', error);
+      setPinError('حدث خطأ في التحقق من الرمز');
+    }
   };
 
   const handleDeleteClick = async (id: string) => {
@@ -144,12 +158,23 @@ export default function AchievementCard({ data }: { data: any }) {
           {showPinPrompt && !isAdmin && (
             <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60] animate-in fade-in duration-200">
               <div className="bg-white p-8 rounded-3xl shadow-2xl max-w-sm w-full mx-4 text-center animate-in zoom-in-95 duration-300" onClick={e => e.stopPropagation()}>
-                <h3 className="text-xl font-black text-[#46178f] mb-2">تسجيل الدخول مطلوب 🔐</h3>
-                <p className="text-sm text-gray-500 mb-6">يجب تسجيل الدخول كمديرة أولاً لتتمكن من تعديل أو حذف الإنجازات.</p>
+                <h3 className="text-xl font-black text-[#46178f] mb-2">تعديل الإنجاز ✏️</h3>
+                <p className="text-sm text-gray-500 mb-6">الرجاء إدخال رمز الحماية (PIN) الخاص بهذا الإنجاز لتتمكن من تعديله.</p>
+                
+                <input 
+                  type="password"
+                  maxLength={4}
+                  value={pinInput} 
+                  onChange={e => setPinInput(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handlePinSubmit()}
+                  placeholder="****"
+                  className={`w-full text-center tracking-[1em] font-mono font-bold text-2xl bg-gray-50 border-2 rounded-xl p-3 outline-none transition-all ${pinError ? 'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100' : 'border-gray-200 focus:border-orange-400 focus:ring-4 focus:ring-orange-100'}`}
+                />
+                {pinError && <p className="text-red-500 font-bold text-sm mt-3 animate-in slide-in-from-top-1">{pinError}</p>}
                 
                 <div className="flex gap-3 mt-6">
                   <button onClick={() => { setShowPinPrompt(false); setPinError(''); setPinInput(''); }} className="flex-1 py-3 rounded-xl font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 transition-colors">إلغاء</button>
-                  <button onClick={() => { setShowPinPrompt(false); router.push('/'); }} className="flex-1 py-3 rounded-xl font-bold text-white bg-[#46178f] hover:bg-[#3a103a] transition-colors">الذهاب للرئيسية</button>
+                  <button onClick={handlePinSubmit} className="flex-1 py-3 rounded-xl font-bold text-white bg-orange-500 hover:bg-orange-600 border-b-4 border-orange-700 active:border-b-0 active:translate-y-1 transition-all">تأكيد</button>
                 </div>
               </div>
             </div>
