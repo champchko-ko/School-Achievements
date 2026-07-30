@@ -156,14 +156,26 @@ export default function FullRecordPage() {
     setShowPinPrompt(true);
   };
 
-  const handlePinSubmit = () => {
-    if (pinInput === selectedDoc.pin) {
-      setShowPinPrompt(false);
-      setShowEditModal(true);
-      setPinInput('');
-      setPinError('');
-    } else {
-      setPinError('رمز الحماية غير صحيح!');
+  const handlePinSubmit = async () => {
+    try {
+      const res = await fetch('/api/pin', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ achievementId: selectedDoc.id, pin: pinInput }),
+      });
+      const result = await res.json();
+      
+      if (result.valid) {
+        setShowPinPrompt(false);
+        setShowEditModal(true);
+        setPinInput('');
+        setPinError('');
+      } else {
+        setPinError('رمز الحماية غير صحيح!');
+      }
+    } catch (error) {
+      console.error('PIN verification error:', error);
+      setPinError('حدث خطأ في التحقق من الرمز');
     }
   };
 
