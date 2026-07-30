@@ -33,9 +33,9 @@ export default function HonorRoll() {
 
       // 3. Construct Podium Array: [Silver(2), Gold(1), Bronze(3)]
       const constructedPodium = [];
-      if (sorted[1]) constructedPodium.push({ id: 2, ...sorted[1], rank: 2, height: "h-32", color: "bg-[#C0C0C0]", textColor: "text-gray-700", icon: <Medal size={32} /> });
-      if (sorted[0]) constructedPodium.push({ id: 1, ...sorted[0], rank: 1, height: "h-44", color: "bg-[#FFD700]", textColor: "text-yellow-900", icon: <Trophy size={40} /> });
-      if (sorted[2]) constructedPodium.push({ id: 3, ...sorted[2], rank: 3, height: "h-24", color: "bg-[#CD7F32]", textColor: "text-white", icon: <Award size={28} /> });
+      if (sorted[1]) constructedPodium.push({ id: 2, ...sorted[1], rank: 2, height: "h-32", color: "bg-[#C0C0C0]", textColor: "text-gray-700", icon: <Medal size={32} className="text-[#C0C0C0]" /> });
+      if (sorted[0]) constructedPodium.push({ id: 1, ...sorted[0], rank: 1, height: "h-44", color: "bg-[#FFD700]", textColor: "text-yellow-900", icon: <Trophy size={40} className="text-[#FFD700]" /> });
+      if (sorted[2]) constructedPodium.push({ id: 3, ...sorted[2], rank: 3, height: "h-24", color: "bg-[#CD7F32]", textColor: "text-white", icon: <Award size={28} className="text-[#CD7F32]" /> });
 
       setPodiumData(constructedPodium);
       setIsLoading(false);
@@ -74,7 +74,7 @@ export default function HonorRoll() {
             
             {/* Floating Info Card */}
             <div className="bg-white w-full p-3 md:p-4 rounded-xl shadow-lg border border-purple-100/50 mb-4 text-center transform transition-all duration-300 group-hover:-translate-y-3 hover:shadow-xl hover:border-orange-200 relative z-10">
-               <div className="flex justify-center text-gray-800 mb-2">{teacher.icon}</div>
+               <div className="flex justify-center mb-2">{teacher.icon}</div>
                <div className="font-black text-[#4a154b] text-sm md:text-base leading-tight mb-1">{teacher.name}</div>
                <div className="text-xs text-gray-500 font-bold">{teacher.dept}</div>
                
