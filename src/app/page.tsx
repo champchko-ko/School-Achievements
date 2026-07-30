@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Users, Star, Award, Loader2, X } from 'lucide-react';
 import AchievementCard from '../components/AchievementCard';
@@ -7,27 +7,46 @@ import AddAchievementModal from '../components/AddAchievementModal';
 import { collection, onSnapshot, query, orderBy, doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
-function HomeContent() {
+// Isolated component to read search params without affecting the main tree
+function SearchParamsWatcher({
+  onChange,
+}: {
+  onChange: (params: { teacher: string | null; add: boolean }) => void;
+}) {
   const searchParams = useSearchParams();
+
+  useEffect(() => {
+    onChange({
+      teacher: searchParams.get('teacher'),
+      add: searchParams.get('add') === 'true',
+    });
+  }, [searchParams, onChange]);
+
+  return null;
+}
+
+function HomeContent() {
   const router = useRouter();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [teacherFilter, setTeacherFilter] = useState<string | null>(null);
+  const [hasAddParam, setHasAddParam] = useState(false);
   const [achievements, setAchievements] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [schoolSettings, setSchoolSettings] = useState<{ schoolName?: string, logoUrl?: string } | null>(null);
-
-  const teacherFilter = searchParams.get('teacher');
 
   const displayedAchievements = teacherFilter 
     ? achievements.filter(a => a.teacherName === teacherFilter) 
     : achievements;
 
-  useEffect(() => {
-    setIsModalOpen(searchParams.get('add') === 'true');
-  }, [searchParams]);
+  const handleParamsChange = useCallback((params: { teacher: string | null; add: boolean }) => {
+    setTeacherFilter(params.teacher);
+    setIsModalOpen(params.add);
+    setHasAddParam(params.add);
+  }, []);
 
   const handleCloseModal = () => {
-    if (searchParams.has('add')) {
+    if (hasAddParam) {
       router.push('/', { scroll: false });
     } else {
       setIsModalOpen(false);
@@ -66,7 +85,10 @@ function HomeContent() {
 
   return (
     <div className="space-y-6 md:space-y-8 animate-in fade-in duration-500 pb-10 w-full max-w-full overflow-hidden">
-      
+      <Suspense fallback={null}>
+        <SearchParamsWatcher onChange={handleParamsChange} />
+      </Suspense>
+
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-4 bg-white/95 backdrop-blur-sm p-3 md:p-6 pr-14 sm:pr-3 md:pr-6 rounded-2xl shadow-lg border border-purple-100/50">
         <div className="flex items-center gap-4">
           {schoolSettings?.logoUrl && (
@@ -153,9 +175,5 @@ function HomeContent() {
 }
 
 export default function Home() {
-  return (
-    <Suspense fallback={<div className="flex justify-center p-10"><Loader2 className="animate-spin" size={32} /></div>}>
-      <HomeContent />
-    </Suspense>
-  );
+  return <HomeContent />;
 }
