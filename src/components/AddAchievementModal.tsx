@@ -81,13 +81,16 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
   };
 
   const handleSubmit = async () => {
+    console.log('handleSubmit called', { docId, formData, files: files.length });
     // Basic validation
-    if (!formData.teacherName || !formData.title || !formData.desc || (!docId && !formData.pin)) {
+    if (!formData.teacherName || !formData.title || !formData.desc) {
+      console.log('Validation failed', { teacher: !!formData.teacherName, title: !!formData.title, desc: !!formData.desc, docId });
       setAlertMsg("يرجى ملء جميع الحقول المطلوبة.");
       return;
     }
 
     setIsSubmitting(true);
+    console.log('isSubmitting set to true, starting save...');
     try {
       let attachmentUrls: string[] = [];
       if (files.length > 0) {
@@ -126,6 +129,7 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
       } else {
         // Save achievement WITHOUT the PIN — PIN is hashed separately via the API
         const { pin, ...achievementData } = formData;
+        console.log('Saving achievement', achievementData);
         const docRef = await addDoc(collection(db, "achievements"), {
           ...achievementData,
           attachmentUrls,
@@ -134,19 +138,24 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
           timestamp: serverTimestamp(),
         });
         
-        // Store the PIN hash server-side (never stores the raw PIN)
-        try {
-          await fetch('/api/pin', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ achievementId: docRef.id, pin }),
-          });
-        } catch (pinErr) {
-          console.error('Failed to store PIN hash:', pinErr);
-          setAlertMsg('تم حفظ الإنجاز، لكن حدث خطأ في حفظ رمز الحماية.');
+        console.log('addDoc succeeded, docRef.id:', docRef.id);
+        // Store the PIN hash server-side only if a PIN was set
+        if (pin) {
+          try {
+            console.log('Calling /api/pin to store hash');
+            const pinRes = await fetch('/api/pin', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ achievementId: docRef.id, pin }),
+            });
+          } catch (pinErr) {
+            console.error('Failed to store PIN hash:', pinErr);
+            setAlertMsg('تم حفظ الإنجاز، لكن حدث خطأ في حفظ رمز الحماية.');
+          }
         }
       }
       
+      console.log('Save completed successfully, calling onClose');
       // Clear form and close modal
       setFormData({ teacherName: '', department: 'الرياضيات', title: '', desc: '', pin: '' });
       setFiles([]);
@@ -293,8 +302,8 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
           <div className="bg-purple-50 border border-purple-100 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
             <div className="bg-[#46178f]/10 p-3 rounded-xl text-[#46178f]"><Lock size={20} /></div>
             <div className="flex-1">
-              <label className="block text-sm font-bold text-[#46178f] mb-1">{docId ? "رمز الحماية (غير قابل للتغيير)" : "رمز الحماية السري (PIN)"}</label>
-              <p className="text-xs text-[#380e6e] mb-2">{docId ? "رمز الحماية لا يمكن تغييره بعد إنشاء الإنجاز" : "اختر 4 أرقام لتتمكن من تعديل الإنجاز لاحقاً"}</p>
+              <label className="block text-sm font-bold text-[#46178f] mb-1">{docId ? "رمز الحماية (غير قابل للتغيير)" : "رمز الحماية السري (PIN) - اختياري"}</label>
+              <p className="text-xs text-[#380e6e] mb-2">{docId ? "رمز الحماية لا يمكن تغييره بعد إنشاء الإنجاز" : "اختياري: اختر 4 أرقام لتتمكن من تعديل الإنجاز لاحقاً"}</p>
             <input 
                 type="password" 
                 maxLength={4} 
