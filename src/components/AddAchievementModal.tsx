@@ -82,7 +82,7 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
 
   const handleSubmit = async () => {
     // Basic validation
-    if (!formData.teacherName || !formData.title || !formData.desc || !formData.pin) {
+    if (!formData.teacherName || !formData.title || !formData.desc || (!docId && !formData.pin)) {
       setAlertMsg("يرجى ملء جميع الحقول المطلوبة.");
       return;
     }
@@ -306,6 +306,17 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
           </div>
 
         </div>
+
+        {/* Alert Message */}
+        {alertMsg && (
+          <div className="fixed bottom-6 right-4 left-4 md:left-auto md:right-4 md:w-96 z-[200] p-4 rounded-2xl shadow-2xl font-bold text-white bg-red-500 animate-in slide-in-from-bottom-2 duration-300">
+            <div className="flex items-center gap-3">
+              <span>❌</span>
+              <span>{alertMsg}</span>
+              <button onClick={() => setAlertMsg(null)} className="mr-auto text-white/70 hover:text-white">✕</button>
+            </div>
+          </div>
+        )}
 
         {/* Footer Buttons */}
         <div className="p-6 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
