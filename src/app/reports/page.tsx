@@ -266,34 +266,26 @@ export default function ReportsPage() {
       </div>
 
       {/* Report Selection Tabs */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 print:hidden">
-        <button onClick={() => setActiveReport('department')} className={`p-4 rounded-2xl border-2 transition-all text-right flex flex-col gap-3 ${activeReport === 'department' ? 'border-[#0087ed] bg-blue-50/50' : 'border-gray-100 bg-white hover:border-gray-200'}`}>
-          <BarChart3 size={24} className={activeReport === 'department' ? 'text-[#0087ed]' : 'text-gray-400'} />
-          <div>
-            <h3 className={`font-bold ${activeReport === 'department' ? 'text-[#0087ed]' : 'text-gray-700'}`}>أداء الأقسام</h3>
-            <p className="text-xs text-gray-500 mt-1">مقارنة الإنجازات والتقييمات</p>
-          </div>
+      <div className="grid grid-cols-4 gap-2 md:gap-4 print:hidden">
+        <button onClick={() => setActiveReport('department')} className={`flex flex-col items-center justify-center gap-1 p-2 md:p-4 rounded-2xl border-2 transition-all text-center ${activeReport === 'department' ? 'border-[#0087ed] bg-blue-50/50' : 'border-gray-100 bg-white hover:border-gray-200'}`}>
+          <BarChart3 size={16} className={`md:size-[24] ${activeReport === 'department' ? 'text-[#0087ed]' : 'text-gray-400'}`} />
+          <h3 className={`text-[10px] md:text-sm font-bold leading-tight ${activeReport === 'department' ? 'text-[#0087ed]' : 'text-gray-700'}`}>أداء الأقسام</h3>
+          <p className="hidden md:block text-xs text-gray-500">مقارنة الإنجازات والتقييمات</p>
         </button>
-        <button onClick={() => setActiveReport('honor')} className={`p-4 rounded-2xl border-2 transition-all text-right flex flex-col gap-3 ${activeReport === 'honor' ? 'border-[#ffb000] bg-yellow-50/50' : 'border-gray-100 bg-white hover:border-gray-200'}`}>
-          <Medal size={24} className={activeReport === 'honor' ? 'text-[#ffb000]' : 'text-gray-400'} />
-          <div>
-            <h3 className={`font-bold ${activeReport === 'honor' ? 'text-[#ffb000]' : 'text-gray-700'}`}>قائمة الشرف</h3>
-            <p className="text-xs text-gray-500 mt-1">المعلمات المتميزات</p>
-          </div>
+        <button onClick={() => setActiveReport('honor')} className={`flex flex-col items-center justify-center gap-1 p-2 md:p-4 rounded-2xl border-2 transition-all text-center ${activeReport === 'honor' ? 'border-[#ffb000] bg-yellow-50/50' : 'border-gray-100 bg-white hover:border-gray-200'}`}>
+          <Medal size={16} className={`md:size-[24] ${activeReport === 'honor' ? 'text-[#ffb000]' : 'text-gray-400'}`} />
+          <h3 className={`text-[10px] md:text-sm font-bold leading-tight ${activeReport === 'honor' ? 'text-[#ffb000]' : 'text-gray-700'}`}>قائمة الشرف</h3>
+          <p className="hidden md:block text-xs text-gray-500">المعلمات المتميزات</p>
         </button>
-        <button onClick={() => setActiveReport('individual')} className={`p-4 rounded-2xl border-2 transition-all text-right flex flex-col gap-3 ${activeReport === 'individual' ? 'border-[#26890c] bg-green-50/50' : 'border-gray-100 bg-white hover:border-gray-200'}`}>
-          <UserSquare size={24} className={activeReport === 'individual' ? 'text-[#26890c]' : 'text-gray-400'} />
-          <div>
-            <h3 className={`font-bold ${activeReport === 'individual' ? 'text-[#26890c]' : 'text-gray-700'}`}>سجل المعلمة</h3>
-            <p className="text-xs text-gray-500 mt-1">تقرير فردي مفصل</p>
-          </div>
+        <button onClick={() => setActiveReport('individual')} className={`flex flex-col items-center justify-center gap-1 p-2 md:p-4 rounded-2xl border-2 transition-all text-center ${activeReport === 'individual' ? 'border-[#26890c] bg-green-50/50' : 'border-gray-100 bg-white hover:border-gray-200'}`}>
+          <UserSquare size={16} className={`md:size-[24] ${activeReport === 'individual' ? 'text-[#26890c]' : 'text-gray-400'}`} />
+          <h3 className={`text-[10px] md:text-sm font-bold leading-tight ${activeReport === 'individual' ? 'text-[#26890c]' : 'text-gray-700'}`}>سجل المعلمة</h3>
+          <p className="hidden md:block text-xs text-gray-500">تقرير فردي مفصل</p>
         </button>
-        <button onClick={() => setActiveReport('master')} className={`p-4 rounded-2xl border-2 transition-all text-right flex flex-col gap-3 ${activeReport === 'master' ? 'border-[#1368ce] bg-blue-50/50' : 'border-gray-100 bg-white hover:border-gray-200'}`}>
-          <FileSpreadsheet size={24} className={activeReport === 'master' ? 'text-[#1368ce]' : 'text-gray-400'} />
-          <div>
-            <h3 className={`font-bold ${activeReport === 'master' ? 'text-[#1368ce]' : 'text-gray-700'}`}>السجل الشامل</h3>
-            <p className="text-xs text-gray-500 mt-1">تصدير البيانات الخام</p>
-          </div>
+        <button onClick={() => setActiveReport('master')} className={`flex flex-col items-center justify-center gap-1 p-2 md:p-4 rounded-2xl border-2 transition-all text-center ${activeReport === 'master' ? 'border-[#1368ce] bg-blue-50/50' : 'border-gray-100 bg-white hover:border-gray-200'}`}>
+          <FileSpreadsheet size={16} className={`md:size-[24] ${activeReport === 'master' ? 'text-[#1368ce]' : 'text-gray-400'}`} />
+          <h3 className={`text-[10px] md:text-sm font-bold leading-tight ${activeReport === 'master' ? 'text-[#1368ce]' : 'text-gray-700'}`}>السجل الشامل</h3>
+          <p className="hidden md:block text-xs text-gray-500">تصدير البيانات الخام</p>
         </button>
       </div>
 
