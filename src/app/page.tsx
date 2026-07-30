@@ -7,13 +7,14 @@ import AddAchievementModal from '../components/AddAchievementModal';
 import { collection, onSnapshot, query, orderBy, doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import ErrorBoundary from '../components/ErrorBoundary';
+import { cleanText } from '../lib/clean-text';
 
-// Isolated component to read search params without affecting the main tree
+// Only this tiny component reads useSearchParams, so only it is subject to
+// Next's client-side bailout/remount on refresh — the fallback is `null`,
+// so nothing visible ever gets swapped out.
 function SearchParamsWatcher({
   onChange,
-}: {
   onChange: (params: { teacher: string | null; add: boolean }) => void;
-}) {
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -24,7 +25,6 @@ function SearchParamsWatcher({
   }, [searchParams, onChange]);
 
   return null;
-}
 
 function HomeContent() {
   const router = useRouter();
@@ -113,10 +113,7 @@ function HomeContent() {
             <img src={schoolSettings.logoUrl} alt="School Logo" className="w-16 h-16 md:w-20 md:h-20 object-contain rounded-xl border border-gray-100 shadow-sm p-1 max-w-full" />
           )}
           <div>
-            <h2 className="text-xl md:text-2xl font-black text-[#46178f] break-words">مرحباً بك في منصة إنجازاتنا 👋</h2>
-            {schoolSettings?.schoolName && (
-              <p className="text-base md:text-lg font-bold text-[#e21b3c] mt-0.5">{schoolSettings.schoolName}</p>
-            )}
+            <h2 className="text-xl md:text-2xl font-black text-[#46178f] break-words">{cleanText(schoolSettings?.schoolName) || "مرحباً بك في منصة إنجازاتنا 👋"}</h2>
             <p className="text-gray-500 font-bold mt-1 text-xs md:text-sm">وثّق، شارك، واحتفل بالتميز المدرسي</p>
           </div>
         </div>
@@ -203,7 +200,6 @@ function HomeContent() {
       <AddAchievementModal isOpen={isModalOpen} onClose={handleCloseModal} />
     </div>
   );
-}
 
 export default function Home() {
   return (
@@ -211,4 +207,3 @@ export default function Home() {
       <HomeContent />
     </ErrorBoundary>
   );
-}
