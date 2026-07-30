@@ -83,12 +83,13 @@ export default function ReportsPage() {
           </p>
         </div>
         
+        <div className="overflow-x-auto">
         <table className="w-full text-right border-collapse">
           <thead>
             <tr className="bg-purple-50 border-b-2 border-purple-200 text-[#46178f] print:bg-white print:text-black">
               <th className="p-4 font-bold">القسم</th>
-              <th className="p-4 font-bold text-center">إجمالي الإنجازات</th>
-              <th className="p-4 font-bold text-center">متوسط التقييم</th>
+              <th className="p-4 font-bold text-center whitespace-nowrap">إجمالي الإنجازات</th>
+              <th className="p-4 font-bold text-center whitespace-nowrap">متوسط التقييم</th>
             </tr>
           </thead>
           <tbody>
@@ -166,7 +167,7 @@ export default function ReportsPage() {
             {honorList.map((stat, idx) => (
               <tr key={idx} className="border-b border-purple-100 hover:bg-purple-50/50 transition-colors print:border-b-2">
                 <td className="p-4 font-black text-gray-400">#{idx + 1}</td>
-                <td className="p-4 font-bold text-gray-800 flex items-center gap-2">
+                <td className="p-4 font-bold text-gray-800"><div className="flex items-center gap-2 whitespace-nowrap">
                   {idx === 0 && <Medal className="text-yellow-500" size={20} />}
                   {idx === 1 && <Medal className="text-gray-400" size={20} />}
                   {idx === 2 && <Medal className="text-orange-500" size={20} />}
