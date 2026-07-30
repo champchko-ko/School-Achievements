@@ -151,9 +151,15 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
           setIsSubmitting(false);
           return;
         }
-        // PIN storage disabled for debugging
+        // Store the PIN hash server-side (fire-and-forget)
         if (pin) {
-          console.log('PIN entered but storage disabled for debugging:', pin);
+          fetch('/api/pin', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ achievementId: docRef.id, pin }),
+          }).catch(pinErr => {
+            console.error('Failed to store PIN hash:', pinErr);
+          });
         }
       }
       
