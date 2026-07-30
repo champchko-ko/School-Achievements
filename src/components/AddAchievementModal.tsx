@@ -116,7 +116,6 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
           department: formData.department,
           title: formData.title,
           desc: formData.desc,
-          // pin removed for security
         };
         if (attachmentUrls.length > 0) {
           updatePayload.attachmentUrls = initialData?.attachmentUrls 
@@ -125,13 +124,27 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
         }
         await updateDoc(doc(db, "achievements", docId), updatePayload);
       } else {
-        await addDoc(collection(db, "achievements"), {
-          ...formData,
+        // Save achievement WITHOUT the PIN — PIN is hashed separately via the API
+        const { pin, ...achievementData } = formData;
+        const docRef = await addDoc(collection(db, "achievements"), {
+          ...achievementData,
           attachmentUrls,
-          score: null, // Default to unreviewed
+          score: null,
           date: new Date().toISOString().split('T')[0],
           timestamp: serverTimestamp(),
         });
+        
+        // Store the PIN hash server-side (never stores the raw PIN)
+        try {
+          await fetch('/api/pin', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ achievementId: docRef.id, pin }),
+          });
+        } catch (pinErr) {
+          console.error('Failed to store PIN hash:', pinErr);
+          setAlertMsg('تم حفظ الإنجاز، لكن حدث خطأ في حفظ رمز الحماية.');
+        }
       }
       
       // Clear form and close modal
