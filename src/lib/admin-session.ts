@@ -17,6 +17,11 @@ export async function isAdminSession(): Promise<boolean> {
     
     if (!cookie) return false;
 
+    // Handle legacy cookie value "1" (set before idle timeout was added)
+    if (cookie === '1') {
+      return true; // Old sessions remain valid — will be migrated on next login
+    }
+
     // Parse the stored timestamp (base64 encoded)
     let loginTime: number;
     try {
