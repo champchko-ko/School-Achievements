@@ -65,6 +65,7 @@ export async function PUT(request: Request) {
 
     const { initializeApp, getApps, getApp } = await import('firebase/app');
     const { getFirestore, doc, setDoc } = await import('firebase/firestore');
+    const { pbkdf2Sync } = await import('crypto');
 
     const firebaseConfig = {
       apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -78,8 +79,19 @@ export async function PUT(request: Request) {
     const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
     const db = getFirestore(app);
 
+    // If admin PIN is provided, hash it and store in protected admin/pinConfig doc
+    if (body.adminPin) {
+      const pepper = process.env.PIN_PEPPER || 'school-achievements-default-pepper-change-in-production';
+      const salt = `admin-pin-${pepper}`;
+      const hash = pbkdf2Sync(body.adminPin, salt, 10000, 64, 'sha512').toString('hex');
+      await setDoc(doc(db, "admin", "pinConfig"), { pinHash: hash });
+    }
+
+    // Remove adminPin from settings data before saving to the public doc
+    const { adminPin, ...settingsData } = body;
+
     // Save settings (merge to preserve fields)
-    await setDoc(doc(db, "settings", "global_info"), body, { merge: true });
+    await setDoc(doc(db, "settings", "global_info"), settingsData, { merge: true });
 
     return NextResponse.json({ success: true });
   } catch (error: any) {

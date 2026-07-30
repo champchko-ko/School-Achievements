@@ -7,12 +7,10 @@ service firebase.storage {
       allow read: if true;
     }
 
-    // Restrict writes to authenticated admin users
-    // Note: This requires Firebase Auth to be active.
-    // For now, writes are open (since the app uses PIN-based admin).
-    // Upgrade: change to "allow write: if request.auth != null"
+    // Writes are denied — the app uploads files to Cloudinary, not Firebase Storage.
+    // Direct client-side writes to Firebase Storage are blocked for security.
     match /{allPaths=**} {
-      allow write: if true;
+      allow write: if false;
     }
   }
 }
