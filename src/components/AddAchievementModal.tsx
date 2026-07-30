@@ -211,7 +211,7 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-1">الاسم</label>
+              <label className="block text-sm font-bold text-gray-700 mb-1">الاسم *</label>
               {teachersList.length > 0 ? (
                 <select 
                   value={formData.teacherName}
@@ -234,7 +234,7 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
               )}
             </div>
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-1">القسم</label>
+              <label className="block text-sm font-bold text-gray-700 mb-1">القسم *</label>
               <select 
                 value={formData.department}
                 onChange={(e) => setFormData({...formData, department: e.target.value})}
@@ -248,7 +248,7 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
           </div>
 
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-1">عنوان الإنجاز</label>
+            <label className="block text-sm font-bold text-gray-700 mb-1">عنوان الإنجاز *</label>
             <input 
               type="text" 
               value={formData.title}
@@ -259,7 +259,7 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
           </div>
 
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-1">الوصف</label>
+            <label className="block text-sm font-bold text-gray-700 mb-1">الوصف *</label>
             <textarea 
               rows={3} 
               value={formData.desc}
