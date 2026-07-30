@@ -176,7 +176,7 @@ export default function SettingsPage() {
       )}
       
       {/* Header */}
-      <div className="bg-white rounded-2xl p-8 shadow-lg border border-purple-100/50 flex items-center gap-4">
+      <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 shadow-lg border border-purple-100/50 flex items-center gap-4">
         <div className="bg-gray-100 p-4 rounded-xl">
           <Settings className="text-gray-700" size={32} />
         </div>
@@ -186,7 +186,7 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-lg border border-purple-100/50 p-8 space-y-8">
+      <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg border border-purple-100/50 p-8 space-y-8">
         
         {/* Logo Upload Section */}
         <div className="flex flex-col md:flex-row gap-8 items-center border-b border-gray-100 pb-8">
