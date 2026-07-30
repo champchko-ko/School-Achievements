@@ -17,9 +17,19 @@ function hashPin(pin: string, achievementId: string): string {
   return hash.toString('hex');
 }
 
-// POST /api/pin — store a new PIN hash for an achievement
+// POST /api/pin — store a new PIN hash for an achievement (admin only)
+// Note: The client now uses POST /api/achievements which handles PIN storage internally.
+// This endpoint is kept for admin use only.
 export async function POST(request: Request) {
   try {
+    // Require admin session
+    const { cookies } = await import('next/headers');
+    const cookieStore = await cookies();
+    const isAdmin = cookieStore.get('admin_session')?.value === '1';
+    if (!isAdmin) {
+      return NextResponse.json({ error: 'غير مصرح بهذا الإجراء.' }, { status: 401 });
+    }
+
     // Rate limit: max 20 PIN storage requests per minute per IP
     const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
     const { allowed } = checkRateLimit(`pin-store:${ip}`, { maxRequests: 20, windowMs: 60_000 });
