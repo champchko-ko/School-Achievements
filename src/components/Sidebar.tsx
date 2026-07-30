@@ -81,16 +81,25 @@ export default function Sidebar() {
     fetchSettings();
   }, []);
 
-  const handleAdminSubmit = () => {
-    if (pinInput === '9999') {
-      setShowAdminPrompt(false);
-      setPinInput('');
-      setPinError('');
-      localStorage.setItem('isAdmin', 'true');
-      setIsAdmin(true);
-      router.push('/admin');
-    } else {
-      setPinError('رمز المرور غير صحيح!');
+  const handleAdminSubmit = async () => {
+    try {
+      const docRef = doc(db, "settings", "global_info");
+      const docSnap = await getDoc(docRef);
+      const adminPin = docSnap.exists() ? docSnap.data().adminPin : '9999';
+      
+      if (pinInput === adminPin) {
+        setShowAdminPrompt(false);
+        setPinInput('');
+        setPinError('');
+        localStorage.setItem('isAdmin', 'true');
+        setIsAdmin(true);
+        router.push('/admin');
+      } else {
+        setPinError('رمز المرور غير صحيح!');
+      }
+    } catch (error) {
+      console.error('Error checking admin PIN:', error);
+      setPinError('حدث خطأ في التحقق من الرمز');
     }
   };
 

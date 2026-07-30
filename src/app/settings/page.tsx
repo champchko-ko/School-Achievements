@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
-import { Settings, Building, Phone, User, UploadCloud, Save, Loader2, Image as ImageIcon, Trash2, Users, BookOpen } from 'lucide-react';
+import { Settings, Building, Phone, User, UploadCloud, Save, Loader2, Image as ImageIcon, Trash2, Users, BookOpen, ShieldCheck } , ShieldCheck } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export default function SettingsPage() {
@@ -19,6 +19,7 @@ export default function SettingsPage() {
     logoUrl: string;
     departments: string[];
     teachers: string[];
+    adminPin: string;
   }>({
     schoolName: '',
     managerName: '',
@@ -30,7 +31,8 @@ export default function SettingsPage() {
     phone: '',
     logoUrl: '',
     departments: ['الرياضيات', 'العلوم', 'اللغة العربية', 'الحاسب الآلي', 'التربية البدنية'],
-    teachers: []
+    teachers: [],
+    adminPin: ""
   });
 
   const [newDept, setNewDept] = useState('');
@@ -295,6 +297,25 @@ export default function SettingsPage() {
               placeholder="المدينة، الحي، الشارع..." 
               className="w-full bg-gray-50 border border-purple-100 rounded-xl p-3 focus:ring-2 focus:ring-[#46178f] outline-none transition-all" 
             />
+          </div>
+        </div>
+
+        {/* Admin PIN */}
+        <div className="border-t border-gray-100 pt-8 mt-8">
+          <div className="max-w-sm">
+            <h3 className="text-lg font-black text-gray-800 mb-4 flex items-center gap-2"><ShieldCheck size={20} className="text-[#ff6b00]" /> رمز الدخول الإداري</h3>
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-gray-700">رمز PIN المكون من 4 أرقام</label>
+              <input 
+                type="password" 
+                maxLength={4}
+                value={formData.adminPin}
+                onChange={(e) => setFormData({...formData, adminPin: e.target.value})}
+                placeholder="****" 
+                className="w-full bg-gray-50 border border-purple-100 rounded-xl p-3 focus:ring-2 focus:ring-[#46178f] outline-none transition-all tracking-[1em] text-center font-mono font-bold text-xl" 
+              />
+              <p className="text-xs text-gray-400 font-bold">استخدم هذا الرقم عند النقر على "دخول الإدارة" من القائمة الجانبية.</p>
+            </div>
           </div>
         </div>
 
