@@ -1,9 +1,11 @@
 // src/lib/useAdmin.ts
 // Custom hook to check admin authentication status
-// Uses cookie-based server-side session (secure) + localStorage (fast UI updates)
+// Uses cookie-based server-side session with idle timeout
 
 'use client';
 import { useState, useEffect, useCallback } from 'react';
+
+const CHECK_INTERVAL = 2 * 60 * 1000; // Check session every 2 minutes
 
 export function useAdmin() {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -11,13 +13,11 @@ export function useAdmin() {
 
   const checkAdmin = useCallback(async () => {
     try {
-      // First check the server session via cookie (the real auth)
       const res = await fetch('/api/auth');
       const data = await res.json();
       const adminStatus = data.admin === true;
 
       setIsAdmin(adminStatus);
-      // Sync localStorage with real auth status
       if (adminStatus) {
         localStorage.setItem('isAdmin', 'true');
       } else {
@@ -33,6 +33,9 @@ export function useAdmin() {
 
   useEffect(() => {
     checkAdmin();
+    // Periodically check session to detect idle timeout
+    const interval = setInterval(checkAdmin, CHECK_INTERVAL);
+    return () => clearInterval(interval);
   }, [checkAdmin]);
 
   return { isAdmin, loading, checkAdmin };
