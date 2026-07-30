@@ -72,9 +72,24 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
     }
   }, [isOpen, initialData]);
 
+  const allowedFileTypes = [
+    'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+    'application/pdf', 'application/msword', 
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'video/mp4', 'video/webm', 'video/quicktime',
+    'application/zip', 'application/x-rar-compressed',
+    'text/plain',
+  ];
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const newFiles = Array.from(e.target.files);
+      // Validate file types
+      const invalidFiles = newFiles.filter(f => !allowedFileTypes.includes(f.type));
+      if (invalidFiles.length > 0) {
+        setAlertMsg('نوع الملف غير مدعوم: ' + invalidFiles.map(f => f.name).join(', '));
+        return;
+      }
       setFiles((prev) => [...prev, ...newFiles]);
       e.target.value = ''; // Reset input to allow selecting the same file again
     }
@@ -262,7 +277,7 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
               className="hidden" 
               ref={fileInputRef} 
               onChange={handleFileChange} 
-              accept="*/*" 
+              accept="image/*,video/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,application/zip,.rar" 
               multiple
             />
             <CloudUpload size={32} className="text-[#46178f] mx-auto mb-2 cursor-pointer" onClick={() => fileInputRef.current?.click()} />

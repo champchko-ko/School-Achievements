@@ -3,6 +3,7 @@
 // The PIN itself is NEVER stored in Firestore - only a hash
 
 import { NextResponse } from 'next/server';
+import { checkRateLimit } from '../../../lib/rate-limit';
 import { pbkdf2Sync } from 'crypto';
 
 function getPepper(): string {
@@ -19,6 +20,13 @@ function hashPin(pin: string, achievementId: string): string {
 // POST /api/pin — store a new PIN hash for an achievement
 export async function POST(request: Request) {
   try {
+    // Rate limit: max 20 PIN storage requests per minute per IP
+    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+    const { allowed } = checkRateLimit(`pin-store:${ip}`, { maxRequests: 20, windowMs: 60_000 });
+    if (!allowed) {
+      return NextResponse.json({ error: 'محاولات كثيرة جداً. الرجاء الانتظار.' }, { status: 429 });
+    }
+
     const { achievementId, pin } = await request.json();
 
     if (!achievementId || !pin) {
@@ -60,6 +68,13 @@ export async function POST(request: Request) {
 // PUT /api/pin — verify a PIN against the stored hash
 export async function PUT(request: Request) {
   try {
+    // Rate limit: max 30 PIN verification attempts per minute per IP
+    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+    const { allowed } = checkRateLimit(`pin-verify:${ip}`, { maxRequests: 30, windowMs: 60_000 });
+    if (!allowed) {
+      return NextResponse.json({ valid: false, error: 'محاولات كثيرة جداً. الرجاء الانتظار.' }, { status: 429 });
+    }
+
     const { achievementId, pin } = await request.json();
 
     if (!achievementId || !pin) {

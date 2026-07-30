@@ -3,16 +3,6 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ========== Data Validation ==========
-    function isValidAchievement() {
-      return request.resource.data.keys().hasAll(['title', 'desc', 'teacherName', 'date'])
-        && request.resource.data.title is string
-        && request.resource.data.title.size() > 0
-        && request.resource.data.title.size() <= 500
-        && request.resource.data.desc is string
-        && request.resource.data.desc.size() <= 2000;
-    }
-
     // ========== Achievements Collection ==========
     match /achievements/{achievementId} {
       allow read: if true;
@@ -29,6 +19,14 @@ service cloud.firestore {
       allow read: if true;
       // Settings writes are handled server-side via /api/settings
       // which verifies admin session cookie.
+      allow write: if false;
+    }
+
+    // ========== Admin Collection (PIN hashes, etc.) ==========
+    match /admin/{document} {
+      // Admin data is only accessible server-side via API routes.
+      // Direct client-side access is denied.
+      allow read: if false;
       allow write: if false;
     }
 
