@@ -5,6 +5,7 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { Settings, Building, Phone, User, UploadCloud, Save, Loader2, Image as ImageIcon, Trash2, Users, BookOpen, ShieldCheck } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useAdmin } from '../../lib/useAdmin';
 
 export default function SettingsPage() {
   const [formData, setFormData] = useState<{
@@ -42,9 +43,17 @@ export default function SettingsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [notification, setNotification] = useState<{ type: string, message: string } | null>(null);
+  const { isAdmin, loading: adminLoading } = useAdmin();
   const router = useRouter();
 
   // Auto-dismiss notification
+  useEffect(() => {
+    if (!isAdmin && !adminLoading) {
+      router.replace('/');
+      return;
+    }
+  }, [isAdmin, adminLoading, router]);
+
   useEffect(() => {
     if (notification) {
       const timer = setTimeout(() => setNotification(null), 4000);
@@ -54,11 +63,6 @@ export default function SettingsPage() {
 
   // Load existing settings on page load
   useEffect(() => {
-    if (localStorage.getItem('isAdmin') !== 'true') {
-      router.replace('/');
-      return;
-    }
-
     const fetchSettings = async () => {
       try {
         const docRef = doc(db, "settings", "global_info");

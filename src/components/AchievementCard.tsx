@@ -6,6 +6,7 @@ import { Calendar, Paperclip, Pencil, Clock, Trophy, Medal, Award, Trash2, Video
 import { doc, deleteDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { db } from '../lib/firebase';
+import { useAdmin } from '../lib/useAdmin';
 import AddAchievementModal from './AddAchievementModal';
 
 
@@ -29,7 +30,7 @@ export default function AchievementCard({ data }: { data: any }) {
   const [pinInput, setPinInput] = useState('');
   const [pinError, setPinError] = useState('');
   const [showEditModal, setShowEditModal] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const { isAdmin } = useAdmin();
   const router = useRouter();
   const [showConfirm, setShowConfirm] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
@@ -37,7 +38,6 @@ export default function AchievementCard({ data }: { data: any }) {
 
   useEffect(() => {
     setMounted(true);
-    setIsAdmin(localStorage.getItem('isAdmin') === 'true');
   }, []);
 
   // Auto-dismiss notification
@@ -49,14 +49,12 @@ export default function AchievementCard({ data }: { data: any }) {
   }, [notification]);
 
   const handlePinSubmit = () => {
-    if (pinInput === data.pin) {
-      setShowPinPrompt(false);
-      setShowEditModal(true);
-      setPinInput('');
-      setPinError('');
-    } else {
-      setPinError('رمز الحماية غير صحيح!');
-    }
+    // Per-achievement PIN removed for security.
+    // Only server-side authenticated admins can edit.
+    setShowPinPrompt(false);
+    setShowEditModal(true);
+    setPinInput('');
+    setPinError('');
   };
 
   const handleDeleteClick = async (id: string) => {
@@ -143,26 +141,15 @@ export default function AchievementCard({ data }: { data: any }) {
 
       {mounted && createPortal(
         <>
-          {showPinPrompt && (
+          {showPinPrompt && !isAdmin && (
             <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60] animate-in fade-in duration-200">
               <div className="bg-white p-8 rounded-3xl shadow-2xl max-w-sm w-full mx-4 text-center animate-in zoom-in-95 duration-300" onClick={e => e.stopPropagation()}>
-                <h3 className="text-xl font-black text-[#46178f] mb-2">تعديل الإنجاز ✏️</h3>
-                <p className="text-sm text-gray-500 mb-6">الرجاء إدخال رمز الحماية (PIN) الخاص بهذا الإنجاز لتتمكن من تعديله.</p>
-                
-                <input 
-                  type="password"
-                  maxLength={4}
-                  value={pinInput} 
-                  onChange={e => setPinInput(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handlePinSubmit()}
-                  placeholder="****"
-                  className={`w-full text-center tracking-[1em] font-mono font-bold text-2xl bg-gray-50 border-2 rounded-xl p-3 outline-none transition-all ${pinError ? 'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100' : 'border-gray-200 focus:border-orange-400 focus:ring-4 focus:ring-orange-100'}`}
-                />
-                {pinError && <p className="text-red-500 font-bold text-sm mt-3 animate-in slide-in-from-top-1">{pinError}</p>}
+                <h3 className="text-xl font-black text-[#46178f] mb-2">تسجيل الدخول مطلوب 🔐</h3>
+                <p className="text-sm text-gray-500 mb-6">يجب تسجيل الدخول كمديرة أولاً لتتمكن من تعديل أو حذف الإنجازات.</p>
                 
                 <div className="flex gap-3 mt-6">
                   <button onClick={() => { setShowPinPrompt(false); setPinError(''); setPinInput(''); }} className="flex-1 py-3 rounded-xl font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 transition-colors">إلغاء</button>
-                  <button onClick={handlePinSubmit} className="flex-1 py-3 rounded-xl font-bold text-white bg-orange-500 hover:bg-orange-600 border-b-4 border-orange-700 active:border-b-0 active:translate-y-1 transition-all">تأكيد</button>
+                  <button onClick={() => { setShowPinPrompt(false); router.push('/'); }} className="flex-1 py-3 rounded-xl font-bold text-white bg-[#46178f] hover:bg-[#3a103a] transition-colors">الذهاب للرئيسية</button>
                 </div>
               </div>
             </div>

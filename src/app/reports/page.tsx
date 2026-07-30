@@ -4,6 +4,7 @@ import { collection, onSnapshot, query, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { Printer, BarChart3, Medal, UserSquare, FileSpreadsheet, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useAdmin } from '../../lib/useAdmin';
 
 export default function ReportsPage() {
   const [activeReport, setActiveReport] = useState('department');
@@ -12,10 +13,12 @@ export default function ReportsPage() {
   const [mounted, setMounted] = useState(false);
   const [selectedTeacher, setSelectedTeacher] = useState('all');
   const [schoolSettings, setSchoolSettings] = useState<{ schoolName?: string, logoUrl?: string } | null>(null);
+  const { isAdmin, loading: adminLoading } = useAdmin();
   const router = useRouter();
 
   useEffect(() => {
-    if (localStorage.getItem('isAdmin') !== 'true') {
+    if (adminLoading) return;
+    if (!isAdmin) {
       router.replace('/');
       return;
     }
@@ -27,7 +30,7 @@ export default function ReportsPage() {
       setIsLoading(false);
     });
     return () => unsubscribe();
-  }, []);
+  }, [isAdmin, adminLoading, router]);
 
   useEffect(() => {
     const fetchSettings = async () => {

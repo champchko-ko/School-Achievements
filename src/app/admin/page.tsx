@@ -4,11 +4,13 @@ import { useState, useEffect } from 'react';
 import { db } from '../../lib/firebase';
 import { collection, query, onSnapshot, doc, updateDoc, getDoc } from 'firebase/firestore';
 import { ShieldCheck, Trophy, Medal, Award, ExternalLink, Loader2, CheckCircle2, TrendingUp, Files, UserX } from 'lucide-react';
+import { useAdmin } from '../../lib/useAdmin';
 import { useRouter } from 'next/navigation';
 
 export default function AdminDashboard() {
   const [allAchievements, setAllAchievements] = useState<any[]>([]);
   const [allTeachers, setAllTeachers] = useState<string[]>([]);
+  const { isAdmin, loading: adminLoading } = useAdmin();
   const [isLoading, setIsLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [notification, setNotification] = useState<{ type: string, message: string } | null>(null);
@@ -22,7 +24,7 @@ export default function AdminDashboard() {
   }, [notification]);
 
   useEffect(() => {
-    if (localStorage.getItem('isAdmin') !== 'true') {
+    if (!isAdmin && !adminLoading) {
       router.replace('/');
       return;
     }
