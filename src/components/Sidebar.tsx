@@ -1,4 +1,5 @@
 "use client";
+import { cleanText } from "../lib/clean-text";
 import { Suspense, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
@@ -116,7 +117,7 @@ export default function Sidebar() {
           <img src={schoolSettings.logoUrl} alt="School Logo" className="w-14 h-14 sm:w-20 sm:h-20 object-contain bg-white rounded-2xl mb-2 sm:mb-3 shadow-md p-1" />
         )}
         <h1 className="text-lg sm:text-2xl font-black text-yellow-400 drop-shadow-md leading-tight break-words">
-          {schoolSettings?.schoolName || 'إنجازاتنا 🌟'}
+          {cleanText(schoolSettings?.schoolName) || "إنجازاتنا 🌟"}
         </h1>
         <p className="text-xs sm:text-sm mt-1 sm:mt-3 text-purple-200">المنصة الرقمية للتميز</p>
       </div>
