@@ -415,16 +415,26 @@ export default function FullRecordPage() {
           {showPinPrompt && !isAdmin && (
             <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60] animate-in fade-in duration-200 p-4">
               <div className="bg-white p-8 rounded-3xl shadow-2xl max-w-sm w-full text-center animate-in zoom-in-95 duration-300" onClick={e => e.stopPropagation()}>
-                <h3 className="text-xl font-black text-[#4a154b] mb-2">تسجيل الدخول مطلوب 🔐</h3>
-                <p className="text-sm text-gray-500 mb-6">يجب تسجيل الدخول كمديرة أولاً لتتمكن من تعديل أو حذف الإنجازات.</p>
-                <p className="text-sm text-gray-400 mb-6">استخدم زر "دخول الإدارة" في القائمة الجانبية.</p>
+                <h3 className="text-xl font-black text-[#4a154b] mb-2">تعديل الإنجاز ✏️</h3>
+                <p className="text-sm text-gray-500 mb-6">الرجاء إدخال رمز الحماية (PIN) الخاص بهذا الإنجاز لتتمكن من تعديله.</p>
+                
+                <input 
+                  type="password" 
+                  maxLength={4} 
+                  value={pinInput} 
+                  onChange={e => setPinInput(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handlePinSubmit()}
+                  placeholder="****"
+                  className={`w-full text-center tracking-[1em] font-mono font-bold text-2xl bg-gray-50 border-2 rounded-xl p-3 outline-none transition-all ${pinError ? 'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100' : 'border-gray-200 focus:border-[#e21b3c] focus:ring-4 focus:ring-red-100'}`}
+                />
+                {pinError && <p className="text-red-500 font-bold text-sm mt-3 animate-in slide-in-from-top-1">{pinError}</p>}
                 
                 <div className="flex gap-3 mt-6">
                   <button onClick={() => { setShowPinPrompt(false); setPinError(''); setPinInput(''); }} className="flex-1 py-3 rounded-xl font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 transition-colors">
                     إلغاء
                   </button>
-                  <button onClick={() => { setShowPinPrompt(false); window.location.href = '/'; }} className="flex-1 py-3 rounded-xl font-bold text-white bg-[#4a154b] hover:bg-[#3a103a] transition-colors">
-                    الذهاب للرئيسية
+                  <button onClick={handlePinSubmit} className="flex-1 py-3 rounded-xl font-bold text-white bg-[#4a154b] hover:bg-[#3a103a] transition-colors">
+                    تأكيد
                   </button>
                 </div>
               </div>
