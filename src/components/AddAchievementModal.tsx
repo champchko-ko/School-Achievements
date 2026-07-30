@@ -85,7 +85,11 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
     // Basic validation
     if (!formData.teacherName || !formData.title || !formData.desc) {
       console.log('Validation failed', { teacher: !!formData.teacherName, title: !!formData.title, desc: !!formData.desc, docId });
-      setAlertMsg("يرجى ملء جميع الحقول المطلوبة.");
+      const missing = [];
+      if (!formData.teacherName) missing.push('اسم المعلمة');
+      if (!formData.title) missing.push('عنوان الإنجاز');
+      if (!formData.desc) missing.push('الوصف');
+      setAlertMsg("الرجاء ملء: " + missing.join('، '));
       return;
     }
 
