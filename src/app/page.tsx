@@ -6,6 +6,7 @@ import AchievementCard from '../components/AchievementCard';
 import AddAchievementModal from '../components/AddAchievementModal';
 import { collection, onSnapshot, query, orderBy, doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import ErrorBoundary from '../components/ErrorBoundary';
 
 // Isolated component to read search params without affecting the main tree
 function SearchParamsWatcher({
@@ -34,6 +35,7 @@ function HomeContent() {
   const [achievements, setAchievements] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [schoolSettings, setSchoolSettings] = useState<{ schoolName?: string, logoUrl?: string } | null>(null);
+  const [firebaseError, setFirebaseError] = useState<string | null>(null);
 
   const displayedAchievements = teacherFilter 
     ? achievements.filter(a => a.teacherName === teacherFilter) 
@@ -54,15 +56,31 @@ function HomeContent() {
   };
 
   useEffect(() => {
-    const q = query(collection(db, 'achievements'), orderBy('timestamp', 'desc'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const achievementsData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setAchievements(achievementsData);
+    let q;
+    try {
+      q = query(collection(db, 'achievements'), orderBy('timestamp', 'desc'));
+    } catch (err) {
+      console.error('Error creating query:', err);
+      setFirebaseError('فشل في إنشاء الاستعلام');
       setIsLoading(false);
-    });
+      return;
+    }
+    
+    const unsubscribe = onSnapshot(q, 
+      (snapshot) => {
+        const achievementsData = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        setAchievements(achievementsData);
+        setIsLoading(false);
+      },
+      (error) => {
+        console.error('Firestore onSnapshot error:', error);
+        setFirebaseError('فشل في تحميل الإنجازات: ' + error.message);
+        setIsLoading(false);
+      }
+    );
 
     return () => unsubscribe();
   }, []);
@@ -84,7 +102,7 @@ function HomeContent() {
 
 
   return (
-    <div className="space-y-6 md:space-y-8 animate-in fade-in duration-500 pb-10 w-full max-w-full overflow-hidden">
+    <div className="space-y-6 md:space-y-8 pb-10 w-full max-w-full overflow-hidden">
       <Suspense fallback={null}>
         <SearchParamsWatcher onChange={handleParamsChange} />
       </Suspense>
@@ -110,6 +128,12 @@ function HomeContent() {
           + إنجاز جديد
         </button>
       </div>
+
+      {firebaseError && (
+        <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-2xl text-sm font-bold text-center">
+          {firebaseError}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
         <div className="bg-white rounded-2xl p-4 md:p-6 shadow-lg border-t-4 border-[#0087ed] flex items-center gap-3 md:gap-4 min-w-0">
@@ -161,6 +185,10 @@ function HomeContent() {
               <Loader2 className="animate-spin mb-4 text-yellow-400" size={40} />
               <p className="font-bold text-purple-200">جاري تحميل الإنجازات المباشرة...</p>
             </div>
+          ) : firebaseError ? (
+            <div className="col-span-full bg-white/95 backdrop-blur-sm rounded-2xl p-10 border-2 border-dashed border-red-200 text-center text-gray-400 shadow-lg">
+              <p className="font-bold text-red-500">تعذر تحميل الإنجازات. تحقق من اتصال الإنترنت.</p>
+            </div>
           ) : displayedAchievements.length === 0 ? (
             <div className="col-span-full bg-white/95 backdrop-blur-sm rounded-2xl p-10 border-2 border-dashed border-purple-200 text-center text-gray-400 shadow-lg">
               <p className="font-bold">{teacherFilter ? "لا توجد إنجازات لهذا المعلم حالياً." : "لا توجد إنجازات حتى الآن. كن أول من يضيف إنجازاً! 🚀"}</p>
@@ -178,5 +206,9 @@ function HomeContent() {
 }
 
 export default function Home() {
-  return <HomeContent />;
+  return (
+    <ErrorBoundary>
+      <HomeContent />
+    </ErrorBoundary>
+  );
 }
