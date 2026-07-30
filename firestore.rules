@@ -13,26 +13,23 @@ service cloud.firestore {
         && request.resource.data.desc.size() <= 2000;
     }
 
-    function isValidSettings() {
-      return request.resource.data.schoolName is string
-        && request.resource.data.schoolName.size() <= 200;
-    }
-
     // ========== Achievements Collection ==========
     match /achievements/{achievementId} {
       allow read: if true;
-      // Writes are open because the app uses PIN-based admin auth (client-side).
-      // Data validation prevents malformed documents.
-      // Upgrade: Add Firebase Auth + change to "allow write: if request.auth != null"
-      allow create: if isValidAchievement();
-      allow update: if true;
-      allow delete: if true;
+      // All writes are handled server-side via Next.js API routes
+      // which verify admin session cookie or achievement PIN.
+      // Direct client-side writes are denied for security.
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
 
     // ========== Settings Collection ==========
     match /settings/{settingId} {
       allow read: if true;
-      allow write: if isValidSettings();
+      // Settings writes are handled server-side via /api/settings
+      // which verifies admin session cookie.
+      allow write: if false;
     }
 
     // ========== Default Deny ==========

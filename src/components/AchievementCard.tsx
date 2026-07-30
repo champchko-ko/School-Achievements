@@ -3,9 +3,8 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Calendar, Paperclip, Pencil, Clock, Trophy, Medal, Award, Trash2, Video } from 'lucide-react';
-import { doc, deleteDoc } from 'firebase/firestore';
+// Firebase imports removed — all writes go through API
 import { useRouter } from 'next/navigation';
-import { db } from '../lib/firebase';
 import { useAdmin } from '../lib/useAdmin';
 import AddAchievementModal from './AddAchievementModal';
 
@@ -29,6 +28,7 @@ export default function AchievementCard({ data }: { data: any }) {
   const [showPinPrompt, setShowPinPrompt] = useState(false);
   const [pinInput, setPinInput] = useState('');
   const [pinError, setPinError] = useState('');
+  const [verifiedPin, setVerifiedPin] = useState('');
   const [showEditModal, setShowEditModal] = useState(false);
   const { isAdmin } = useAdmin();
   const router = useRouter();
@@ -58,6 +58,7 @@ export default function AchievementCard({ data }: { data: any }) {
       const result = await res.json();
       
       if (result.valid) {
+        setVerifiedPin(pinInput);
         setShowPinPrompt(false);
         setShowEditModal(true);
         setPinInput('');
@@ -80,11 +81,15 @@ export default function AchievementCard({ data }: { data: any }) {
     if (!pendingDeleteId) return;
     setShowConfirm(false);
     try {
-      await deleteDoc(doc(db, "achievements", pendingDeleteId));
+      const res = await fetch(`/api/achievements/${pendingDeleteId}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || 'فشل الحذف');
+      }
       setNotification({ type: "success", message: "تم حذف الإنجاز بنجاح! 🗑️" });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error deleting document:", error);
-      setNotification({ type: "error", message: "حدث خطأ أثناء الحذف." });
+      setNotification({ type: "error", message: error.message || "حدث خطأ أثناء الحذف." });
     }
     setPendingDeleteId(null);
   };
@@ -210,6 +215,7 @@ export default function AchievementCard({ data }: { data: any }) {
             onClose={() => setShowEditModal(false)} 
             initialData={data} 
             docId={data.id} 
+            verifiedPin={verifiedPin} 
           />
         </>,
         document.body

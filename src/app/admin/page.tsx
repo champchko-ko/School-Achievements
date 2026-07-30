@@ -2,7 +2,7 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { db } from '../../lib/firebase';
-import { collection, query, onSnapshot, doc, updateDoc, getDoc } from 'firebase/firestore';
+import { collection, query, onSnapshot, doc, getDoc } from 'firebase/firestore';
 import { ShieldCheck, Trophy, Medal, Award, ExternalLink, Loader2, CheckCircle2, TrendingUp, Files, UserX } from 'lucide-react';
 import { useAdmin } from '../../lib/useAdmin';
 import { useRouter } from 'next/navigation';
@@ -89,14 +89,19 @@ export default function AdminDashboard() {
   const handleScore = async (id: string, score: number) => {
     setProcessingId(id);
     try {
-      const achievementRef = doc(db, "achievements", id);
-      await updateDoc(achievementRef, {
-        score: score
+      const res = await fetch(`/api/achievements/${id}/score`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ score }),
       });
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || 'فشل التقييم');
+      }
       // The onSnapshot listener will automatically remove it from this list!
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating score:", error);
-      setNotification({ type: "error", message: "حدث خطأ أثناء تقييم الإنجاز." });
+      setNotification({ type: "error", message: error.message || "حدث خطأ أثناء تقييم الإنجاز." });
     } finally {
       setProcessingId(null);
     }

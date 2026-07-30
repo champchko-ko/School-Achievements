@@ -1,0 +1,114 @@
+// src/app/api/achievements/[id]/route.ts
+// PUT: Update an achievement (admin session OR correct PIN required)
+// DELETE: Delete an achievement (admin session required)
+
+import { NextResponse } from 'next/server';
+import { pbkdf2Sync } from 'crypto';
+
+function getPepper(): string {
+  return process.env.PIN_PEPPER || 'school-achievements-default-pepper-change-in-production';
+}
+
+function hashPin(pin: string, achievementId: string): string {
+  const pepper = getPepper();
+  const salt = `${achievementId}-${pepper}`;
+  const hash = pbkdf2Sync(pin, salt, 10000, 64, 'sha512');
+  return hash.toString('hex');
+}
+
+async function isAdminSession(): Promise<boolean> {
+  try {
+    const { cookies } = await import('next/headers');
+    const cookieStore = await cookies();
+    return cookieStore.get('admin_session')?.value === '1';
+  } catch {
+    return false;
+  }
+}
+
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { id } = await params;
+    const body = await request.json();
+    const isAdmin = await isAdminSession();
+
+    const { initializeApp, getApps, getApp } = await import('firebase/app');
+    const { getFirestore, doc, getDoc, updateDoc } = await import('firebase/firestore');
+
+    const firebaseConfig = {
+      apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+      authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+      messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+      appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+    };
+
+    const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+    const db = getFirestore(app);
+
+    const docSnap = await getDoc(doc(db, 'achievements', id));
+    if (!docSnap.exists()) {
+      return NextResponse.json({ error: 'Achievement not found' }, { status: 404 });
+    }
+
+    // Check authorization: admin session OR correct PIN
+    if (!isAdmin) {
+      const { pin, ...updateData } = body;
+      if (!pin) {
+        return NextResponse.json({ error: 'PIN مطلوب لتعديل هذا الإنجاز' }, { status: 401 });
+      }
+      const storedHash = docSnap.data()?.pinHash;
+      if (!storedHash) {
+        return NextResponse.json({ error: 'لا يوجد رمز حماية لهذا الإنجاز' }, { status: 401 });
+      }
+      const inputHash = hashPin(pin, id);
+      if (inputHash !== storedHash) {
+        return NextResponse.json({ error: 'رمز الحماية غير صحيح!' }, { status: 401 });
+      }
+    }
+
+    // Build update payload (strip pin from the data)
+    const { pin: _, ...updatePayload } = body;
+    
+    await updateDoc(doc(db, 'achievements', id), updatePayload);
+
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    console.error('Update achievement error:', error?.message || error);
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { id } = await params;
+    const isAdmin = await isAdminSession();
+
+    if (!isAdmin) {
+      return NextResponse.json({ error: 'غير مصرح بهذا الإجراء. تسجيل الدخول كمدير مطلوب.' }, { status: 401 });
+    }
+
+    const { initializeApp, getApps, getApp } = await import('firebase/app');
+    const { getFirestore, doc, deleteDoc } = await import('firebase/firestore');
+
+    const firebaseConfig = {
+      apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+      authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+      messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+      appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+    };
+
+    const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+    const db = getFirestore(app);
+
+    await deleteDoc(doc(db, 'achievements', id));
+
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    console.error('Delete achievement error:', error?.message || error);
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+  }
+}
