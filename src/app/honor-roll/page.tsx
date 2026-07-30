@@ -33,9 +33,9 @@ export default function HonorRoll() {
 
       // 3. Construct Podium Array: [Silver(2), Gold(1), Bronze(3)]
       const constructedPodium = [];
-      if (sorted[1]) constructedPodium.push({ id: 2, ...sorted[1], rank: 2, height: "h-32", color: "bg-[#d1d5db]", textColor: "text-gray-700", icon: <Medal size={32} /> });
-      if (sorted[0]) constructedPodium.push({ id: 1, ...sorted[0], rank: 1, height: "h-44", color: "bg-[#ffb000]", textColor: "text-yellow-900", icon: <Trophy size={40} /> });
-      if (sorted[2]) constructedPodium.push({ id: 3, ...sorted[2], rank: 3, height: "h-24", color: "bg-[#cd7f32]", textColor: "text-orange-950", icon: <Award size={28} /> });
+      if (sorted[1]) constructedPodium.push({ id: 2, ...sorted[1], rank: 2, height: "h-32", color: "bg-[#C0C0C0]", textColor: "text-gray-700", icon: <Medal size={32} /> });
+      if (sorted[0]) constructedPodium.push({ id: 1, ...sorted[0], rank: 1, height: "h-44", color: "bg-[#FFD700]", textColor: "text-yellow-900", icon: <Trophy size={40} /> });
+      if (sorted[2]) constructedPodium.push({ id: 3, ...sorted[2], rank: 3, height: "h-24", color: "bg-[#CD7F32]", textColor: "text-white", icon: <Award size={28} /> });
 
       setPodiumData(constructedPodium);
       setIsLoading(false);
