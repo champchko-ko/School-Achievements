@@ -145,9 +145,6 @@ function HomeContent() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {/* School name and logo */}
             <div className="flex items-center gap-3 md:col-span-2 lg:col-span-1">
-              {schoolSettings.logoUrl && (
-                <img src={schoolSettings.logoUrl} alt="School Logo" className="w-12 h-12 md:w-14 md:h-14 object-contain rounded-xl border border-gray-100 shadow-sm p-1" />
-              )}
               <div>
                 {schoolSettings.schoolName && (
                   <h2 className="text-lg md:text-xl font-black text-[#46178f]">{schoolSettings.schoolName}</h2>
