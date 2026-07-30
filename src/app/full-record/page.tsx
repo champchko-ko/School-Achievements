@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { collection, onSnapshot, query, orderBy, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import AddAchievementModal from '../../components/AddAchievementModal';
+import { sanitizeText } from '../../lib/sanitize';
 
 const getScoreBadge = (score: number | null) => {
   if (score === null) return <span className="bg-gray-100 text-gray-500 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 w-fit"><Clock size={14} /> مراجعة</span>;
@@ -136,7 +137,11 @@ export default function FullRecordPage() {
               if (row.attachmentUrls) links.push(...row.attachmentUrls);
               if (row.attachmentUrl) links.push(row.attachmentUrl);
               const attachmentsHtml = links.map((url, i) => `<a href="${url}">مرفق ${i + 1}</a>`).join("<br/>");
-              return `<tr><td>${row.teacherName || ''}</td><td>${row.department || ''}</td><td>${row.title || ''}</td><td>${row.date || ''}</td><td>${row.score ?? 'قيد المراجعة'}</td><td>${attachmentsHtml}</td></tr>`;
+              const safeTeacher = sanitizeText(row.teacherName || '');
+              const safeDept = sanitizeText(row.department || '');
+              const safeTitle = sanitizeText(row.title || '');
+              const safeDate = sanitizeText(row.date || '');
+              return `<tr><td>${safeTeacher}</td><td>${safeDept}</td><td>${safeTitle}</td><td>${safeDate}</td><td>${row.score ?? 'قيد المراجعة'}</td><td>${attachmentsHtml}</td></tr>`;
             }).join('')}
           </tbody>
         </table>

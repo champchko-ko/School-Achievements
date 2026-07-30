@@ -3,6 +3,7 @@
 // Stores achievement data + handles PIN hashing server-side
 
 import { NextResponse } from 'next/server';
+import { sanitizeAchievementPayload } from '../../../lib/sanitize';
 import { pbkdf2Sync } from 'crypto';
 
 function getPepper(): string {
@@ -21,7 +22,15 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { teacherName, department, title, desc, attachmentUrls, pin } = body;
 
-    if (!teacherName || !title || !desc) {
+    // Sanitize all user-supplied text
+    const sanitized = sanitizeAchievementPayload({ teacherName, department, title, desc, attachmentUrls });
+    const sTeacherName = sanitized.teacherName;
+    const sDepartment = sanitized.department;
+    const sTitle = sanitized.title;
+    const sDesc = sanitized.desc;
+    const sAttachmentUrls = sanitized.attachmentUrls;
+
+    if (!sTeacherName || !sTitle || !sDesc) {
       return NextResponse.json({ error: 'teacherName, title, and desc are required' }, { status: 400 });
     }
 
@@ -43,10 +52,10 @@ export async function POST(request: Request) {
     // Create the achievement document
     const docRef = await addDoc(collection(db, "achievements"), {
       teacherName,
-      department: department || '',
+      department: sDepartment || '',
       title,
       desc,
-      attachmentUrls: attachmentUrls || [],
+      attachmentUrls: sAttachmentUrls || [],
       score: null,
       date: new Date().toISOString().split('T')[0],
       timestamp: serverTimestamp(),
