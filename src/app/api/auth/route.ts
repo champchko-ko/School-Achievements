@@ -1,9 +1,8 @@
 // src/app/api/auth/route.ts
 import { NextResponse } from 'next/server';
 import { checkRateLimit } from '../../../lib/rate-limit';
+import { isAdminSession, createSessionValue, getSessionCookieOptions } from '../../../lib/admin-session';
 import { pbkdf2Sync } from 'crypto';
-
-const SESSION_COOKIE = 'admin_session';
 
 function hashAdminPin(pin: string): string {
   const pepper = process.env.PIN_PEPPER || 'school-achievements-default-pepper-change-in-production';
@@ -12,12 +11,10 @@ function hashAdminPin(pin: string): string {
   return hash.toString('hex');
 }
 
-// GET: Check if admin is authenticated (by cookie)
+// GET: Check if admin is authenticated (by cookie with idle timeout)
 export async function GET() {
-  const { cookies } = await import('next/headers');
-  const cookieStore = await cookies();
-  const session = cookieStore.get(SESSION_COOKIE)?.value;
-  return NextResponse.json({ admin: session === '1' });
+  const admin = await isAdminSession();
+  return NextResponse.json({ admin });
 }
 
 // POST: Verify PIN via Firestore and set session cookie
@@ -92,13 +89,9 @@ export async function POST(request: Request) {
 
     // Set httpOnly session cookie
     const response = NextResponse.json({ admin: true });
-    response.cookies.set(SESSION_COOKIE, '1', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-    });
+    const sessionValue = createSessionValue();
+    const cookieOptions = getSessionCookieOptions();
+    response.cookies.set('admin_session', sessionValue, cookieOptions);
 
     return response;
   } catch (error) {
@@ -110,6 +103,6 @@ export async function POST(request: Request) {
 // DELETE: Logout (clear session cookie)
 export async function DELETE() {
   const response = NextResponse.json({ admin: false });
-  response.cookies.delete(SESSION_COOKIE);
+  response.cookies.delete('admin_session');
   return response;
 }

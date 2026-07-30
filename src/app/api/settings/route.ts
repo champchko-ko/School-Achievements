@@ -3,17 +3,9 @@
 // PUT: Update settings (admin session required)
 
 import { NextResponse } from 'next/server';
+import { isAdminSession } from '../../../lib/admin-session';
 import { sanitizeSettingsPayload } from '../../../lib/sanitize';
 
-async function isAdminSession(): Promise<boolean> {
-  try {
-    const { cookies } = await import('next/headers');
-    const cookieStore = await cookies();
-    return cookieStore.get('admin_session')?.value === '1';
-  } catch {
-    return false;
-  }
-}
 
 export async function GET() {
   try {
