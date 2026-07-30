@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import { Search, Filter, DownloadCloud, FileText, Trophy, Clock, Medal, Award, Loader2, Pencil, Trash2, Eye } from 'lucide-react';
 import { useAdmin } from '../../lib/useAdmin';
 import Link from 'next/link';
-import { collection, onSnapshot, query, orderBy, doc, deleteDoc, getDoc } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import AddAchievementModal from '../../components/AddAchievementModal';
 
@@ -41,6 +41,7 @@ export default function FullRecordPage() {
   const [showPinPrompt, setShowPinPrompt] = useState(false);
   const [pinInput, setPinInput] = useState('');
   const [pinError, setPinError] = useState('');
+  const [verifiedPin, setVerifiedPin] = useState('');
   const [showEditModal, setShowEditModal] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
@@ -166,6 +167,7 @@ export default function FullRecordPage() {
       const result = await res.json();
       
       if (result.valid) {
+        setVerifiedPin(pinInput);
         setShowPinPrompt(false);
         setShowEditModal(true);
         setPinInput('');
@@ -188,11 +190,15 @@ export default function FullRecordPage() {
     if (!pendingDeleteId) return;
     setShowConfirm(false);
     try {
-      await deleteDoc(doc(db, "achievements", pendingDeleteId));
+      const res = await fetch(`/api/achievements/${pendingDeleteId}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || 'فشل الحذف');
+      }
       setNotification({ type: "success", message: "تم حذف الإنجاز بنجاح! 🗑️" });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error deleting document:", error);
-      setNotification({ type: "error", message: "حدث خطأ أثناء الحذف." });
+      setNotification({ type: "error", message: error.message || "حدث خطأ أثناء الحذف." });
     }
     setPendingDeleteId(null);
   };
@@ -485,6 +491,7 @@ export default function FullRecordPage() {
                 setShowEditModal(false);
                 setSelectedDoc(null);
               }}
+              verifiedPin={verifiedPin}
               initialData={selectedDoc} docId={selectedDoc.id}
             />
           )}

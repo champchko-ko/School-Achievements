@@ -1,8 +1,7 @@
 // src/app/settings/page.tsx
 "use client";
 import { useState, useEffect } from 'react';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
+// Settings data now fetched via API
 import { Settings, Building, Phone, User, UploadCloud, Save, Loader2, Image as ImageIcon, Trash2, Users, BookOpen, ShieldCheck } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAdmin } from '../../lib/useAdmin';
@@ -65,10 +64,9 @@ export default function SettingsPage() {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const docRef = doc(db, "settings", "global_info");
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          const data = docSnap.data();
+        const res = await fetch('/api/settings');
+        if (res.ok) {
+          const data = await res.json();
           setFormData(prev => ({
             ...prev,
             ...data,
@@ -131,9 +129,16 @@ export default function SettingsPage() {
         logoUrl: finalLogoUrl
       };
 
-      // 2. Save all data to the single Firestore document
-      const docRef = doc(db, "settings", "global_info");
-      await setDoc(docRef, finalData, { merge: true }); // Merge ensures we don't accidentally delete fields we didn't update
+      // 2. Save all data via API
+      const res = await fetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(finalData),
+      });
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || 'فشل حفظ الإعدادات');
+      }
 
       setNotification({ type: "success", message: "تم حفظ الإعدادات بنجاح! ✅" });
       setSelectedFile(null); // Clear the file input

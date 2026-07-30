@@ -3,10 +3,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, CloudUpload, Lock, Loader2 } from 'lucide-react';
-import { collection, addDoc, serverTimestamp, doc, updateDoc, getDoc } from 'firebase/firestore';
+import { collection, doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
-export default function AddAchievementModal({ isOpen, onClose, initialData, docId }: { isOpen: boolean, onClose: () => void, initialData?: any, docId?: string }) {
+export default function AddAchievementModal({ isOpen, onClose, initialData, docId, verifiedPin }: { isOpen: boolean, onClose: () => void, initialData?: any, docId?: string, verifiedPin?: string }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [mounted, setMounted] = useState(false);
@@ -116,7 +116,7 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
         attachmentUrls = await Promise.all(uploadPromises);
       }
 
-      // Send data to Firestore (Add or Update)
+      // Send data via API (Add or Update)
       if (docId) {
         const updatePayload: any = {
           teacherName: formData.teacherName,
@@ -129,37 +129,37 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
             ? [...initialData.attachmentUrls, ...attachmentUrls] 
             : attachmentUrls;
         }
-        await updateDoc(doc(db, "achievements", docId), updatePayload);
+        // If we have a verified PIN, send it for server-side auth
+        if (verifiedPin) {
+          updatePayload.pin = verifiedPin;
+        }
+        const res = await fetch(`/api/achievements/${docId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatePayload),
+        });
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.error || 'فشل تحديث الإنجاز');
+        }
       } else {
-        // Save achievement WITHOUT the PIN — PIN is hashed separately via the API
+        // Create via API (PIN is hashed server-side)
         const { pin, ...achievementData } = formData;
-        console.log('Saving achievement', achievementData);
-        let docRef: any;
-        try {
-        docRef = await addDoc(collection(db, "achievements"), {
+        const createPayload: any = {
           ...achievementData,
           attachmentUrls,
-          score: null,
-          date: new Date().toISOString().split('T')[0],
-          timestamp: serverTimestamp(),
-        });
-        
-        console.log('addDoc succeeded, docRef.id:', docRef.id, 'docRef.path:', docRef.path);
-        } catch (addErr) {
-          console.error('addDoc failed:', addErr);
-          setAlertMsg('فشل حفظ الإنجاز في قاعدة البيانات');
-          setIsSubmitting(false);
-          return;
-        }
-        // Store the PIN hash server-side (fire-and-forget)
+        };
         if (pin) {
-          fetch('/api/pin', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ achievementId: docRef.id, pin }),
-          }).catch(pinErr => {
-            console.error('Failed to store PIN hash:', pinErr);
-          });
+          createPayload.pin = pin;
+        }
+        const res = await fetch('/api/achievements', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(createPayload),
+        });
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.error || 'فشل حفظ الإنجاز في قاعدة البيانات');
         }
       }
       
