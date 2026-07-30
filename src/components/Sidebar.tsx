@@ -7,6 +7,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Home, PlusCircle, BookOpen, Printer, Trophy, ShieldCheck, LogOut, Settings, MonitorPlay, Menu, X } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { useAdmin } from '../lib/useAdmin';
 
 function SidebarLinks({ isAdmin, onClose }: { isAdmin: boolean; onClose?: () => void }) {
   const pathname = usePathname();
@@ -58,14 +59,13 @@ export default function Sidebar() {
   const [showAdminPrompt, setShowAdminPrompt] = useState(false);
   const [pinInput, setPinInput] = useState('');
   const [pinError, setPinError] = useState('');
+  const { isAdmin, loading: adminLoading, checkAdmin } = useAdmin();
   const [mounted, setMounted] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [schoolSettings, setSchoolSettings] = useState<{ schoolName?: string; logoUrl?: string } | null>(null);
 
   useEffect(() => {
     setMounted(true);
-    setIsAdmin(localStorage.getItem('isAdmin') === 'true');
 
     const fetchSettings = async () => {
       try {
@@ -85,14 +85,18 @@ export default function Sidebar() {
     try {
       const docRef = doc(db, "settings", "global_info");
       const docSnap = await getDoc(docRef);
-      const adminPin = docSnap.exists() ? docSnap.data().adminPin : '9999';
+      // Verify PIN via server API (sets httpOnly cookie)
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin: pinInput }),
+      });
       
-      if (pinInput === adminPin) {
+      if (res.ok) {
         setShowAdminPrompt(false);
         setPinInput('');
         setPinError('');
-        localStorage.setItem('isAdmin', 'true');
-        setIsAdmin(true);
+        checkAdmin(); // refresh admin state
         router.push('/admin');
       } else {
         setPinError('رمز المرور غير صحيح!');
@@ -103,9 +107,9 @@ export default function Sidebar() {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('isAdmin');
-    setIsAdmin(false);
+  const handleLogout = async () => {
+    await fetch('/api/auth', { method: 'DELETE' });
+    checkAdmin();
     router.push('/');
   };
 
