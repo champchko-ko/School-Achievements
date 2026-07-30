@@ -155,13 +155,14 @@ export default function ReportsPage() {
           </p>
         </div>
         
+        <div className="overflow-x-auto">
         <table className="w-full text-right border-collapse">
           <thead>
             <tr className="bg-purple-50 border-b-2 border-purple-200 text-[#46178f] print:bg-white print:text-black">
               <th className="p-4 font-bold">الترتيب</th>
               <th className="p-4 font-bold">المعلمة</th>
               <th className="p-4 font-bold">القسم</th>
-              <th className="p-4 font-bold text-center">إجمالي الإنجازات</th>
+              <th className="p-4 font-bold text-center whitespace-nowrap">إجمالي الإنجازات</th>
             </tr>
           </thead>
           <tbody>
@@ -173,7 +174,7 @@ export default function ReportsPage() {
                   {idx === 1 && <Medal className="text-gray-400" size={20} />}
                   {idx === 2 && <Medal className="text-orange-500" size={20} />}
                   {stat.name}
-                </td>
+                </div></td>
                 <td className="p-4 text-gray-600 font-bold">{stat.department}</td>
                 <td className="p-4 text-center font-bold text-[#0087ed] text-lg">{stat.count}</td>
               </tr>
