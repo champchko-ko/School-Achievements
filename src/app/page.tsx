@@ -1,8 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Users, Star, Award, Loader2, X } from 'lucide-react';
-import AchievementCard from '../components/AchievementCard';
+import { Users, Star, Award, Loader2, X, Clock, Trophy, Medal } from 'lucide-react';
 import AddAchievementModal from '../components/AddAchievementModal';
 import { collection, onSnapshot, query, orderBy, doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -39,6 +38,14 @@ function HomeContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [schoolSettings, setSchoolSettings] = useState<{ schoolName?: string, logoUrl?: string } | null>(null);
   const [firebaseError, setFirebaseError] = useState<string | null>(null);
+
+  // Score badge renderer for table
+  const getBadge = (score: number | null) => {
+    if (score === null) return <span className="bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full text-[10px] md:text-xs font-bold flex items-center gap-1 w-fit"><Clock size={12} /> قيد المراجعة</span>;
+    if (score >= 90) return <span className="bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full text-[10px] md:text-xs font-bold flex items-center gap-1 w-fit"><Trophy size={12} /> {score} ذهبي</span>;
+    if (score >= 75) return <span className="bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full text-[10px] md:text-xs font-bold flex items-center gap-1 w-fit"><Medal size={12} /> {score} فضي</span>;
+    return <span className="bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full text-[10px] md:text-xs font-bold flex items-center gap-1 w-fit"><Award size={12} /> {score} برونزي</span>;
+  };
 
   const displayedAchievements = teacherFilter 
     ? achievements.filter(a => a.teacherName === teacherFilter) 
@@ -136,8 +143,9 @@ function HomeContent() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-        <div className="bg-white rounded-2xl p-4 md:p-6 shadow-lg border-t-4 border-[#0087ed] flex items-center gap-3 md:gap-4 min-w-0">
+      {/* Stats cards: horizontal scroll on mobile, grid on desktop */}
+      <div className="flex overflow-x-auto overflow-y-hidden gap-4 snap-x snap-mandatory pb-2 md:grid md:grid-cols-3 md:overflow-visible md:pb-0 md:gap-6 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent -mx-4 px-4 md:mx-0 md:px-0">
+        <div className="bg-white rounded-2xl p-4 md:p-6 shadow-lg border-t-4 border-[#0087ed] flex items-center gap-3 md:gap-4 min-w-[200px] md:min-w-0 snap-center shrink-0">
           <div className="bg-blue-100 p-3 md:p-4 rounded-xl text-[#0087ed] shrink-0"><Award size={24} className="md:size-[32px]" /></div>
           <div>
             <p className="text-gray-500 text-xs md:text-sm font-bold truncate">إجمالي الإنجازات</p>
@@ -146,7 +154,7 @@ function HomeContent() {
             </p>
           </div>
         </div>
-        <div className="bg-white rounded-2xl p-4 md:p-6 shadow-lg border-t-4 border-[#26890c] flex items-center gap-3 md:gap-4 min-w-0">
+        <div className="bg-white rounded-2xl p-4 md:p-6 shadow-lg border-t-4 border-[#26890c] flex items-center gap-3 md:gap-4 min-w-[200px] md:min-w-0 snap-center shrink-0">
           <div className="bg-green-100 p-3 md:p-4 rounded-xl text-[#26890c] shrink-0"><Users size={24} className="md:size-[32px]" /></div>
           <div>
             <p className="text-gray-500 text-xs md:text-sm font-bold truncate">المعلمات المشاركات</p>
@@ -155,7 +163,7 @@ function HomeContent() {
             </p>
           </div>
         </div>
-        <div className="bg-white rounded-2xl p-4 md:p-6 shadow-lg border-t-4 border-[#ffb000] flex items-center gap-3 md:gap-4 min-w-0">
+        <div className="bg-white rounded-2xl p-4 md:p-6 shadow-lg border-t-4 border-[#ffb000] flex items-center gap-3 md:gap-4 min-w-[200px] md:min-w-0 snap-center shrink-0">
           <div className="bg-yellow-100 p-3 md:p-4 rounded-xl text-[#ffb000] shrink-0"><Star size={24} className="md:size-[32px]" /></div>
           <div>
             <p className="text-gray-500 text-xs md:text-sm font-bold truncate">إنجازات مميزة</p>
@@ -180,24 +188,47 @@ function HomeContent() {
           </div>
         )}
         
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
+        <div className="overflow-x-auto rounded-2xl shadow-lg bg-white">
           {isLoading ? (
-            <div className="col-span-full flex flex-col items-center justify-center py-12 text-purple-200">
+            <div className="flex flex-col items-center justify-center py-12 text-purple-200">
               <Loader2 className="animate-spin mb-4 text-yellow-400" size={40} />
               <p className="font-bold text-purple-200">جاري تحميل الإنجازات المباشرة...</p>
             </div>
           ) : firebaseError ? (
-            <div className="col-span-full bg-white/95 backdrop-blur-sm rounded-2xl p-10 border-2 border-dashed border-red-200 text-center text-gray-400 shadow-lg">
+            <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-10 border-2 border-dashed border-red-200 text-center text-gray-400 shadow-lg">
               <p className="font-bold text-red-500">تعذر تحميل الإنجازات. تحقق من اتصال الإنترنت.</p>
             </div>
           ) : displayedAchievements.length === 0 ? (
-            <div className="col-span-full bg-white/95 backdrop-blur-sm rounded-2xl p-10 border-2 border-dashed border-purple-200 text-center text-gray-400 shadow-lg">
+            <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-10 border-2 border-dashed border-purple-200 text-center text-gray-400 shadow-lg">
               <p className="font-bold">{teacherFilter ? "لا توجد إنجازات لهذه المعلمة حالياً." : "لا توجد إنجازات حتى الآن. كن أول من يضيف إنجازاً! 🚀"}</p>
             </div>
           ) : (
-            displayedAchievements.map((achievement) => (
-              <AchievementCard key={achievement.id} data={achievement} />
-            ))
+            <table className="w-full text-right table-auto min-w-[600px]">
+              <thead>
+                <tr className="bg-gray-50 border-b-2 border-gray-200">
+                  <th className="p-3 md:p-4 whitespace-nowrap text-xs md:text-sm font-bold text-gray-600">المعلمة</th>
+                  <th className="p-3 md:p-4 whitespace-nowrap text-xs md:text-sm font-bold text-gray-600">القسم</th>
+                  <th className="p-3 md:p-4 whitespace-nowrap text-xs md:text-sm font-bold text-gray-600">العنوان</th>
+                  <th className="p-3 md:p-4 whitespace-nowrap text-xs md:text-sm font-bold text-gray-600">التقييم</th>
+                  <th className="p-3 md:p-4 whitespace-nowrap text-xs md:text-sm font-bold text-gray-600">التاريخ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {displayedAchievements.map((achievement) => (
+                  <tr 
+                    key={achievement.id} 
+                    onClick={() => router.push(`/achievement/${achievement.id}`)}
+                    className="border-b border-gray-100 hover:bg-purple-50/50 transition-colors cursor-pointer"
+                  >
+                    <td className="p-3 md:p-4 text-xs md:text-sm font-bold text-[#46178f]">{achievement.teacherName || ''}</td>
+                    <td className="p-3 md:p-4 text-xs md:text-sm text-gray-500">{achievement.department || ''}</td>
+                    <td className="p-3 md:p-4 text-xs md:text-sm font-bold text-gray-800 max-w-[200px] truncate" title={achievement.title}>{achievement.title || ''}</td>
+                    <td className="p-3 md:p-4">{getBadge(achievement.score)}</td>
+                    <td className="p-3 md:p-4 text-xs md:text-sm text-gray-400">{achievement.date || ''}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           )}
         </div>
       </div>
