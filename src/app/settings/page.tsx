@@ -232,7 +232,7 @@ export default function SettingsPage() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-bold text-gray-700 flex items-center gap-2"><User size={16}/> المديرة</label>
+            <label className="text-sm font-bold text-gray-700 flex items-center gap-2"><User size={16}/> مديرة المدرسة</label>
             <input 
               type="text" 
               value={formData.managerName}
