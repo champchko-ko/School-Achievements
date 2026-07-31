@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Search, Filter, DownloadCloud, FileText, Trophy, Clock, Medal, Award, Loader2, Pencil, Trash2, Eye } from 'lucide-react';
-import { attachmentsCell, generateCategorizedPdf, generateTablePdf, isImageUrl, isVideoUrl } from '../../lib/pdf';
+import { isImageUrl, isVideoUrl } from '../../lib/pdf';
 import { useAdmin } from '../../lib/useAdmin';
 import Link from 'next/link';
 import { collection, onSnapshot, query, orderBy, doc, getDoc } from 'firebase/firestore';
@@ -151,6 +151,10 @@ export default function FullRecordPage() {
         teacherMap.get(teacher)!.push(row);
       }
 
+      const { downloadPdf } = await import('../../pdf/render');
+      const { ReportDocument } = await import('../../pdf/ReportDocument');
+      const { buildPdfHeader, buildAttachmentData, attachmentsCell, textCell } = await import('../../pdf/builders');
+
       const sections: any[] = [];
       const sortedDepts = Array.from(groups.keys()).sort((a, b) => a.localeCompare(b, 'ar'));
       for (const dept of sortedDepts) {
@@ -161,38 +165,37 @@ export default function FullRecordPage() {
           const sectionRows: any[][] = [];
           for (const row of rows) {
             const appUrl = `${window.location.origin}/achievement/${row.id}`;
-            const attachmentCell = await attachmentsCell(collectAttachments(row), appUrl);
+            const attData = await buildAttachmentData(collectAttachments(row), appUrl);
             // Columns are listed right-to-left so the PDF table reads as RTL.
             // (التقييم is excluded from the export.)
             sectionRows.push([
-              attachmentCell,
-              row.date || '',
-              row.title || '',
+              attachmentsCell(attData),
+              textCell(row.date || ''),
+              textCell(row.title || ''),
             ]);
           }
           sections.push({
             title: `القسم: ${dept}`,
             subtitle: `المعلمة: ${teacher}  (${rows.length} إنجاز${rows.length === 1 ? '' : 'ات'})`,
             columns: [
-              { header: 'المرفقات', width: 110 },
-              { header: 'التاريخ', width: 60 },
-              { header: 'الإنجاز', width: '*' },
+              { header: 'المرفقات', width: 21 },
+              { header: 'التاريخ', width: 11, align: 'center' },
+              { header: 'الإنجاز', width: 68 },
             ],
             rows: sectionRows,
           });
         }
       }
 
-      await generateCategorizedPdf({
-        header: {
-          logoUrl: schoolSettings?.logoUrl,
-          schoolName: schoolSettings?.schoolName,
-          title: 'منصة إنجازات المدرسة',
-          subtitle: 'السجل الكامل للإنجازات',
-        },
-        sections,
-        filename: 'full-record.pdf',
-      });
+      const header = await buildPdfHeader(
+        schoolSettings,
+        'منصة إنجازات المدرسة',
+        'السجل الكامل للإنجازات'
+      );
+      await downloadPdf(
+        <ReportDocument header={header} sections={sections} />,
+        'full-record.pdf'
+      );
     } catch (error) {
       console.error('PDF export error:', error);
     } finally {

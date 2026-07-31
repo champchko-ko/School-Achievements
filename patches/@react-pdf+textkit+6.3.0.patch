@@ -1,0 +1,61 @@
+# Patch @react-pdf/textkit 6.3.0 for Arabic PDF export
+#
+# react-pdf's textkit bidi reordering is buggy for Arabic: reorderLine() throws
+# "Cannot read properties of undefined (reading 'id')" when reordering Arabic
+# glyph runs, and mirrorString() double-mirrors parentheses in Arabic text.
+#
+# Our PDF documents pre-shape and pre-reorder every Arabic string to final
+# visual order with rtlText() (src/lib/pdf.ts) and lay text out LTR, so both
+# textkit steps are redundant for this app. They are neutered here.
+#
+# Re-applied automatically by patch-package on `npm install` (see postinstall).
+#
+diff --git a/node_modules/@react-pdf/textkit/lib/textkit.js b/node_modules/@react-pdf/textkit/lib/textkit.js
+index 0b8b6fa..74b898c 100644
+--- a/node_modules/@react-pdf/textkit/lib/textkit.js
++++ b/node_modules/@react-pdf/textkit/lib/textkit.js
+@@ -1056,13 +1056,7 @@ const reorderParagraph = (paragraph) => paragraph.map(reorderLine);
+  *
+  * @returns Reordered paragraphs
+  */
+-const bidiReordering = () => {
+-    /**
+-     * @param paragraphs - Paragraphs
+-     * @returns Reordered paragraphs
+-     */
+-    return (paragraphs) => paragraphs.map(reorderParagraph);
+-};
++const bidiReordering = () => (paragraphs) => paragraphs;
+ 
+ /**
+  * Resolve string indices based on glyphs code points.
+@@ -1838,28 +1832,7 @@ const getBidiLevels = (runs) => {
+ /**
+  * Perform bidi mirroring
+  */
+-const mirrorString = () => {
+-    /**
+-     * @param attributedString - Attributed string
+-     * @returns Attributed string
+-     */
+-    return (attributedString) => {
+-        const levels = getBidiLevels(attributedString.runs);
+-        let updatedString = '';
+-        attributedString.string.split('').forEach((char, index) => {
+-            const isRTL = levels[index] % 2 === 1;
+-            const mirroredChar = isRTL
+-                ? bidi$1.getMirroredCharacter(attributedString.string.charAt(index))
+-                : null;
+-            updatedString += mirroredChar || char;
+-        });
+-        const result = {
+-            ...attributedString,
+-            string: updatedString,
+-        };
+-        return result;
+-    };
+-};
++const mirrorString = () => (attributedString) => attributedString;
+ 
+ /**
+  * A LayoutEngine is the main object that performs text layout.
