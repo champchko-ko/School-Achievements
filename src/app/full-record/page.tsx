@@ -164,16 +164,19 @@ export default function FullRecordPage() {
           for (const row of rows) {
             const appUrl = `${window.location.origin}/achievement/${row.id}`;
             sectionRows.push([
-              buildPrintAttachments(collectAttachments(row), appUrl),
+              {
+                type: 'achievement',
+                title: row.title || '',
+                items: buildPrintAttachments(collectAttachments(row), appUrl),
+              },
               { type: 'text', text: row.date || '' },
-              { type: 'text', text: row.title || '' },
             ]);
           }
           sections.push({
             title: `القسم: ${dept}`,
             subtitle: `المعلمة: ${teacher}  (${rows.length} إنجاز${rows.length === 1 ? '' : 'ات'})`,
-            columns: ['المرفقات', 'التاريخ', 'الإنجاز'],
-            widths: [21, 11, 68],
+            columns: ['الإنجاز', 'التاريخ'],
+            widths: [78, 22],
             rows: sectionRows,
           });
         }
