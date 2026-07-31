@@ -4,6 +4,7 @@ import { Trophy, Medal, Award, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { collection, onSnapshot, query } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
+import { card, header } from '../../lib/ui';
 
 export default function HonorRoll() {
   const [podiumData, setPodiumData] = useState<any[]>([]);
@@ -48,13 +49,13 @@ export default function HonorRoll() {
     <div className="space-y-8 animate-in fade-in duration-500 pb-10">
       
       {/* Header */}
-      <div className="bg-white rounded-2xl p-8 shadow-lg border border-purple-100/50 text-center">
-        <h2 className="text-3xl font-black text-[#4a154b] mb-2 flex justify-center items-center gap-3">
+      <div className={`${header} p-8 text-center`}>
+        <h2 className="text-3xl font-black text-white mb-2 flex justify-center items-center gap-3">
           <Trophy className="text-[#ffb000]" size={36} />
           لوحة الشرف
           <Trophy className="text-[#ffb000]" size={36} />
         </h2>
-        <p className="text-gray-500 font-bold">أكثر المعلمات تميزاً وإنجازاً هذا الشهر 🌟</p>
+        <p className="text-purple-100 font-bold">أكثر المعلمات تميزاً وإنجازاً هذا الشهر 🌟</p>
       </div>
 
       {/* Kahoot-Style Podium */}
@@ -64,7 +65,7 @@ export default function HonorRoll() {
           <p className="font-bold">جاري تحميل لوحة الشرف المباشرة...</p>
         </div>
       ) : podiumData.length === 0 ? (
-        <div className="bg-white rounded-2xl p-10 border-2 border-dashed border-purple-200 text-center text-gray-400 mt-10 shadow-lg">
+        <div className="bg-white rounded-3xl p-10 border-2 border-dashed border-purple-200 text-center text-gray-400 mt-10 shadow-xl">
           <p className="font-bold">لا توجد إنجازات حتى الآن. بادر بإضافة الإنجاز الأول!</p>
         </div>
       ) : (
@@ -73,13 +74,13 @@ export default function HonorRoll() {
           <Link href={`/?teacher=${encodeURIComponent(teacher.name)}`} key={teacher.id} className="flex flex-col items-center group w-28 md:w-40 cursor-pointer">
             
             {/* Floating Info Card */}
-            <div className="bg-white w-full p-3 md:p-4 rounded-xl shadow-lg border border-purple-100/50 mb-4 text-center transform transition-all duration-300 group-hover:-translate-y-3 hover:shadow-xl hover:border-orange-200 relative z-10">
+            <div className={`${card} w-full p-3 md:p-4 rounded-2xl mb-4 text-center transform transition-all duration-300 group-hover:-translate-y-3 hover:shadow-xl hover:border-orange-200 relative z-10`}>
                <div className="flex justify-center mb-2">{teacher.icon}</div>
-               <div className="font-black text-[#4a154b] text-sm md:text-base leading-tight mb-1">{teacher.name}</div>
+               <div className="font-black text-[#46178f] text-sm md:text-base leading-tight mb-1">{teacher.name}</div>
                <div className="text-xs text-gray-500 font-bold">{teacher.dept}</div>
                
                {/* Points Badge */}
-               <div className="absolute -top-3 -right-3 md:-right-4 bg-[#e21b3c] text-white text-xs md:text-sm font-black px-3 py-1 rounded-full shadow-lg border-2 border-white">
+               <div className="absolute -top-3 -right-3 md:-right-4 bg-[#eb1f36] text-white text-xs md:text-sm font-black px-3 py-1 rounded-full shadow-lg border-2 border-white">
                  {teacher.points} pt
                </div>
             </div>

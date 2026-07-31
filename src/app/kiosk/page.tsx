@@ -64,8 +64,8 @@ export default function KioskModePage() {
   // Loading State
   if (isLoading) {
     return (
-      <div className="fixed inset-0 z-[100] h-screen w-screen m-0 p-4 overflow-y-auto bg-slate-950 flex flex-col items-center justify-center text-white">
-        <Loader2 className="animate-spin mb-4 text-purple-400" size={40} />
+      <div className="fixed inset-0 z-[100] h-screen w-screen m-0 p-4 overflow-y-auto bg-gradient-to-br from-[#46178f] via-[#380e6e] to-[#2a0a54] flex flex-col items-center justify-center text-white">
+        <Loader2 className="animate-spin mb-4 text-[#ffb800]" size={40} />
         <p className="text-lg md:text-2xl font-bold animate-pulse text-center px-4">جاري تحميل الإنجازات المتميزة...</p>
       </div>
     );
@@ -74,7 +74,7 @@ export default function KioskModePage() {
   // Empty State
   if (achievements.length === 0) {
     return (
-      <div className="fixed inset-0 z-[100] h-screen w-screen m-0 p-4 overflow-y-auto bg-slate-950 flex flex-col items-center justify-center text-white">
+      <div className="fixed inset-0 z-[100] h-screen w-screen m-0 p-4 overflow-y-auto bg-gradient-to-br from-[#46178f] via-[#380e6e] to-[#2a0a54] flex flex-col items-center justify-center text-white">
         <Star className="mb-4 text-yellow-400 opacity-50" size={40} />
         <p className="text-xl md:text-3xl font-black text-gray-400 text-center px-4">لا توجد إنجازات متميزة للعرض حالياً</p>
       </div>
@@ -101,14 +101,14 @@ export default function KioskModePage() {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] h-screen w-screen m-0 p-0 overflow-y-auto bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-purple-950 to-black text-white flex flex-col">
+    <div className="fixed inset-0 z-[100] h-screen w-screen m-0 p-0 overflow-y-auto bg-gradient-to-br from-[#46178f] via-[#380e6e] to-[#2a0a54] text-white flex flex-col">
       
       {/* Decorative background glows */}
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-purple-600/20 blur-[120px] rounded-full pointer-events-none" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/20 blur-[120px] rounded-full pointer-events-none" />
 
       {/* Kiosk Header */}
-      <header className="px-4 md:px-12 py-3 md:py-8 flex items-center justify-between z-10 border-b border-white/10 bg-black/30 backdrop-blur-md shadow-lg">
+      <header className="px-4 md:px-12 py-3 md:py-8 flex items-center justify-between z-10 border-b border-white/20 bg-white/10 backdrop-blur-md shadow-lg">
         <div className="flex items-center gap-6">
           {logoUrl && <img src={logoUrl} alt="School Logo" className="w-10 h-10 md:w-24 md:h-24 object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]" />}
           <div>
@@ -131,7 +131,7 @@ export default function KioskModePage() {
         <div key={current.id + currentIndex} className="w-full max-w-[98vw] md:max-w-[95vw] animate-in fade-in zoom-in-95 slide-in-from-bottom-8 duration-1000 flex flex-col lg:flex-row gap-4 md:gap-12 items-center justify-center relative">
           
           {/* Content Left (Info Card Alone) */}
-          <div className="flex-1 w-full max-w-4xl bg-white/95 backdrop-blur-2xl border border-white/20 rounded-2xl md:rounded-[3rem] p-4 md:p-12 shadow-[0_0_50px_rgba(0,0,0,0.5)] space-y-3 md:space-y-8 z-10 relative overflow-hidden">
+          <div className="flex-1 w-full max-w-4xl bg-white rounded-3xl border-2 border-purple-100 p-4 md:p-12 shadow-[0_0_50px_rgba(0,0,0,0.5)] space-y-3 md:space-y-8 z-10 relative overflow-hidden">
             {/* Subtle shine effect on the card */}
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-white/40 to-transparent"></div>
 
@@ -148,12 +148,12 @@ export default function KioskModePage() {
               {current.desc || current.description}
             </p>
 
-            <div className="flex flex-wrap items-center gap-2 md:gap-6 pt-3 md:pt-8 border-t border-slate-200 text-sm md:text-2xl font-bold text-slate-800">
-              <div className="flex items-center gap-1 md:gap-3 bg-slate-50 backdrop-blur-sm px-3 md:px-8 py-2 md:py-4 rounded-xl md:rounded-2xl border border-slate-200 shadow-inner">
+            <div className="flex flex-wrap items-center gap-2 md:gap-6 pt-3 md:pt-8 border-t-2 border-purple-100 text-sm md:text-2xl font-bold text-slate-800">
+              <div className="flex items-center gap-1 md:gap-3 bg-purple-50 backdrop-blur-sm px-3 md:px-8 py-2 md:py-4 rounded-2xl border-2 border-purple-100 shadow-inner">
                 <User size={16} className="md:size-[28px] text-pink-600" /> 
                 {current.teacherName}
               </div>
-              <div className="flex items-center gap-1 md:gap-3 bg-slate-50 backdrop-blur-sm px-3 md:px-8 py-2 md:py-4 rounded-xl md:rounded-2xl border border-slate-200 shadow-inner">
+              <div className="flex items-center gap-1 md:gap-3 bg-purple-50 backdrop-blur-sm px-3 md:px-8 py-2 md:py-4 rounded-2xl border-2 border-purple-100 shadow-inner">
                 <Building size={16} className="md:size-[28px] text-blue-600" /> 
                 {current.department}
               </div>
@@ -179,7 +179,7 @@ export default function KioskModePage() {
       </div>
 
       {/* Full Screen Toggle Button */}
-      <button onClick={toggleFullScreen} className="absolute bottom-6 right-6 z-50 text-white/30 hover:text-white/80 transition-colors p-3 bg-black/20 hover:bg-black/40 rounded-full backdrop-blur-md border border-white/10" title="ملء الشاشة">
+      <button onClick={toggleFullScreen} className="absolute bottom-6 right-6 z-50 text-white/60 hover:text-white transition-colors p-3 bg-white/10 hover:bg-white/20 rounded-full backdrop-blur-md border-2 border-white/20" title="ملء الشاشة">
         <Maximize size={28} />
       </button>
 

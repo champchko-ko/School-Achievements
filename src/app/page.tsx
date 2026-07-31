@@ -7,6 +7,7 @@ import { collection, onSnapshot, query, orderBy, doc, getDoc } from 'firebase/fi
 import { db } from '../lib/firebase';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { cleanText } from '../lib/clean-text';
+import { header, panel, table } from '../lib/ui';
 
 // Only this tiny component reads useSearchParams, so only it is subject to
 // Next's client-side bailout/remount on refresh — the fallback is `null`,
@@ -127,21 +128,21 @@ function HomeContent() {
       </Suspense>
 
       {/* Header card */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-4 bg-white/95 backdrop-blur-sm p-3 md:p-6 pr-14 sm:pr-3 md:pr-6 rounded-2xl shadow-lg border border-purple-100/50">
+      <div className={`${header} flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-4 p-4 md:p-6 pr-14 sm:pr-3 md:pr-6`}>
         <div className="flex items-center gap-4">
           {schoolSettings?.logoUrl && (
-            <img src={schoolSettings.logoUrl} alt="School Logo" className="w-16 h-16 md:w-20 md:h-20 object-contain rounded-xl border border-gray-100 shadow-sm p-1 max-w-full" />
+            <img src={schoolSettings.logoUrl} alt="School Logo" className="w-16 h-16 md:w-20 md:h-20 object-contain rounded-xl bg-white/90 border border-white/20 shadow-sm p-1 max-w-full" />
           )}
           <div>
-            <h2 className="text-xl md:text-2xl font-black text-[#46178f]">مرحباً بك في منصة إنجازاتنا</h2>
-            <p className="text-xs md:text-sm text-gray-500 font-bold">وثق ، شارك ، وكن جزءاً من النجاح</p>
+            <h2 className="text-xl md:text-2xl font-black text-white">مرحباً بك في منصة إنجازاتنا</h2>
+            <p className="text-xs md:text-sm text-purple-100 font-bold">وثق ، شارك ، وكن جزءاً من النجاح</p>
           </div>
         </div>
       </div>
 
       {/* School Info Card - below header, above stats */}
       {schoolSettings && (schoolSettings.schoolName || schoolSettings.address || schoolSettings.phone || schoolSettings.managerName || schoolSettings.vision || schoolSettings.message) && (
-        <div className="bg-white/95 backdrop-blur-sm p-4 md:p-6 pr-14 sm:pr-3 md:pr-6 rounded-2xl shadow-lg border border-purple-100/50">
+        <div className={`${panel} p-4 md:p-6 pr-14 sm:pr-3 md:pr-6`}>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {/* School name and logo */}
             <div className="flex items-center gap-3 md:col-span-2 lg:col-span-1">
@@ -162,7 +163,7 @@ function HomeContent() {
             <div className="space-y-2">
               {schoolSettings.address && (
                 <p className="text-xs md:text-sm text-gray-600 flex items-center gap-2">
-                  <MapPin size={16} className="text-[#e21b3c] shrink-0" />
+                  <MapPin size={16} className="text-[#eb1f36] shrink-0" />
                   <span>{schoolSettings.address}</span>
                 </p>
               )}
@@ -203,22 +204,22 @@ function HomeContent() {
 
       {/* Stats cards */}
       <div className="flex gap-3 md:gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-none pb-2 -mx-3 px-3 md:mx-0 md:px-0">
-        <div className="bg-white rounded-xl p-3 shadow border-r-4 border-[#0087ed] flex flex-col items-center gap-0.5 min-w-[120px] md:min-w-0 snap-center shrink-0">
-          <div className="bg-blue-100 p-1.5 rounded-lg text-[#0087ed]"><Users size={18} /></div>
+        <div className="bg-white rounded-2xl p-3 shadow-lg border-2 border-purple-100 flex flex-col items-center gap-0.5 min-w-[120px] md:min-w-0 snap-center shrink-0">
+          <div className="bg-blue-100 p-1.5 rounded-xl text-[#0087ed]"><Users size={18} /></div>
             <p className="text-[10px] md:text-xs text-gray-500 font-bold text-center leading-tight">المعلمات</p>
             <p className="text-xl md:text-2xl font-black text-gray-800">
               {isLoading ? <Loader2 size={16} className="animate-spin" /> : new Set(achievements.map(a => a.teacherName).filter(Boolean)).size}
             </p>
         </div>
-        <div className="bg-white rounded-xl p-3 shadow border-r-4 border-[#26890c] flex flex-col items-center gap-0.5 min-w-[120px] md:min-w-0 snap-center shrink-0">
-          <div className="bg-green-100 p-1.5 rounded-lg text-[#26890c]"><Award size={18} /></div>
+        <div className="bg-white rounded-2xl p-3 shadow-lg border-2 border-purple-100 flex flex-col items-center gap-0.5 min-w-[120px] md:min-w-0 snap-center shrink-0">
+          <div className="bg-green-100 p-1.5 rounded-xl text-[#26890c]"><Award size={18} /></div>
             <p className="text-[10px] md:text-xs text-gray-500 font-bold text-center leading-tight">إجمالي المشاركات</p>
             <p className="text-xl md:text-2xl font-black text-gray-800">
               {isLoading ? <Loader2 size={16} className="animate-spin" /> : achievements.length}
             </p>
         </div>
-        <div className="bg-white rounded-xl p-3 shadow border-r-4 border-[#ffb000] flex flex-col items-center gap-0.5 min-w-[120px] md:min-w-0 snap-center shrink-0">
-          <div className="bg-yellow-100 p-1.5 rounded-lg text-[#ffb000]"><Star size={18} /></div>
+        <div className="bg-white rounded-2xl p-3 shadow-lg border-2 border-purple-100 flex flex-col items-center gap-0.5 min-w-[120px] md:min-w-0 snap-center shrink-0">
+          <div className="bg-yellow-100 p-1.5 rounded-xl text-[#ffb000]"><Star size={18} /></div>
             <p className="text-[10px] md:text-xs text-gray-500 font-bold text-center leading-tight">إنجازات مميزة</p>
             <p className="text-xl md:text-2xl font-black text-gray-800">
               {isLoading ? <Loader2 size={16} className="animate-spin" /> : achievements.filter(a => a.score && a.score >= 90).length}
@@ -227,20 +228,20 @@ function HomeContent() {
       </div>
 
       <div>
-        <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-          <span className="bg-[#e21b3c] w-2 h-6 rounded-full inline-block"></span>
+        <h3 className="text-xl md:text-2xl font-black text-white mb-6 flex items-center gap-3">
+          <span className="bg-[#ffb800] w-2.5 h-7 rounded-full inline-block shadow-lg"></span>
           {teacherFilter ? `إنجازات المعلمة: ${teacherFilter}` : 'أحدث الإنجازات المعتمدة'}
         </h3>
         
         {teacherFilter && (
           <div className="mb-6 flex items-center gap-2">
-            <button onClick={() => router.push('/')} className="bg-red-100 hover:bg-red-200 text-red-700 px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors">
+            <button onClick={() => router.push('/')} className="bg-[#eb1f36] hover:bg-[#c9172c] text-white px-4 py-2 rounded-2xl text-sm font-black flex items-center gap-2 border-b-4 border-[#b51427] active:border-b-0 active:translate-y-1 transition-all shadow-lg">
               <X size={16} /> إلغاء التصفية
             </button>
           </div>
         )}
         
-        <div className="overflow-x-auto rounded-2xl shadow-lg bg-white">
+        <div className="overflow-x-auto rounded-3xl shadow-xl border-2 border-purple-100 bg-white">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-12 text-purple-200">
               <Loader2 className="animate-spin mb-4 text-yellow-400" size={40} />
@@ -257,12 +258,12 @@ function HomeContent() {
           ) : (
             <table className="w-full text-right table-auto min-w-[600px]">
               <thead>
-                <tr className="bg-gray-50 border-b-2 border-gray-200">
-                  <th className="p-3 md:p-4 whitespace-nowrap text-xs md:text-sm font-bold text-gray-600">المعلمة</th>
-                  <th className="p-3 md:p-4 whitespace-nowrap text-xs md:text-sm font-bold text-gray-600">القسم</th>
-                  <th className="p-3 md:p-4 whitespace-nowrap text-xs md:text-sm font-bold text-gray-600">العنوان</th>
-                  <th className="p-3 md:p-4 whitespace-nowrap text-xs md:text-sm font-bold text-gray-600 hidden">التقييم</th>
-                  <th className="p-3 md:p-4 whitespace-nowrap text-xs md:text-sm font-bold text-gray-600">التاريخ</th>
+                <tr className={table.head}>
+                  <th className="p-3 md:p-4 whitespace-nowrap text-xs md:text-sm font-bold">المعلمة</th>
+                  <th className="p-3 md:p-4 whitespace-nowrap text-xs md:text-sm font-bold">القسم</th>
+                  <th className="p-3 md:p-4 whitespace-nowrap text-xs md:text-sm font-bold">العنوان</th>
+                  <th className="p-3 md:p-4 whitespace-nowrap text-xs md:text-sm font-bold hidden">التقييم</th>
+                  <th className="p-3 md:p-4 whitespace-nowrap text-xs md:text-sm font-bold">التاريخ</th>
                 </tr>
               </thead>
               <tbody>
@@ -270,7 +271,7 @@ function HomeContent() {
                   <tr 
                     key={achievement.id} 
                     onClick={() => router.push(`/achievement/${achievement.id}`)}
-                    className="border-b border-gray-100 hover:bg-purple-50/50 transition-colors cursor-pointer"
+                    className={`${table.row} cursor-pointer`}
                   >
                     <td className="p-3 md:p-4 text-xs md:text-sm font-bold text-[#46178f]">{achievement.teacherName || ''}</td>
                     <td className="p-3 md:p-4 text-xs md:text-sm text-gray-500">{achievement.department || ''}</td>
