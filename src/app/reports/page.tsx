@@ -172,16 +172,20 @@ export default function ReportsPage() {
             if (ach.attachmentUrl && !attachments.includes(ach.attachmentUrl)) attachments.push(ach.attachmentUrl);
             const appUrl = `${window.location.origin}/achievement/${ach.id}`;
             deptRows.push([
-              buildPrintAttachments(attachments, appUrl),
+              {
+                type: 'achievement',
+                title: ach.title || '',
+                desc: ach.desc || '',
+                items: buildPrintAttachments(attachments, appUrl),
+              },
               { type: 'text', text: ach.date || '' },
-              { type: 'rich', title: ach.title || '', desc: ach.desc || '' },
             ]);
           }
           sections.push({
             title: `القسم: ${dept}`,
             subtitle: `${deptRows.length} إنجاز${deptRows.length === 1 ? '' : 'ات'}`,
-            columns: ['المرفقات', 'التاريخ', 'الإنجاز'],
-            widths: [21, 11, 68],
+            columns: ['الإنجاز', 'التاريخ'],
+            widths: [78, 22],
             rows: deptRows,
           });
         }

@@ -17,8 +17,12 @@ export type PrintAttachment = {
 
 export type PrintCell =
   | { type: "text"; text: string; bold?: boolean; color?: string }
-  | { type: "rich"; title: string; desc?: string }
-  | { type: "attachments"; items: PrintAttachment[] };
+  | {
+      type: "achievement";
+      title: string;
+      desc?: string;
+      items: PrintAttachment[];
+    };
 
 export type PrintSection = {
   title: string;
@@ -47,7 +51,7 @@ function getFileName(url: string): string {
   }
 }
 
-export function buildPrintAttachments(urls: string[], appUrl: string): PrintCell {
+export function buildPrintAttachments(urls: string[], appUrl: string): PrintAttachment[] {
   const items: PrintAttachment[] = [];
   let imageIndex = 1;
   let videoIndex = 1;
@@ -66,7 +70,7 @@ export function buildPrintAttachments(urls: string[], appUrl: string): PrintCell
       items.push({ kind: "document", label: getFileName(url), appUrl });
     }
   }
-  return { type: "attachments", items };
+  return items;
 }
 
 function escapeHtml(value: string): string {
@@ -79,7 +83,7 @@ function escapeHtml(value: string): string {
 }
 
 function renderAttachments(items: PrintAttachment[]): string {
-  if (items.length === 0) return '<span class="empty">—</span>';
+  if (items.length === 0) return "";
   return `<div class="attachments">${items
     .map((item) => {
       const inner =
@@ -93,11 +97,9 @@ function renderAttachments(items: PrintAttachment[]): string {
 
 function renderCell(cell: PrintCell): string {
   switch (cell.type) {
-    case "attachments":
-      return `<td>${renderAttachments(cell.items)}</td>`;
-    case "rich": {
-      const desc = cell.desc ? `<div class="rich-desc">${escapeHtml(cell.desc)}</div>` : "";
-      return `<td><div class="rich-title">${escapeHtml(cell.title)}</div>${desc}</td>`;
+    case "achievement": {
+      const desc = cell.desc ? `<div class="achievement-desc">${escapeHtml(cell.desc)}</div>` : "";
+      return `<td class="achievement-cell"><div class="achievement-title">${escapeHtml(cell.title)}</div>${desc}${renderAttachments(cell.items)}</td>`;
     }
     default: {
       const style: string[] = [];
@@ -168,30 +170,6 @@ function buildPrintHtml(opts: PrintReportOptions): string {
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
-    .toolbar {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      z-index: 10;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 14px;
-      padding: 10px 16px;
-      background: #ffffff;
-      border-bottom: 1px solid #dddddd;
-    }
-    .toolbar button {
-      font-family: inherit;
-      font-size: 13px;
-      font-weight: 700;
-      color: #ffffff;
-      background: #46178f;
-      border: none;
-      border-radius: 8px;
-      padding: 8px 18px;
-      cursor: pointer;
-    }
-    .toolbar .hint { font-size: 11px; color: #666666; }
     .content { padding: 24px; }
     .header { text-align: center; margin-bottom: 22px; }
     .logo { max-height: 90px; max-width: 200px; object-fit: contain; margin-bottom: 6px; }
@@ -205,7 +183,7 @@ function buildPrintHtml(opts: PrintReportOptions): string {
     table { width: 100%; border-collapse: collapse; }
     th, td {
       border: 1px solid #dddddd;
-      padding: 6px 8px;
+      padding: 8px 10px;
       text-align: right;
       vertical-align: top;
       word-break: break-word;
@@ -213,22 +191,22 @@ function buildPrintHtml(opts: PrintReportOptions): string {
     thead { display: table-header-group; }
     tr { page-break-inside: avoid; }
     th { background: #46178f; color: #ffffff; font-size: 11px; }
-    .cell-text { font-size: 11px; }
-    .rich-title { font-weight: 700; font-size: 11px; }
-    .rich-desc { color: #555555; font-size: 10px; margin-top: 2px; }
-    .empty { color: #999999; }
-    .attachments { display: flex; flex-wrap: wrap; gap: 8px; }
+    .cell-text { font-size: 11px; padding-top: 14px; }
+    .achievement-cell { padding: 10px 12px; }
+    .achievement-title { font-weight: 700; font-size: 12px; margin-bottom: 4px; }
+    .achievement-desc { color: #555555; font-size: 10px; margin-bottom: 6px; }
+    .attachments { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
     .attachment {
       display: inline-flex;
       flex-direction: column;
       align-items: center;
-      gap: 3px;
+      gap: 4px;
       text-decoration: none;
-      max-width: 120px;
+      max-width: 130px;
     }
     .attachment img {
-      max-height: 80px;
-      max-width: 110px;
+      max-height: 90px;
+      max-width: 120px;
       object-fit: contain;
       border: 1px solid #eeeeee;
       border-radius: 4px;
@@ -241,17 +219,12 @@ function buildPrintHtml(opts: PrintReportOptions): string {
       word-break: break-all;
     }
     @media print {
-      .toolbar { display: none; }
       .content { padding: 0; }
       a { color: inherit; }
     }
   </style>
 </head>
 <body>
-  <div class="toolbar">
-    <button id="print-btn" type="button">طباعة / حفظ PDF</button>
-    <span class="hint">اختر "حفظ كـ PDF" من نافذة الطباعة</span>
-  </div>
   <div class="content">
     <div class="header">
       ${logo}
@@ -290,7 +263,6 @@ function buildPrintHtml(opts: PrintReportOptions): string {
         });
       setTimeout(doPrint, 8000);
     }
-    document.getElementById("print-btn").addEventListener("click", doPrint);
     if (document.readyState === "complete") {
       waitAndPrint();
     } else {
