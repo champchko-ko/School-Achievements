@@ -151,9 +151,7 @@ export default function FullRecordPage() {
         teacherMap.get(teacher)!.push(row);
       }
 
-      const { downloadPdf } = await import('../../pdf/render');
-      const { ReportDocument } = await import('../../pdf/ReportDocument');
-      const { buildPdfHeader, buildAttachmentData, attachmentsCell, textCell } = await import('../../pdf/builders');
+      const { printReport, buildPrintAttachments } = await import('../../lib/printPdf');
 
       const sections: any[] = [];
       const sortedDepts = Array.from(groups.keys()).sort((a, b) => a.localeCompare(b, 'ar'));
@@ -165,37 +163,30 @@ export default function FullRecordPage() {
           const sectionRows: any[][] = [];
           for (const row of rows) {
             const appUrl = `${window.location.origin}/achievement/${row.id}`;
-            const attData = await buildAttachmentData(collectAttachments(row), appUrl);
-            // Columns are listed right-to-left so the PDF table reads as RTL.
-            // (التقييم is excluded from the export.)
             sectionRows.push([
-              attachmentsCell(attData),
-              textCell(row.date || ''),
-              textCell(row.title || ''),
+              buildPrintAttachments(collectAttachments(row), appUrl),
+              { type: 'text', text: row.date || '' },
+              { type: 'text', text: row.title || '' },
             ]);
           }
           sections.push({
             title: `القسم: ${dept}`,
             subtitle: `المعلمة: ${teacher}  (${rows.length} إنجاز${rows.length === 1 ? '' : 'ات'})`,
-            columns: [
-              { header: 'المرفقات', width: 21 },
-              { header: 'التاريخ', width: 11, align: 'center' },
-              { header: 'الإنجاز', width: 68 },
-            ],
+            columns: ['المرفقات', 'التاريخ', 'الإنجاز'],
+            widths: [21, 11, 68],
             rows: sectionRows,
           });
         }
       }
 
-      const header = await buildPdfHeader(
-        schoolSettings,
-        'منصة إنجازات المدرسة',
-        'السجل الكامل للإنجازات'
-      );
-      await downloadPdf(
-        <ReportDocument header={header} sections={sections} />,
-        'full-record.pdf'
-      );
+      printReport({
+        documentTitle: 'full-record',
+        logoUrl: schoolSettings?.logoUrl,
+        schoolName: schoolSettings?.schoolName,
+        title: 'منصة إنجازات المدرسة',
+        subtitle: 'السجل الكامل للإنجازات',
+        sections,
+      });
     } catch (error) {
       console.error('PDF export error:', error);
     } finally {
