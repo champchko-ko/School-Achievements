@@ -144,7 +144,7 @@ export default function SettingsPage() {
     return (
       <div className="flex flex-col items-center justify-center py-28">
         <Loader2 className="animate-spin mb-4 text-[#ffb800]" size={48} />
-        <p className="font-black text-lg text-white">جاري تحميل إعدادات اللعبة... 🎮</p>
+        <p className="font-black text-lg text-white">جاري التحميل...</p>
       </div>
     );
   }
