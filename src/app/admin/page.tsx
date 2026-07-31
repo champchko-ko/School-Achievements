@@ -137,32 +137,21 @@ export default function AdminDashboard() {
 
       {/* Analytics Overview */}
       {!isLoading && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 my-8">
-          <div className={`${panel} p-6 flex items-center gap-4 hover:shadow-lg transition-shadow`}>
-            <div className="bg-purple-100 p-3 rounded-2xl text-purple-600"><TrendingUp size={28} /></div>
-            <div>
-              <p className="text-gray-500 text-sm font-bold">القسم الأنشط هذا الشهر</p>
-              <p className="text-2xl font-black text-gray-800">{mostActiveDept}</p>
-            </div>
+        <div className="flex gap-3 md:gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-none pb-2 -mx-3 px-3 md:mx-0 md:px-0">
+          <div className="bg-white rounded-2xl p-3 shadow-lg border-2 border-purple-100 flex flex-col items-center gap-0.5 min-w-[120px] md:min-w-0 snap-center shrink-0">
+            <div className="bg-purple-100 p-1.5 rounded-xl text-[#46178f]"><TrendingUp size={18} /></div>
+            <p className="text-[10px] md:text-xs text-gray-500 font-bold text-center leading-tight">القسم الأنشط هذا الشهر</p>
+            <p className="text-xl md:text-2xl font-black text-gray-800 text-center leading-tight break-words">{mostActiveDept}</p>
           </div>
-          <div className={`${panel} p-6 flex items-center gap-4 hover:shadow-lg transition-shadow`}>
-            <div className="bg-blue-100 p-3 rounded-2xl text-blue-600"><Files size={28} /></div>
-            <div>
-              <p className="text-gray-500 text-sm font-bold">إجمالي الملفات المرفوعة</p>
-              <p className="text-3xl font-black text-gray-800">{totalFiles}</p>
-            </div>
+          <div className="bg-white rounded-2xl p-3 shadow-lg border-2 border-purple-100 flex flex-col items-center gap-0.5 min-w-[120px] md:min-w-0 snap-center shrink-0">
+            <div className="bg-blue-100 p-1.5 rounded-xl text-[#0087ed]"><Files size={18} /></div>
+            <p className="text-[10px] md:text-xs text-gray-500 font-bold text-center leading-tight">إجمالي الملفات المرفوعة</p>
+            <p className="text-xl md:text-2xl font-black text-gray-800">{totalFiles}</p>
           </div>
-          <div className={`${panel} p-6 flex items-center gap-4 min-w-0 hover:shadow-lg transition-shadow`}>
-            <div className="bg-red-100 p-3 rounded-2xl text-red-600 shrink-0"><UserX size={28} /></div>
-            <div className="min-w-0 flex-1">
-              <p className="text-gray-500 text-sm font-bold">معلمون بلا إنجازات</p>
-              <p className="text-3xl font-black text-gray-800">{inactiveTeachers.length}</p>
-              {inactiveTeachers.length > 0 && (
-                <p className="text-xs text-red-500 truncate mt-1" title={inactiveTeachers.join('، ')}>
-                  {inactiveTeachers.join('، ')}
-                </p>
-              )}
-            </div>
+          <div className="bg-white rounded-2xl p-3 shadow-lg border-2 border-purple-100 flex flex-col items-center gap-0.5 min-w-[120px] md:min-w-0 snap-center shrink-0" title={inactiveTeachers.length > 0 ? inactiveTeachers.join('، ') : undefined}>
+            <div className="bg-red-100 p-1.5 rounded-xl text-[#eb1f36]"><UserX size={18} /></div>
+            <p className="text-[10px] md:text-xs text-gray-500 font-bold text-center leading-tight">معلمون بلا إنجازات</p>
+            <p className="text-xl md:text-2xl font-black text-gray-800">{inactiveTeachers.length}</p>
           </div>
         </div>
       )}
