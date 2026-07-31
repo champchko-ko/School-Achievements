@@ -4,10 +4,10 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { doc, getDoc, Timestamp } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
-import { ArrowRight, Clock, Trophy, Medal, Award, Loader2, DownloadCloud, Image as ImageIcon, User, Building, Calendar, FileText, X, Printer, Video, PlayCircle, CheckCircle2 } from "lucide-react";
+import { ArrowRight, Clock, Trophy, Medal, Award, Loader2, DownloadCloud, Image as ImageIcon, User, Building, Calendar, FileText, X, Printer, Video, PlayCircle } from "lucide-react";
 
 const getScoreBadge = (score: number | null | undefined) => {
-  if (score === null || score === undefined) return <span className="bg-green-50 text-green-700 px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 w-fit"><CheckCircle2 size={16} /> معتمد</span>;
+  if (score === null || score === undefined) return <span className="bg-gray-100 text-gray-500 px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 w-fit"><Clock size={16} /> قيد المراجعة</span>;
   if (score >= 90) return <span className="bg-yellow-100 text-yellow-700 px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 w-fit"><Trophy size={16} /> {score} ذهبي</span>;
   if (score >= 80) return <span className="bg-gray-200 text-gray-700 px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 w-fit"><Medal size={16} /> {score} فضي</span>;
   return <span className="bg-orange-100 text-orange-700 px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 w-fit"><Award size={16} /> {score} برونزي</span>;
