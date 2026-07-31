@@ -103,59 +103,47 @@ export default function ReportsPage() {
   const handleExportPdf = async () => {
     setIsExporting(true);
     try {
-      const { downloadPdf } = await import('../../pdf/render');
-      const { TableDocument } = await import('../../pdf/TableDocument');
-      const { ReportDocument } = await import('../../pdf/ReportDocument');
-      const { buildPdfHeader, buildAttachmentData, attachmentsCell, textCell, richCell } = await import('../../pdf/builders');
+      const { printReport, buildPrintAttachments } = await import('../../lib/printPdf');
 
       if (activeReport === 'department') {
         const statsArray = computeDepartmentStats();
-        const header = await buildPdfHeader(
-          schoolSettings,
-          'تقرير أداء الأقسام',
-          'مقارنة تفصيلية لعدد الإنجازات ومتوسط التقييم لكل قسم'
-        );
-        await downloadPdf(
-          <TableDocument
-            header={header}
-            columns={[
-              { header: 'القسم', width: 40 },
-              { header: 'إجمالي الإنجازات', width: 30, align: 'center' },
-              { header: 'متوسط التقييم', width: 30, align: 'center' },
-            ]}
-            rows={statsArray.map(s => [
-              textCell(s.department, { bold: true }),
-              textCell(String(s.count), { bold: true, color: '#0087ed' }),
-              textCell(s.averageScore ?? 'قيد المراجعة'),
-            ])}
-          />,
-          'department-report.pdf'
-        );
+        printReport({
+          documentTitle: 'department-report',
+          logoUrl: schoolSettings?.logoUrl,
+          schoolName: schoolSettings?.schoolName,
+          title: 'تقرير أداء الأقسام',
+          subtitle: 'مقارنة تفصيلية لعدد الإنجازات ومتوسط التقييم لكل قسم',
+          sections: [{
+            title: 'ملخص أداء الأقسام',
+            columns: ['القسم', 'إجمالي الإنجازات', 'متوسط التقييم'],
+            widths: [40, 30, 30],
+            rows: statsArray.map(s => [
+              { type: 'text', text: s.department, bold: true },
+              { type: 'text', text: String(s.count), bold: true, color: '#0087ed' },
+              { type: 'text', text: s.averageScore === null ? 'قيد المراجعة' : String(s.averageScore) },
+            ]),
+          }],
+        });
       } else if (activeReport === 'honor') {
         const honorList = computeHonorList();
-        const header = await buildPdfHeader(
-          schoolSettings,
-          'قائمة الشرف للمتميزين',
-          'أكثر المعلمات إنجازاً وتميزاً في الأداء'
-        );
-        await downloadPdf(
-          <TableDocument
-            header={header}
-            columns={[
-              { header: 'الترتيب', width: 10, align: 'center' },
-              { header: 'المعلمة', width: 40 },
-              { header: 'القسم', width: 30 },
-              { header: 'إجمالي الإنجازات', width: 20, align: 'center' },
-            ]}
-            rows={honorList.map((s, idx) => [
-              textCell(String(idx + 1), { bold: true }),
-              textCell(s.name, { bold: true }),
-              textCell(s.department),
-              textCell(String(s.count), { bold: true, color: '#0087ed' }),
-            ])}
-          />,
-          'honor-roll.pdf'
-        );
+        printReport({
+          documentTitle: 'honor-roll',
+          logoUrl: schoolSettings?.logoUrl,
+          schoolName: schoolSettings?.schoolName,
+          title: 'قائمة الشرف للمتميزين',
+          subtitle: 'أكثر المعلمات إنجازاً وتميزاً في الأداء',
+          sections: [{
+            title: 'قائمة الشرف',
+            columns: ['الترتيب', 'المعلمة', 'القسم', 'إجمالي الإنجازات'],
+            widths: [10, 40, 30, 20],
+            rows: honorList.map((s, idx) => [
+              { type: 'text', text: String(idx + 1), bold: true },
+              { type: 'text', text: s.name, bold: true },
+              { type: 'text', text: s.department },
+              { type: 'text', text: String(s.count), bold: true, color: '#0087ed' },
+            ]),
+          }],
+        });
       } else {
         // Individual teacher report
         if (selectedTeacher === 'all') {
@@ -183,34 +171,29 @@ export default function ReportsPage() {
             if (ach.fileUrl && !attachments.includes(ach.fileUrl)) attachments.push(ach.fileUrl);
             if (ach.attachmentUrl && !attachments.includes(ach.attachmentUrl)) attachments.push(ach.attachmentUrl);
             const appUrl = `${window.location.origin}/achievement/${ach.id}`;
-            const attData = await buildAttachmentData(attachments, appUrl);
             deptRows.push([
-              attachmentsCell(attData),
-              textCell(ach.date || ''),
-              richCell(ach.title || '', ach.desc || ''),
+              buildPrintAttachments(attachments, appUrl),
+              { type: 'text', text: ach.date || '' },
+              { type: 'rich', title: ach.title || '', desc: ach.desc || '' },
             ]);
           }
           sections.push({
             title: `القسم: ${dept}`,
             subtitle: `${deptRows.length} إنجاز${deptRows.length === 1 ? '' : 'ات'}`,
-            columns: [
-              { header: 'المرفقات', width: 21 },
-              { header: 'التاريخ', width: 11, align: 'center' },
-              { header: 'الإنجاز', width: 68 },
-            ],
+            columns: ['المرفقات', 'التاريخ', 'الإنجاز'],
+            widths: [21, 11, 68],
             rows: deptRows,
           });
         }
 
-        const header = await buildPdfHeader(
-          schoolSettings,
-          'السجل الفردي للإنجازات',
-          `المعلمة: ${selectedTeacher}`
-        );
-        await downloadPdf(
-          <ReportDocument header={header} sections={sections} />,
-          'teacher-report.pdf'
-        );
+        printReport({
+          documentTitle: 'teacher-report',
+          logoUrl: schoolSettings?.logoUrl,
+          schoolName: schoolSettings?.schoolName,
+          title: 'السجل الفردي للإنجازات',
+          subtitle: `المعلمة: ${selectedTeacher}`,
+          sections,
+        });
       }
     } catch (error) {
       console.error('PDF export error:', error);
