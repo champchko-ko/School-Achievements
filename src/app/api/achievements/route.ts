@@ -20,7 +20,7 @@ function hashPin(pin: string, achievementId: string): string {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { teacherName, department, title, desc, attachmentUrls, pin } = body;
+    const { teacherName, department, title, desc, attachmentUrls, pin, date } = body;
 
     // Sanitize all user-supplied text
     const sanitized = sanitizeAchievementPayload({ teacherName, department, title, desc, attachmentUrls });
@@ -33,6 +33,13 @@ export async function POST(request: Request) {
     if (!sTeacherName || !sTitle || !sDesc) {
       return NextResponse.json({ error: 'teacherName, title, and desc are required' }, { status: 400 });
     }
+
+    // Trust a well-formed date sent by the client (device-local timezone);
+    // otherwise fall back to the server's UTC date.
+    const sDate =
+      typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)
+        ? date
+        : new Date().toISOString().split('T')[0];
 
     const { initializeApp, getApps, getApp } = await import('firebase/app');
     const { getFirestore, doc, collection, addDoc, serverTimestamp } = await import('firebase/firestore');
@@ -57,7 +64,7 @@ export async function POST(request: Request) {
       desc,
       attachmentUrls: sAttachmentUrls || [],
       score: null,
-      date: new Date().toISOString().split('T')[0],
+      date: sDate,
       timestamp: serverTimestamp(),
     });
 
