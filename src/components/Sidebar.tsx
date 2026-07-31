@@ -9,6 +9,9 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAdmin } from '../lib/useAdmin';
 
+// Temporary flag: admin access hidden & disabled (keep code, can be re-enabled later)
+const ADMIN_ACCESS_ENABLED = false;
+
 function SidebarLinks({ isAdmin, onClose }: { isAdmin: boolean; onClose?: () => void }) {
   const pathname = usePathname();
 
@@ -33,7 +36,7 @@ function SidebarLinks({ isAdmin, onClose }: { isAdmin: boolean; onClose?: () => 
         <Trophy size={20} />
         <span className="font-bold">لوحة الشرف</span>
       </Link>
-      {isAdmin && (
+      {ADMIN_ACCESS_ENABLED && isAdmin && (
         <>
           <Link href="/reports" onClick={onClose} className={linkClass('/reports')}>
             <Printer size={20} className="text-pink-300" />
@@ -140,7 +143,7 @@ export default function Sidebar() {
       </Suspense>
 
       <div className="p-3 sm:p-4 border-t border-purple-700/30">
-        {!isAdmin ? (
+        {!ADMIN_ACCESS_ENABLED ? null : !isAdmin ? (
           <button onClick={() => { setShowAdminPrompt(true); closeMobile(); }}
             className="flex w-full items-center gap-3 p-2 sm:p-3 rounded-xl bg-[#5b1fa8]/50 hover:bg-[#5b1fa8] transition-all text-xs sm:text-sm font-bold text-purple-200"
           >

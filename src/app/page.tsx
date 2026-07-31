@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Users, Star, Award, Loader2, X, Clock, Trophy, Medal, MapPin, Phone, BookOpen, Eye } from 'lucide-react';
+import { Users, Star, Award, Loader2, X, Clock, Trophy, Medal, MapPin, Phone, BookOpen, Eye, CheckCircle2 } from 'lucide-react';
 import AddAchievementModal from '../components/AddAchievementModal';
 import { collection, onSnapshot, query, orderBy, doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -51,7 +51,7 @@ function HomeContent() {
 
   // Score badge renderer for table
   const getBadge = (score: number | null) => {
-    if (score === null) return <span className="bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full text-[10px] md:text-xs font-bold flex items-center gap-1 w-fit"><Clock size={12} /> قيد المراجعة</span>;
+    if (score === null) return <span className="bg-green-50 text-green-700 px-2 py-0.5 rounded-full text-[10px] md:text-xs font-bold flex items-center gap-1 w-fit"><CheckCircle2 size={12} /> معتمد</span>;
     if (score >= 90) return <span className="bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full text-[10px] md:text-xs font-bold flex items-center gap-1 w-fit"><Trophy size={12} /> {score} ذهبي</span>;
     if (score >= 75) return <span className="bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full text-[10px] md:text-xs font-bold flex items-center gap-1 w-fit"><Medal size={12} /> {score} فضي</span>;
     return <span className="bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full text-[10px] md:text-xs font-bold flex items-center gap-1 w-fit"><Award size={12} /> {score} برونزي</span>;

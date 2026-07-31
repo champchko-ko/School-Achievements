@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Calendar, Paperclip, Pencil, Clock, Trophy, Medal, Award, Trash2, Video } from 'lucide-react';
+import { Calendar, Paperclip, Pencil, Clock, Trophy, Medal, Award, Trash2, Video, CheckCircle2 } from 'lucide-react';
 // Firebase imports removed — all writes go through API
 import { useRouter } from 'next/navigation';
 import { useAdmin } from '../lib/useAdmin';
@@ -16,7 +16,7 @@ const isVideoUrl = (url: string) => {
 };
 
 const getBadge = (score: number | null) => {
-  if (score === null) return { icon: <Clock size={20} className="text-gray-400" />, text: "Pending", style: "bg-gray-100 text-gray-500 border-gray-200" };
+  if (score === null) return { icon: <CheckCircle2 size={20} className="text-green-500" />, text: "معتمد", style: "bg-green-50 text-green-700 border-green-200" };
   if (score >= 90) return { icon: <Trophy size={20} className="text-yellow-500" />, text: "Gold", style: "bg-yellow-50 text-yellow-700 border-yellow-200" };
   if (score >= 75) return { icon: <Medal size={20} className="text-gray-400" />, text: "Silver", style: "bg-gray-50 text-gray-700 border-gray-300" };
   return { icon: <Award size={20} className="text-orange-400" />, text: "Bronze", style: "bg-orange-50 text-orange-700 border-orange-200" };
