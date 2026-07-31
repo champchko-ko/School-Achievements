@@ -7,6 +7,12 @@ import { collection, doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { compact, input } from '../lib/ui';
 
+// Local (device) date in YYYY-MM-DD, used as the default achievement date
+const todayLocal = () => {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+};
+
 export default function AddAchievementModal({ isOpen, onClose, initialData, docId, verifiedPin }: { isOpen: boolean, onClose: () => void, initialData?: any, docId?: string, verifiedPin?: string }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<File[]>([]);
@@ -18,6 +24,7 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
     department: 'الرياضيات',
     title: '',
     desc: '',
+    date: todayLocal(),
     pin: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -42,10 +49,11 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
           department: initialData.department || departmentsList[0] || 'الرياضيات',
           title: initialData.title || '',
           desc: initialData.desc || '',
+          date: initialData.date || todayLocal(),
           pin: initialData.pin || ''
         });
       } else {
-        setFormData({ teacherName: '', department: departmentsList[0] || 'الرياضيات', title: '', desc: '', pin: '' });
+        setFormData({ teacherName: '', department: departmentsList[0] || 'الرياضيات', title: '', desc: '', date: todayLocal(), pin: '' });
       }
       setFiles([]);
 
@@ -99,12 +107,13 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
   const handleSubmit = async () => {
     console.log('handleSubmit called', { docId, formData, files: files.length });
     // Basic validation
-    if (!formData.teacherName || !formData.title || !formData.desc || (!docId && !formData.pin)) {
+    if (!formData.teacherName || !formData.title || !formData.desc || !formData.date || (!docId && !formData.pin)) {
       console.log('Validation failed', { teacher: !!formData.teacherName, title: !!formData.title, desc: !!formData.desc, pin: !!formData.pin, docId });
       const missing = [];
       if (!formData.teacherName) missing.push('اسم المعلمة');
       if (!formData.title) missing.push('عنوان الإنجاز');
       if (!formData.desc) missing.push('الوصف');
+      if (!formData.date) missing.push('تاريخ الإنجاز');
       if (!docId && !formData.pin) missing.push('رمز الحماية (PIN)');
       setAlertMsg("الرجاء ملء: " + missing.join('، '));
       return;
@@ -138,6 +147,7 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
           department: formData.department,
           title: formData.title,
           desc: formData.desc,
+          date: formData.date,
         };
         if (attachmentUrls.length > 0) {
           updatePayload.attachmentUrls = initialData?.attachmentUrls 
@@ -180,7 +190,7 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
       
       console.log('Save completed successfully, calling onClose');
       // Clear form and close modal
-      setFormData({ teacherName: '', department: 'الرياضيات', title: '', desc: '', pin: '' });
+      setFormData({ teacherName: '', department: 'الرياضيات', title: '', desc: '', date: todayLocal(), pin: '' });
       setFiles([]);
       onClose();
     } catch (error) {
@@ -268,6 +278,16 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
               placeholder="اكتب تفاصيل الإنجاز هنا..." 
               className={`${input} w-full resize-none`}
             ></textarea>
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-1">تاريخ الإنجاز *</label>
+            <input 
+              type="date" 
+              value={formData.date}
+              onChange={(e) => setFormData({...formData, date: e.target.value})}
+              className={`${input} w-full cursor-pointer`}
+            />
           </div>
 
           {/* Drag & Drop Zone */}

@@ -61,8 +61,9 @@ export default function AdminDashboard() {
   // 1. Pending Queue
   const pendingAchievements = allAchievements.filter(a => a.score === null);
 
-  // 2. Most Active Department this Month
-  const currentMonth = new Date().toISOString().slice(0, 7);
+  // 2. Most Active Department this Month (device-local month, not UTC)
+  const now = new Date();
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   const currentMonthAchievements = allAchievements.filter(a => a.date && a.date.startsWith(currentMonth));
   const deptCounts: Record<string, number> = {};
   currentMonthAchievements.forEach(a => {
