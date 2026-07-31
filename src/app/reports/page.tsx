@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { collection, onSnapshot, query, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { Printer, BarChart3, Medal, UserSquare, FileSpreadsheet, Loader2 } from 'lucide-react';
-import { attachmentsCell, generateCategorizedPdf, generateTablePdf } from '../../lib/pdf';
+
 import { useRouter } from 'next/navigation';
 import { useAdmin } from '../../lib/useAdmin';
 
@@ -103,45 +103,59 @@ export default function ReportsPage() {
   const handleExportPdf = async () => {
     setIsExporting(true);
     try {
-      const dateStamp = new Date().toLocaleDateString('ar-SA');
-      const timeStamp = new Date().toLocaleTimeString('ar-SA');
+      const { downloadPdf } = await import('../../pdf/render');
+      const { TableDocument } = await import('../../pdf/TableDocument');
+      const { ReportDocument } = await import('../../pdf/ReportDocument');
+      const { buildPdfHeader, buildAttachmentData, attachmentsCell, textCell, richCell } = await import('../../pdf/builders');
 
       if (activeReport === 'department') {
         const statsArray = computeDepartmentStats();
-        await generateTablePdf({
-          header: {
-            logoUrl: schoolSettings?.logoUrl,
-            schoolName: schoolSettings?.schoolName,
-            title: 'تقرير أداء الأقسام',
-            subtitle: 'مقارنة تفصيلية لعدد الإنجازات ومتوسط التقييم لكل قسم',
-          },
-          // Listed right-to-left so the PDF table reads as RTL.
-          columns: [
-            { header: 'متوسط التقييم', width: 110, alignment: 'center' },
-            { header: 'إجمالي الإنجازات', width: 110, alignment: 'center' },
-            { header: 'القسم', width: '*' },
-          ],
-          rows: statsArray.map(s => [s.averageScore ?? 'قيد المراجعة', String(s.count), s.department]),
-          filename: 'department-report.pdf',
-        });
+        const header = await buildPdfHeader(
+          schoolSettings,
+          'تقرير أداء الأقسام',
+          'مقارنة تفصيلية لعدد الإنجازات ومتوسط التقييم لكل قسم'
+        );
+        await downloadPdf(
+          <TableDocument
+            header={header}
+            columns={[
+              { header: 'القسم', width: 40 },
+              { header: 'إجمالي الإنجازات', width: 30, align: 'center' },
+              { header: 'متوسط التقييم', width: 30, align: 'center' },
+            ]}
+            rows={statsArray.map(s => [
+              textCell(s.department, { bold: true }),
+              textCell(String(s.count), { bold: true, color: '#0087ed' }),
+              textCell(s.averageScore ?? 'قيد المراجعة'),
+            ])}
+          />,
+          'department-report.pdf'
+        );
       } else if (activeReport === 'honor') {
         const honorList = computeHonorList();
-        await generateTablePdf({
-          header: {
-            logoUrl: schoolSettings?.logoUrl,
-            schoolName: schoolSettings?.schoolName,
-            title: 'قائمة الشرف للمتميزين',
-            subtitle: 'أكثر المعلمات إنجازاً وتميزاً في الأداء',
-          },
-          columns: [
-            { header: 'إجمالي الإنجازات', width: 110, alignment: 'center' },
-            { header: 'القسم', width: 120 },
-            { header: 'المعلمة', width: '*' },
-            { header: 'الترتيب', width: 50, alignment: 'center' },
-          ],
-          rows: honorList.map((s, idx) => [String(s.count), s.department, s.name, String(idx + 1)]),
-          filename: 'honor-roll.pdf',
-        });
+        const header = await buildPdfHeader(
+          schoolSettings,
+          'قائمة الشرف للمتميزين',
+          'أكثر المعلمات إنجازاً وتميزاً في الأداء'
+        );
+        await downloadPdf(
+          <TableDocument
+            header={header}
+            columns={[
+              { header: 'الترتيب', width: 10, align: 'center' },
+              { header: 'المعلمة', width: 40 },
+              { header: 'القسم', width: 30 },
+              { header: 'إجمالي الإنجازات', width: 20, align: 'center' },
+            ]}
+            rows={honorList.map((s, idx) => [
+              textCell(String(idx + 1), { bold: true }),
+              textCell(s.name, { bold: true }),
+              textCell(s.department),
+              textCell(String(s.count), { bold: true, color: '#0087ed' }),
+            ])}
+          />,
+          'honor-roll.pdf'
+        );
       } else {
         // Individual teacher report
         if (selectedTeacher === 'all') {
@@ -169,37 +183,34 @@ export default function ReportsPage() {
             if (ach.fileUrl && !attachments.includes(ach.fileUrl)) attachments.push(ach.fileUrl);
             if (ach.attachmentUrl && !attachments.includes(ach.attachmentUrl)) attachments.push(ach.attachmentUrl);
             const appUrl = `${window.location.origin}/achievement/${ach.id}`;
-            const attachmentCell = await attachmentsCell(attachments, appUrl);
-            // Columns are listed right-to-left so the PDF table reads as RTL.
-            // (التقييم is excluded from the export.)
+            const attData = await buildAttachmentData(attachments, appUrl);
             deptRows.push([
-              attachmentCell,
-              ach.date || '',
-              [{ text: ach.title || '', bold: true }, ...(ach.desc ? [{ text: ach.desc, margin: [0, 2, 0, 0], color: '#555555' }] : [])],
+              attachmentsCell(attData),
+              textCell(ach.date || ''),
+              richCell(ach.title || '', ach.desc || ''),
             ]);
           }
           sections.push({
             title: `القسم: ${dept}`,
             subtitle: `${deptRows.length} إنجاز${deptRows.length === 1 ? '' : 'ات'}`,
             columns: [
-              { header: 'المرفقات', width: 110 },
-              { header: 'التاريخ', width: 60 },
-              { header: 'الإنجاز', width: '*' },
+              { header: 'المرفقات', width: 21 },
+              { header: 'التاريخ', width: 11, align: 'center' },
+              { header: 'الإنجاز', width: 68 },
             ],
             rows: deptRows,
           });
         }
 
-        await generateCategorizedPdf({
-          header: {
-            logoUrl: schoolSettings?.logoUrl,
-            schoolName: schoolSettings?.schoolName,
-            title: 'السجل الفردي للإنجازات',
-            subtitle: `المعلمة: ${selectedTeacher}`,
-          },
-          sections,
-          filename: 'teacher-report.pdf',
-        });
+        const header = await buildPdfHeader(
+          schoolSettings,
+          'السجل الفردي للإنجازات',
+          `المعلمة: ${selectedTeacher}`
+        );
+        await downloadPdf(
+          <ReportDocument header={header} sections={sections} />,
+          'teacher-report.pdf'
+        );
       }
     } catch (error) {
       console.error('PDF export error:', error);
