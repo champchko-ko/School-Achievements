@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Search, Filter, DownloadCloud, FileText, Trophy, Clock, Medal, Award, Loader2, Pencil, Trash2, Eye } from 'lucide-react';
+import { attachmentsCell, generateCategorizedPdf, generateTablePdf, isImageUrl, isVideoUrl } from '../../lib/pdf';
 import { useAdmin } from '../../lib/useAdmin';
 import Link from 'next/link';
 import { collection, onSnapshot, query, orderBy, doc, getDoc } from 'firebase/firestore';
@@ -26,6 +27,7 @@ export default function FullRecordPage() {
   const [filterDepartment, setFilterDepartment] = useState("all");
   const [achievements, setAchievements] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [notification, setNotification] = useState<{ type: string, message: string } | null>(null);
 
@@ -114,47 +116,121 @@ export default function FullRecordPage() {
     return matchesSearch && matchesDate && matchesScore && matchesDepartment;
   });
 
-  const exportToExcel = () => {
-    let tableHtml = `
-      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-      <head>
-        <meta charset="utf-8" />
-        <style>
-          table { text-align: right; direction: rtl; border-collapse: collapse; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-          th, td { border: 1px solid #ddd; padding: 10px; }
-          th { background-color: #f8f9fa; color: #333; font-weight: bold; }
-          a { color: #0087ed; text-decoration: underline; }
-        </style>
-      </head>
-      <body>
-        <table>
-          <thead>
-            <tr><th>المعلمة</th><th>القسم</th><th>الإنجاز</th><th>التاريخ</th><th>التقييم</th><th>المرفقات</th></tr>
-          </thead>
-          <tbody>
-            ${filteredData.map(row => {
-              const links = [];
-              if (row.attachmentUrls) links.push(...row.attachmentUrls);
-              if (row.attachmentUrl) links.push(row.attachmentUrl);
-              const attachmentsHtml = links.map((url, i) => `<a href="${url}">مرفق ${i + 1}</a>`).join("<br/>");
-              const safeTeacher = sanitizeText(row.teacherName || '');
-              const safeDept = sanitizeText(row.department || '');
-              const safeTitle = sanitizeText(row.title || '');
-              const safeDate = sanitizeText(row.date || '');
-              return `<tr><td>${safeTeacher}</td><td>${safeDept}</td><td>${safeTitle}</td><td>${safeDate}</td><td>${row.score ?? 'قيد المراجعة'}</td><td>${attachmentsHtml}</td></tr>`;
-            }).join('')}
-          </tbody>
-        </table>
-      </body>
-      </html>
-    `;
+  const getScoreCategory = (score: number | null | undefined) => {
+    if (score === null || score === undefined) return 'قيد المراجعة';
+    if (score >= 90) return `${score} - ذهبي`;
+    if (score >= 80) return `${score} - فضي`;
+    return `${score} - برونزي`;
+  };
 
-    const blob = new Blob(["\uFEFF" + tableHtml], { type: "application/vnd.ms-excel;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "السجل_الكامل.xls";
-    link.click();
+  const getAttachmentLabel = (url: string, index: number) => {
+    if (isImageUrl(url)) return `صورة ${index}`;
+    if (isVideoUrl(url)) return `فيديو ${index}`;
+    return `مستند ${index}`;
+  };
+
+  const collectAttachments = (row: any) => {
+    const attachments: string[] = [];
+    if (row.attachmentUrls) attachments.push(...row.attachmentUrls);
+    if (row.fileUrl && !attachments.includes(row.fileUrl)) attachments.push(row.fileUrl);
+    if (row.attachmentUrl && !attachments.includes(row.attachmentUrl)) attachments.push(row.attachmentUrl);
+    return attachments;
+  };
+
+  const handlePdfExport = async () => {
+    setIsExporting(true);
+    try {
+      // Group achievements by department, then by teacher
+      const groups = new Map<string, Map<string, any[]>>();
+      for (const row of filteredData) {
+        const dept = row.department || 'غير محدد';
+        const teacher = row.teacherName || 'غير محدد';
+        if (!groups.has(dept)) groups.set(dept, new Map());
+        const teacherMap = groups.get(dept)!;
+        if (!teacherMap.has(teacher)) teacherMap.set(teacher, []);
+        teacherMap.get(teacher)!.push(row);
+      }
+
+      const sections: any[] = [];
+      const sortedDepts = Array.from(groups.keys()).sort((a, b) => a.localeCompare(b, 'ar'));
+      for (const dept of sortedDepts) {
+        const teacherMap = groups.get(dept)!;
+        const sortedTeachers = Array.from(teacherMap.keys()).sort((a, b) => a.localeCompare(b, 'ar'));
+        for (const teacher of sortedTeachers) {
+          const rows = teacherMap.get(teacher)!;
+          const sectionRows: any[][] = [];
+          for (const row of rows) {
+            const attachmentCell = await attachmentsCell(collectAttachments(row));
+            sectionRows.push([
+              row.title || '',
+              row.date || '',
+              getScoreCategory(row.score),
+              attachmentCell,
+            ]);
+          }
+          sections.push({
+            title: `القسم: ${dept}`,
+            subtitle: `المعلمة: ${teacher}  (${rows.length} إنجاز${rows.length === 1 ? '' : 'ات'})`,
+            columns: [
+              { header: 'الإنجاز', width: '*' },
+              { header: 'التاريخ', width: 60 },
+              { header: 'التقييم', width: 60 },
+              { header: 'المرفقات', width: 100 },
+            ],
+            rows: sectionRows,
+          });
+        }
+      }
+
+      await generateCategorizedPdf({
+        header: {
+          logoUrl: schoolSettings?.logoUrl,
+          schoolName: schoolSettings?.schoolName,
+          title: 'منصة إنجازات المدرسة',
+          subtitle: 'السجل الكامل للإنجازات',
+        },
+        sections,
+        filename: 'السجل_الكامل_للإنجازات.pdf',
+      });
+    } catch (error) {
+      console.error('PDF export error:', error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const exportToExcel = async () => {
+    setIsExporting(true);
+    try {
+      const XLSX = await import('xlsx');
+      const sortedData = [...filteredData].sort((a, b) => {
+        const deptCompare = (a.department || '').localeCompare(b.department || '', 'ar');
+        if (deptCompare !== 0) return deptCompare;
+        return (a.teacherName || '').localeCompare(b.teacherName || '', 'ar');
+      });
+      const rows = sortedData.map(row => {
+        const attachmentsText = collectAttachments(row)
+          .map((url, i) => `${getAttachmentLabel(url, i + 1)}: ${url}`)
+          .join('\n');
+        return {
+          'المعلمة': row.teacherName || '',
+          'القسم': row.department || '',
+          'الإنجاز': row.title || '',
+          'التاريخ': row.date || '',
+          'التقييم': getScoreCategory(row.score),
+          'المرفقات': attachmentsText,
+        };
+      });
+      const ws = XLSX.utils.json_to_sheet(rows);
+      ws['!cols'] = [{ wch: 20 }, { wch: 14 }, { wch: 40 }, { wch: 12 }, { wch: 14 }, { wch: 60 }];
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'الإنجازات');
+      XLSX.writeFile(wb, 'السجل_الكامل_للإنجازات.xlsx');
+    } catch (error) {
+      console.error('Excel export error:', error);
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const handleActionClick = (doc: any) => {
@@ -258,10 +334,11 @@ export default function FullRecordPage() {
         
         <div className="flex gap-2 w-full md:w-auto">
           <button 
-            onClick={() => window.print()}
-            className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white border-2 border-gray-200 hover:border-[#26890c] hover:text-[#26890c] text-gray-600 px-4 py-2 rounded-xl font-bold transition-colors"
+            onClick={handlePdfExport}
+            disabled={isExporting}
+            className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white border-2 border-gray-200 hover:border-[#26890c] hover:text-[#26890c] text-gray-600 px-4 py-2 rounded-xl font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <FileText size={18} /> PDF
+            {isExporting ? <Loader2 size={18} className="animate-spin" /> : <FileText size={18} />} {isExporting ? 'جارٍ التصدير...' : 'PDF'}
           </button>
           <button 
             onClick={exportToExcel}
