@@ -162,21 +162,21 @@ export default function FullRecordPage() {
           for (const row of rows) {
             const appUrl = `${window.location.origin}/achievement/${row.id}`;
             const attachmentCell = await attachmentsCell(collectAttachments(row), appUrl);
+            // Columns are listed right-to-left so the PDF table reads as RTL.
+            // (التقييم is excluded from the export.)
             sectionRows.push([
-              row.title || '',
-              row.date || '',
-              getScoreCategory(row.score),
               attachmentCell,
+              row.date || '',
+              row.title || '',
             ]);
           }
           sections.push({
             title: `القسم: ${dept}`,
             subtitle: `المعلمة: ${teacher}  (${rows.length} إنجاز${rows.length === 1 ? '' : 'ات'})`,
             columns: [
-              { header: 'الإنجاز', width: '*' },
+              { header: 'المرفقات', width: 110 },
               { header: 'التاريخ', width: 60 },
-              { header: 'التقييم', width: 60 },
-              { header: 'المرفقات', width: 100 },
+              { header: 'الإنجاز', width: '*' },
             ],
             rows: sectionRows,
           });
@@ -236,8 +236,10 @@ export default function FullRecordPage() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+      setNotification({ type: "success", message: "تم تصدير ملف Excel بنجاح! 📊" });
     } catch (error) {
       console.error('Excel export error:', error);
+      setNotification({ type: "error", message: "حدث خطأ أثناء تصدير ملف Excel، حاول مرة أخرى." });
     } finally {
       setIsExporting(false);
     }
@@ -352,9 +354,10 @@ export default function FullRecordPage() {
           </button>
           <button 
             onClick={exportToExcel}
+            disabled={isExporting}
             className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white border-2 border-gray-200 hover:border-[#26890c] hover:text-[#26890c] text-gray-600 px-4 py-2 rounded-xl font-bold transition-colors"
           >
-            <DownloadCloud size={18} /> Excel
+            {isExporting ? <Loader2 size={18} className="animate-spin" /> : <DownloadCloud size={18} />} {isExporting ? 'جارٍ التصدير...' : 'Excel'}
           </button>
         </div>
       </div>

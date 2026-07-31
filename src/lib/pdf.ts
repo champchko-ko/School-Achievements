@@ -118,6 +118,8 @@ const getFileName = (url: string) => {
 // links that open inside the app (the achievement page), not the raw storage URL.
 // `appUrl` is the in-app page (e.g. origin + "/achievement/<id>") where all
 // attachments are displayed.
+// Attachments are stacked vertically (small thumbnails) so they don't blow up
+// the table width or the page count.
 export async function attachmentsCell(urls: string[], appUrl: string): Promise<any> {
   const cells: any[] = [];
   let index = 1;
@@ -125,7 +127,21 @@ export async function attachmentsCell(urls: string[], appUrl: string): Promise<a
     if (isImageUrl(url)) {
       const dataUrl = await fetchAsDataUrl(url);
       if (dataUrl) {
-        cells.push({ image: dataUrl, width: 32, height: 32, link: appUrl, margin: [0, 1, 0, 1] });
+        cells.push({
+          stack: [
+            { image: dataUrl, fit: [55, 55], link: appUrl },
+            {
+              text: `صورة ${index}`,
+              link: appUrl,
+              color: "#0087ed",
+              decoration: "underline",
+              fontSize: 7,
+              alignment: "center",
+              margin: [0, 1, 0, 0],
+            },
+          ],
+          margin: [0, 2, 0, 2],
+        });
       } else {
         cells.push({
           text: `صورة ${index}`,
@@ -139,7 +155,21 @@ export async function attachmentsCell(urls: string[], appUrl: string): Promise<a
     } else if (isVideoUrl(url)) {
       const thumbDataUrl = await fetchAsDataUrl(getVideoThumbUrl(url));
       if (thumbDataUrl) {
-        cells.push({ image: thumbDataUrl, width: 40, height: 26, link: appUrl, margin: [0, 1, 0, 1] });
+        cells.push({
+          stack: [
+            { image: thumbDataUrl, fit: [70, 45], link: appUrl },
+            {
+              text: `فيديو ${index}`,
+              link: appUrl,
+              color: "#0087ed",
+              decoration: "underline",
+              fontSize: 7,
+              alignment: "center",
+              margin: [0, 1, 0, 0],
+            },
+          ],
+          margin: [0, 2, 0, 2],
+        });
       } else {
         cells.push({
           text: `فيديو ${index}`,
@@ -163,7 +193,20 @@ export async function attachmentsCell(urls: string[], appUrl: string): Promise<a
     index += 1;
   }
   if (cells.length === 0) return { text: "—", color: "#999999" };
-  return cells;
+  return { stack: cells };
+}
+
+// Normalize a raw table cell into a pdfmake node. Objects (like the stacked
+// attachments cell) are passed through, arrays become vertical stacks, and
+// everything else becomes right-aligned text.
+function toPdfCell(cell: any, alignment: string) {
+  if (cell && typeof cell === "object" && !Array.isArray(cell)) {
+    return { ...cell, alignment };
+  }
+  if (Array.isArray(cell)) {
+    return { stack: cell, alignment };
+  }
+  return { text: String(cell), alignment };
 }
 
 export async function generateTablePdf(opts: {
@@ -203,12 +246,7 @@ export async function generateTablePdf(opts: {
       widths: columns.map((c) => c.width ?? "*"),
       body: [
         columns.map((c) => ({ text: c.header, style: "tableHeader", alignment: c.alignment || "center" })),
-        ...rows.map((row) =>
-          row.map((cell, i) => ({
-            ...(Array.isArray(cell) ? { stack: cell } : { text: String(cell) }),
-            alignment: columns[i]?.alignment || "right",
-          }))
-        ),
+        ...rows.map((row) => row.map((cell, i) => toPdfCell(cell, columns[i]?.alignment || "right"))),
       ],
     },
     layout: {
@@ -287,10 +325,11 @@ export async function generateCategorizedPdf(opts: {
     content.push({
       text: section.title,
       style: "sectionTitle",
+      alignment: "right",
       margin: [0, 8, 0, 2],
     });
     if (section.subtitle) {
-      content.push({ text: section.subtitle, style: "subtitle", margin: [0, 0, 0, 6] });
+      content.push({ text: section.subtitle, style: "subtitle", alignment: "right", margin: [0, 0, 0, 6] });
     }
     content.push({
       table: {
@@ -298,12 +337,7 @@ export async function generateCategorizedPdf(opts: {
         widths: section.columns.map((c) => c.width ?? "*"),
         body: [
           section.columns.map((c) => ({ text: c.header, style: "tableHeader", alignment: c.alignment || "center" })),
-          ...section.rows.map((row) =>
-            row.map((cell, i) => ({
-              ...(Array.isArray(cell) ? { stack: cell } : { text: String(cell) }),
-              alignment: section.columns[i]?.alignment || "right",
-            }))
-          ),
+          ...section.rows.map((row) => row.map((cell, i) => toPdfCell(cell, section.columns[i]?.alignment || "right"))),
         ],
       },
       layout: {

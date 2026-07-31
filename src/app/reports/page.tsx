@@ -100,13 +100,6 @@ export default function ReportsPage() {
     })).sort((a, b) => b.count - a.count).slice(0, 10);
   };
 
-  const getScoreCategory = (score: number | null | undefined) => {
-    if (score === null || score === undefined) return 'قيد المراجعة';
-    if (score >= 90) return `${score} - ذهبي`;
-    if (score >= 80) return `${score} - فضي`;
-    return `${score} - برونزي`;
-  };
-
   const handleExportPdf = async () => {
     setIsExporting(true);
     try {
@@ -122,12 +115,13 @@ export default function ReportsPage() {
             title: 'تقرير أداء الأقسام',
             subtitle: 'مقارنة تفصيلية لعدد الإنجازات ومتوسط التقييم لكل قسم',
           },
+          // Listed right-to-left so the PDF table reads as RTL.
           columns: [
-            { header: 'القسم', width: '*' },
-            { header: 'إجمالي الإنجازات', width: 110, alignment: 'center' },
             { header: 'متوسط التقييم', width: 110, alignment: 'center' },
+            { header: 'إجمالي الإنجازات', width: 110, alignment: 'center' },
+            { header: 'القسم', width: '*' },
           ],
-          rows: statsArray.map(s => [s.department, String(s.count), s.averageScore ?? 'قيد المراجعة']),
+          rows: statsArray.map(s => [s.averageScore ?? 'قيد المراجعة', String(s.count), s.department]),
           filename: 'department-report.pdf',
         });
       } else if (activeReport === 'honor') {
@@ -140,12 +134,12 @@ export default function ReportsPage() {
             subtitle: 'أكثر المعلمات إنجازاً وتميزاً في الأداء',
           },
           columns: [
-            { header: 'الترتيب', width: 50, alignment: 'center' },
-            { header: 'المعلمة', width: '*' },
-            { header: 'القسم', width: 120 },
             { header: 'إجمالي الإنجازات', width: 110, alignment: 'center' },
+            { header: 'القسم', width: 120 },
+            { header: 'المعلمة', width: '*' },
+            { header: 'الترتيب', width: 50, alignment: 'center' },
           ],
-          rows: honorList.map((s, idx) => [String(idx + 1), s.name, s.department, String(s.count)]),
+          rows: honorList.map((s, idx) => [String(s.count), s.department, s.name, String(idx + 1)]),
           filename: 'honor-roll.pdf',
         });
       } else {
@@ -176,21 +170,21 @@ export default function ReportsPage() {
             if (ach.attachmentUrl && !attachments.includes(ach.attachmentUrl)) attachments.push(ach.attachmentUrl);
             const appUrl = `${window.location.origin}/achievement/${ach.id}`;
             const attachmentCell = await attachmentsCell(attachments, appUrl);
+            // Columns are listed right-to-left so the PDF table reads as RTL.
+            // (التقييم is excluded from the export.)
             deptRows.push([
-              [{ text: ach.title || '', bold: true }, ...(ach.desc ? [{ text: ach.desc, margin: [0, 2, 0, 0], color: '#555555' }] : [])],
-              ach.date || '',
-              getScoreCategory(ach.score),
               attachmentCell,
+              ach.date || '',
+              [{ text: ach.title || '', bold: true }, ...(ach.desc ? [{ text: ach.desc, margin: [0, 2, 0, 0], color: '#555555' }] : [])],
             ]);
           }
           sections.push({
             title: `القسم: ${dept}`,
             subtitle: `${deptRows.length} إنجاز${deptRows.length === 1 ? '' : 'ات'}`,
             columns: [
-              { header: 'الإنجاز', width: '*' },
+              { header: 'المرفقات', width: 110 },
               { header: 'التاريخ', width: 60 },
-              { header: 'التقييم', width: 60 },
-              { header: 'المرفقات', width: 100 },
+              { header: 'الإنجاز', width: '*' },
             ],
             rows: deptRows,
           });
