@@ -399,9 +399,9 @@ export default function SettingsPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* Departments Management */}
-              <div className="bg-purple-50/30 p-6 rounded-3xl border-2 border-purple-100">
+              <div className="bg-purple-50/30 p-6 rounded-3xl border-2 border-purple-100 min-w-0">
                 <h4 className="font-black text-gray-800 mb-4 flex items-center gap-2"><BookOpen size={18} className="text-[#0087ed]" /> الأقسام الدراسية</h4>
-                <div className="flex gap-2 mb-4">
+                <div className="flex flex-col sm:flex-row gap-2 mb-4">
                   <input 
                     type="text" 
                     value={newDept} 
@@ -416,9 +416,9 @@ export default function SettingsPage() {
                       }
                     }}
                     placeholder="اسم القسم الجديد" 
-                    className="flex-1 bg-white border-2 border-purple-100 rounded-2xl p-3 font-bold focus:ring-4 focus:ring-purple-200 focus:border-[#46178f] outline-none text-sm" 
+                    className="w-full sm:flex-1 min-w-0 bg-white border-2 border-purple-100 rounded-2xl p-3 font-bold focus:ring-4 focus:ring-purple-200 focus:border-[#46178f] outline-none text-sm" 
                   />
-                  <button type="button" onClick={() => { if(newDept.trim() && !formData.departments.includes(newDept.trim())) { setFormData({...formData, departments: [...formData.departments, newDept.trim()]}); setNewDept(''); } }} className="bg-[#0087ed] text-white px-5 py-2.5 rounded-2xl font-black hover:bg-[#0073cc] transition-all shadow-md">إضافة</button>
+                  <button type="button" onClick={() => { if(newDept.trim() && !formData.departments.includes(newDept.trim())) { setFormData({...formData, departments: [...formData.departments, newDept.trim()]}); setNewDept(''); } }} className="shrink-0 w-full sm:w-auto bg-[#0087ed] text-white px-5 py-2.5 rounded-2xl font-black hover:bg-[#0073cc] transition-all shadow-md">إضافة</button>
                 </div>
                 <div className="flex flex-wrap gap-2 max-h-52 overflow-y-auto p-2 border-2 border-dashed border-purple-200 rounded-2xl bg-white">
                   {formData.departments.map(dept => (
@@ -432,9 +432,9 @@ export default function SettingsPage() {
               </div>
 
               {/* Teachers Management */}
-              <div className="bg-purple-50/30 p-6 rounded-3xl border-2 border-purple-100">
+              <div className="bg-purple-50/30 p-6 rounded-3xl border-2 border-purple-100 min-w-0">
                 <h4 className="font-black text-gray-800 mb-4 flex items-center gap-2"><Users size={18} className="text-[#26890c]" /> قائمة المعلمات</h4>
-                <div className="flex gap-2 mb-4">
+                <div className="flex flex-col sm:flex-row gap-2 mb-4">
                   <input 
                     type="text" 
                     value={newTeacher} 
@@ -449,9 +449,9 @@ export default function SettingsPage() {
                       }
                     }}
                     placeholder="اسم المعلمة الجديدة" 
-                    className="flex-1 bg-white border-2 border-purple-100 rounded-2xl p-3 font-bold focus:ring-4 focus:ring-purple-200 focus:border-[#46178f] outline-none text-sm" 
+                    className="w-full sm:flex-1 min-w-0 bg-white border-2 border-purple-100 rounded-2xl p-3 font-bold focus:ring-4 focus:ring-purple-200 focus:border-[#46178f] outline-none text-sm" 
                   />
-                  <button type="button" onClick={() => { if(newTeacher.trim() && !formData.teachers.includes(newTeacher.trim())) { setFormData({...formData, teachers: [...formData.teachers, newTeacher.trim()]}); setNewTeacher(''); } }} className="bg-[#26890c] text-white px-5 py-2.5 rounded-2xl font-black hover:bg-[#20730a] transition-all shadow-md">إضافة</button>
+                  <button type="button" onClick={() => { if(newTeacher.trim() && !formData.teachers.includes(newTeacher.trim())) { setFormData({...formData, teachers: [...formData.teachers, newTeacher.trim()]}); setNewTeacher(''); } }} className="shrink-0 w-full sm:w-auto bg-[#26890c] text-white px-5 py-2.5 rounded-2xl font-black hover:bg-[#20730a] transition-all shadow-md">إضافة</button>
                 </div>
                 <div className="flex flex-wrap gap-2 max-h-52 overflow-y-auto p-2 border-2 border-dashed border-purple-200 rounded-2xl bg-white">
                   {formData.teachers.map(teacher => (
@@ -514,4 +514,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-
