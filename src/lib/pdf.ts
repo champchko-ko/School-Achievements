@@ -86,6 +86,24 @@ export function isVideoUrl(url: string): boolean {
   return url.includes("/video/upload/");
 }
 
+// Build a Cloudinary poster-frame URL for a video (so_0 = first frame, .jpg).
+export function getVideoThumbUrl(url: string): string {
+  try {
+    if (!url.includes("/video/upload/")) return url;
+    const u = new URL(url);
+    const segments = u.pathname.split("/");
+    const uploadIdx = segments.indexOf("upload");
+    if (uploadIdx === -1) return url;
+    // Strip any existing extension, insert so_0 right after "upload", end with .jpg
+    segments[segments.length - 1] = segments[segments.length - 1].replace(/\.[^/.]+$/, "");
+    segments.splice(uploadIdx + 1, 0, "so_0");
+    u.pathname = segments.join("/") + ".jpg";
+    return u.toString();
+  } catch {
+    return url;
+  }
+}
+
 const getFileName = (url: string) => {
   try {
     const decoded = decodeURIComponent(url);
@@ -97,19 +115,21 @@ const getFileName = (url: string) => {
 };
 
 // Build a PDF table cell for attachments: embedded image thumbnails + clickable
-// links for videos and documents.
-export async function attachmentsCell(urls: string[]): Promise<any> {
+// links that open inside the app (the achievement page), not the raw storage URL.
+// `appUrl` is the in-app page (e.g. origin + "/achievement/<id>") where all
+// attachments are displayed.
+export async function attachmentsCell(urls: string[], appUrl: string): Promise<any> {
   const cells: any[] = [];
   let index = 1;
   for (const url of urls) {
     if (isImageUrl(url)) {
       const dataUrl = await fetchAsDataUrl(url);
       if (dataUrl) {
-        cells.push({ image: dataUrl, width: 32, height: 32, margin: [0, 1, 0, 1] });
+        cells.push({ image: dataUrl, width: 32, height: 32, link: appUrl, margin: [0, 1, 0, 1] });
       } else {
         cells.push({
           text: `صورة ${index}`,
-          link: url,
+          link: appUrl,
           color: "#0087ed",
           decoration: "underline",
           fontSize: 8,
@@ -117,18 +137,23 @@ export async function attachmentsCell(urls: string[]): Promise<any> {
         });
       }
     } else if (isVideoUrl(url)) {
-      cells.push({
-        text: `فيديو ${index}`,
-        link: url,
-        color: "#0087ed",
-        decoration: "underline",
-        fontSize: 8,
-        margin: [0, 1, 0, 1],
-      });
+      const thumbDataUrl = await fetchAsDataUrl(getVideoThumbUrl(url));
+      if (thumbDataUrl) {
+        cells.push({ image: thumbDataUrl, width: 40, height: 26, link: appUrl, margin: [0, 1, 0, 1] });
+      } else {
+        cells.push({
+          text: `فيديو ${index}`,
+          link: appUrl,
+          color: "#0087ed",
+          decoration: "underline",
+          fontSize: 8,
+          margin: [0, 1, 0, 1],
+        });
+      }
     } else {
       cells.push({
         text: getFileName(url),
-        link: url,
+        link: appUrl,
         color: "#0087ed",
         decoration: "underline",
         fontSize: 8,

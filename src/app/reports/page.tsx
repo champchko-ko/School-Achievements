@@ -174,7 +174,8 @@ export default function ReportsPage() {
             if (ach.attachmentUrls) attachments.push(...ach.attachmentUrls);
             if (ach.fileUrl && !attachments.includes(ach.fileUrl)) attachments.push(ach.fileUrl);
             if (ach.attachmentUrl && !attachments.includes(ach.attachmentUrl)) attachments.push(ach.attachmentUrl);
-            const attachmentCell = await attachmentsCell(attachments);
+            const appUrl = `${window.location.origin}/achievement/${ach.id}`;
+            const attachmentCell = await attachmentsCell(attachments, appUrl);
             deptRows.push([
               [{ text: ach.title || '', bold: true }, ...(ach.desc ? [{ text: ach.desc, margin: [0, 2, 0, 0], color: '#555555' }] : [])],
               ach.date || '',

@@ -160,7 +160,8 @@ export default function FullRecordPage() {
           const rows = teacherMap.get(teacher)!;
           const sectionRows: any[][] = [];
           for (const row of rows) {
-            const attachmentCell = await attachmentsCell(collectAttachments(row));
+            const appUrl = `${window.location.origin}/achievement/${row.id}`;
+            const attachmentCell = await attachmentsCell(collectAttachments(row), appUrl);
             sectionRows.push([
               row.title || '',
               row.date || '',
