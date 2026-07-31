@@ -128,7 +128,7 @@ export default function ReportsPage() {
             { header: 'متوسط التقييم', width: 110, alignment: 'center' },
           ],
           rows: statsArray.map(s => [s.department, String(s.count), s.averageScore ?? 'قيد المراجعة']),
-          filename: 'تقرير_أداء_الأقسام.pdf',
+          filename: 'department-report.pdf',
         });
       } else if (activeReport === 'honor') {
         const honorList = computeHonorList();
@@ -146,7 +146,7 @@ export default function ReportsPage() {
             { header: 'إجمالي الإنجازات', width: 110, alignment: 'center' },
           ],
           rows: honorList.map((s, idx) => [String(idx + 1), s.name, s.department, String(s.count)]),
-          filename: 'قائمة_الشرف.pdf',
+          filename: 'honor-roll.pdf',
         });
       } else {
         // Individual teacher report
@@ -203,7 +203,7 @@ export default function ReportsPage() {
             subtitle: `المعلمة: ${selectedTeacher}`,
           },
           sections,
-          filename: `السجل_الفردي_${selectedTeacher}.pdf`,
+          filename: 'teacher-report.pdf',
         });
       }
     } catch (error) {
