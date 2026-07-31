@@ -190,7 +190,7 @@ export default function FullRecordPage() {
           subtitle: 'السجل الكامل للإنجازات',
         },
         sections,
-        filename: 'السجل_الكامل_للإنجازات.pdf',
+        filename: 'full-record.pdf',
       });
     } catch (error) {
       console.error('PDF export error:', error);
@@ -225,7 +225,16 @@ export default function FullRecordPage() {
       ws['!cols'] = [{ wch: 20 }, { wch: 14 }, { wch: 40 }, { wch: 12 }, { wch: 14 }, { wch: 60 }];
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'الإنجازات');
-      XLSX.writeFile(wb, 'السجل_الكامل_للإنجازات.xlsx');
+      const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+      const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'full-record.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Excel export error:', error);
     } finally {
