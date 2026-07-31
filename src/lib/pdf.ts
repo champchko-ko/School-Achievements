@@ -1,5 +1,15 @@
-// Real PDF generation using pdfmake (client-side) with the Tajawal Arabic font.
-// pdfmake and the font files are loaded lazily so the main bundle stays small.
+// Real PDF generation using pdfmake (client-side) with the Noto Naskh Arabic
+// font. pdfmake and the font files are loaded lazily so the main bundle stays
+// small.
+//
+// pdfmake (via pdfkit) lays text out left-to-right and never runs the Unicode
+// BiDi algorithm, so raw Arabic renders in the wrong visual order. Every Arabic
+// string is therefore shaped to Arabic presentation forms and then reordered to
+// visual (RTL) order before it reaches pdfmake. Noto Naskh Arabic is used
+// because it contains the Arabic presentation-form glyphs pdfkit needs.
+
+import ArabicReshaper from "arabic-reshaper";
+import bidiFactory from "bidi-js";
 
 export type PdfHeader = {
   logoUrl?: string;
@@ -15,6 +25,24 @@ export type PdfColumn = {
 };
 
 let pdfMakePromise: Promise<any> | null = null;
+let bidi: any = null;
+
+// Convert logical Arabic text to visual (RTL) order for the LTR pdfmake engine.
+// Pure Latin/digit strings are returned untouched.
+export function rtlText(text: string | number): string {
+  const raw = String(text ?? "");
+  if (!raw) return raw;
+  if (!/[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFC]/.test(raw)) {
+    return raw;
+  }
+  const reshaped = ArabicReshaper.convertArabic(raw);
+  if (!bidi) bidi = (bidiFactory as any)();
+  const levels = bidi.getEmbeddingLevels(reshaped, "rtl");
+  let visual: string = bidi.getReorderedString(reshaped, levels);
+  const mirrored = bidi.getMirroredCharactersMap(visual, levels);
+  if (mirrored) visual = visual.split("").map((c, i) => mirrored[i] || c).join("");
+  return visual;
+}
 
 function arrayBufferToBase64(buffer: ArrayBuffer): string {
   let binary = "";
@@ -34,20 +62,20 @@ async function loadPdfMake(): Promise<any> {
       const loadFont = async (url: string) =>
         arrayBufferToBase64(await (await fetch(url)).arrayBuffer());
       const [regular, bold] = await Promise.all([
-        loadFont("/fonts/Tajawal-Regular.ttf"),
-        loadFont("/fonts/Tajawal-Bold.ttf"),
+        loadFont("/fonts/NotoNaskhArabic-Regular.ttf"),
+        loadFont("/fonts/NotoNaskhArabic-Bold.ttf"),
       ]);
       pdfMake.addFontContainer({
         vfs: {
-          "Tajawal-Regular.ttf": regular,
-          "Tajawal-Bold.ttf": bold,
+          "NotoNaskhArabic-Regular.ttf": regular,
+          "NotoNaskhArabic-Bold.ttf": bold,
         },
         fonts: {
-          Tajawal: {
-            normal: "Tajawal-Regular.ttf",
-            bold: "Tajawal-Bold.ttf",
-            italics: "Tajawal-Regular.ttf",
-            bolditalics: "Tajawal-Bold.ttf",
+          NotoNaskh: {
+            normal: "NotoNaskhArabic-Regular.ttf",
+            bold: "NotoNaskhArabic-Bold.ttf",
+            italics: "NotoNaskhArabic-Regular.ttf",
+            bolditalics: "NotoNaskhArabic-Bold.ttf",
           },
         },
       });
@@ -131,7 +159,7 @@ export async function attachmentsCell(urls: string[], appUrl: string): Promise<a
           stack: [
             { image: dataUrl, fit: [55, 55], link: appUrl },
             {
-              text: `صورة ${index}`,
+              text: rtlText(`صورة ${index}`),
               link: appUrl,
               color: "#0087ed",
               decoration: "underline",
@@ -144,7 +172,7 @@ export async function attachmentsCell(urls: string[], appUrl: string): Promise<a
         });
       } else {
         cells.push({
-          text: `صورة ${index}`,
+          text: rtlText(`صورة ${index}`),
           link: appUrl,
           color: "#0087ed",
           decoration: "underline",
@@ -159,7 +187,7 @@ export async function attachmentsCell(urls: string[], appUrl: string): Promise<a
           stack: [
             { image: thumbDataUrl, fit: [70, 45], link: appUrl },
             {
-              text: `فيديو ${index}`,
+              text: rtlText(`فيديو ${index}`),
               link: appUrl,
               color: "#0087ed",
               decoration: "underline",
@@ -172,7 +200,7 @@ export async function attachmentsCell(urls: string[], appUrl: string): Promise<a
         });
       } else {
         cells.push({
-          text: `فيديو ${index}`,
+          text: rtlText(`فيديو ${index}`),
           link: appUrl,
           color: "#0087ed",
           decoration: "underline",
@@ -182,7 +210,7 @@ export async function attachmentsCell(urls: string[], appUrl: string): Promise<a
       }
     } else {
       cells.push({
-        text: getFileName(url),
+        text: rtlText(getFileName(url)),
         link: appUrl,
         color: "#0087ed",
         decoration: "underline",
@@ -204,9 +232,17 @@ function toPdfCell(cell: any, alignment: string) {
     return { ...cell, alignment };
   }
   if (Array.isArray(cell)) {
-    return { stack: cell, alignment };
+    return {
+      stack: cell.map((item) => {
+        if (item && typeof item === "object" && !Array.isArray(item)) {
+          return item.text !== undefined ? { ...item, text: rtlText(item.text) } : item;
+        }
+        return { text: rtlText(String(item)) };
+      }),
+      alignment,
+    };
   }
-  return { text: String(cell), alignment };
+  return { text: rtlText(String(cell)), alignment };
 }
 
 export async function generateTablePdf(opts: {
@@ -227,14 +263,14 @@ export async function generateTablePdf(opts: {
     }
   }
   if (header.schoolName) {
-    content.push({ text: header.schoolName, style: "schoolName", alignment: "center" });
+    content.push({ text: rtlText(header.schoolName), style: "schoolName", alignment: "center" });
   }
-  content.push({ text: header.title, style: "title", alignment: "center", margin: [0, 8, 0, 2] });
+  content.push({ text: rtlText(header.title), style: "title", alignment: "center", margin: [0, 8, 0, 2] });
   if (header.subtitle) {
-    content.push({ text: header.subtitle, style: "subtitle", alignment: "center", margin: [0, 0, 0, 6] });
+    content.push({ text: rtlText(header.subtitle), style: "subtitle", alignment: "center", margin: [0, 0, 0, 6] });
   }
   content.push({
-    text: `تاريخ الطباعة: ${new Date().toLocaleDateString("ar-SA")} - الوقت: ${new Date().toLocaleTimeString("ar-SA")}`,
+    text: rtlText(`تاريخ الطباعة: ${new Date().toLocaleDateString("ar-SA")} - الوقت: ${new Date().toLocaleTimeString("ar-SA")}`),
     style: "date",
     alignment: "center",
     margin: [0, 4, 0, 14],
@@ -245,7 +281,7 @@ export async function generateTablePdf(opts: {
       headerRows: 1,
       widths: columns.map((c) => c.width ?? "*"),
       body: [
-        columns.map((c) => ({ text: c.header, style: "tableHeader", alignment: c.alignment || "center" })),
+        columns.map((c) => ({ text: rtlText(c.header), style: "tableHeader", alignment: c.alignment || "center" })),
         ...rows.map((row) => row.map((cell, i) => toPdfCell(cell, columns[i]?.alignment || "right"))),
       ],
     },
@@ -264,7 +300,7 @@ export async function generateTablePdf(opts: {
   const docDefinition = {
     pageSize: "A4",
     pageMargins: [36, 36, 36, 36],
-    defaultStyle: { font: "Tajawal", fontSize: 9, alignment: "right" },
+    defaultStyle: { font: "NotoNaskh", fontSize: 9, alignment: "right" },
     styles: {
       schoolName: { fontSize: 16, bold: true, color: "#333333" },
       title: { fontSize: 13, bold: true, color: "#46178f" },
@@ -308,14 +344,14 @@ export async function generateCategorizedPdf(opts: {
     }
   }
   if (header.schoolName) {
-    content.push({ text: header.schoolName, style: "schoolName", alignment: "center" });
+    content.push({ text: rtlText(header.schoolName), style: "schoolName", alignment: "center" });
   }
-  content.push({ text: header.title, style: "title", alignment: "center", margin: [0, 8, 0, 2] });
+  content.push({ text: rtlText(header.title), style: "title", alignment: "center", margin: [0, 8, 0, 2] });
   if (header.subtitle) {
-    content.push({ text: header.subtitle, style: "subtitle", alignment: "center", margin: [0, 0, 0, 6] });
+    content.push({ text: rtlText(header.subtitle), style: "subtitle", alignment: "center", margin: [0, 0, 0, 6] });
   }
   content.push({
-    text: `تاريخ الطباعة: ${new Date().toLocaleDateString("ar-SA")} - الوقت: ${new Date().toLocaleTimeString("ar-SA")}`,
+    text: rtlText(`تاريخ الطباعة: ${new Date().toLocaleDateString("ar-SA")} - الوقت: ${new Date().toLocaleTimeString("ar-SA")}`),
     style: "date",
     alignment: "center",
     margin: [0, 4, 0, 14],
@@ -323,20 +359,20 @@ export async function generateCategorizedPdf(opts: {
 
   for (const section of sections) {
     content.push({
-      text: section.title,
+      text: rtlText(section.title),
       style: "sectionTitle",
       alignment: "right",
       margin: [0, 8, 0, 2],
     });
     if (section.subtitle) {
-      content.push({ text: section.subtitle, style: "subtitle", alignment: "right", margin: [0, 0, 0, 6] });
+      content.push({ text: rtlText(section.subtitle), style: "subtitle", alignment: "right", margin: [0, 0, 0, 6] });
     }
     content.push({
       table: {
         headerRows: 1,
         widths: section.columns.map((c) => c.width ?? "*"),
         body: [
-          section.columns.map((c) => ({ text: c.header, style: "tableHeader", alignment: c.alignment || "center" })),
+          section.columns.map((c) => ({ text: rtlText(c.header), style: "tableHeader", alignment: c.alignment || "center" })),
           ...section.rows.map((row) => row.map((cell, i) => toPdfCell(cell, section.columns[i]?.alignment || "right"))),
         ],
       },
@@ -357,7 +393,7 @@ export async function generateCategorizedPdf(opts: {
   const docDefinition = {
     pageSize: "A4",
     pageMargins: [36, 36, 36, 36],
-    defaultStyle: { font: "Tajawal", fontSize: 9, alignment: "right" },
+    defaultStyle: { font: "NotoNaskh", fontSize: 9, alignment: "right" },
     styles: {
       schoolName: { fontSize: 16, bold: true, color: "#333333" },
       title: { fontSize: 13, bold: true, color: "#46178f" },
