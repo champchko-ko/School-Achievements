@@ -13,9 +13,19 @@ const todayLocal = () => {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 };
 
+const fileNameFromUrl = (url: string) => {
+  try {
+    const decoded = decodeURIComponent(url);
+    return decoded.split('/').pop()?.split('?')[0] || 'ملف مرفق';
+  } catch {
+    return 'ملف مرفق';
+  }
+};
+
 export default function AddAchievementModal({ isOpen, onClose, initialData, docId, verifiedPin }: { isOpen: boolean, onClose: () => void, initialData?: any, docId?: string, verifiedPin?: string }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<File[]>([]);
+  const [existingAttachments, setExistingAttachments] = useState<string[]>([]);
   const [mounted, setMounted] = useState(false);
   const [departmentsList, setDepartmentsList] = useState<string[]>(['الرياضيات', 'العلوم', 'اللغة العربية', 'الحاسب الآلي', 'التربية البدنية']);
   const [teachersList, setTeachersList] = useState<string[]>([]);
@@ -52,8 +62,16 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
           date: initialData.date || todayLocal(),
           pin: initialData.pin || ''
         });
+        // Merge all current attachment sources (normal + legacy single-file fields)
+        const merged = [
+          ...(initialData.attachmentUrls || []),
+          initialData.fileUrl,
+          initialData.attachmentUrl,
+        ].filter(Boolean) as string[];
+        setExistingAttachments(Array.from(new Set(merged)));
       } else {
         setFormData({ teacherName: '', department: departmentsList[0] || 'الرياضيات', title: '', desc: '', date: todayLocal(), pin: '' });
+        setExistingAttachments([]);
       }
       setFiles([]);
 
@@ -148,12 +166,9 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
           title: formData.title,
           desc: formData.desc,
           date: formData.date,
+          // Final list after removals + new uploads; the server deletes removed files from Cloudinary
+          attachmentUrls: [...existingAttachments, ...attachmentUrls],
         };
-        if (attachmentUrls.length > 0) {
-          updatePayload.attachmentUrls = initialData?.attachmentUrls 
-            ? [...initialData.attachmentUrls, ...attachmentUrls] 
-            : attachmentUrls;
-        }
         // If we have a verified PIN, send it for server-side auth
         if (verifiedPin) {
           updatePayload.pin = verifiedPin;
@@ -301,6 +316,31 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
               multiple
             />
             <CloudUpload size={32} className="text-[#46178f] mx-auto mb-2 cursor-pointer" onClick={() => fileInputRef.current?.click()} />
+
+            {/* Existing attachments (edit mode) — removable, deleted from Cloudinary on save */}
+            {docId && existingAttachments.length > 0 && (
+              <div className="space-y-2 mb-3">
+                <p className="text-sm font-bold text-[#46178f]">الملفات الحالية ({existingAttachments.length}) — اضغط ✕ للحذف</p>
+                <div className="flex flex-wrap gap-2 justify-center max-h-32 overflow-y-auto px-2">
+                  {existingAttachments.map((url, i) => (
+                    <span key={i} className="bg-white text-xs font-bold px-2 py-1 rounded-md border border-purple-200 flex items-center gap-2 shadow-sm">
+                      <span className="truncate max-w-[140px]" title={url}>{fileNameFromUrl(url)}</span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setExistingAttachments(existingAttachments.filter((_, idx) => idx !== i));
+                        }}
+                        className="text-red-500 hover:bg-red-50 rounded-full p-0.5 transition-colors"
+                        title="حذف هذا الملف"
+                      >
+                        <X size={14} />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
             
             {files.length > 0 ? (
               <div className="space-y-3 mt-2">

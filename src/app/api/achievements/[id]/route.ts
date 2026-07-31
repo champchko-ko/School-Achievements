@@ -95,7 +95,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     const isAdmin = await isAdminSession();
 
     const { initializeApp, getApps, getApp } = await import('firebase/app');
-    const { getFirestore, doc, getDoc, updateDoc } = await import('firebase/firestore');
+    const { getFirestore, doc, getDoc, updateDoc, deleteField } = await import('firebase/firestore');
 
     const firebaseConfig = {
       apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -132,8 +132,29 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
     // Build update payload (strip pin from the data)
     const { pin: _, ...updatePayload } = body;
-    
-    await updateDoc(doc(db, 'achievements', id), updatePayload);
+
+    // Determine which attachments were removed by the user and delete them from Cloudinary
+    const existingData = docSnap.data();
+    const existingUrls = collectAttachmentUrls(existingData);
+    const newUrls = Array.isArray(updatePayload.attachmentUrls)
+      ? updatePayload.attachmentUrls
+      : existingUrls;
+    const removedUrls = existingUrls.filter(u => !newUrls.includes(u));
+    if (removedUrls.length > 0) {
+      const results = await Promise.allSettled(removedUrls.map(destroyCloudinaryAsset));
+      results.forEach((r, i) => {
+        if (r.status === 'rejected') {
+          console.error(`Failed to delete Cloudinary asset ${removedUrls[i]}:`, r.reason);
+        }
+      });
+    }
+
+    // Save the final attachment list and normalize legacy single-file fields
+    const firestoreUpdate: any = { ...updatePayload, attachmentUrls: newUrls };
+    if (existingData?.fileUrl) firestoreUpdate.fileUrl = deleteField();
+    if (existingData?.attachmentUrl) firestoreUpdate.attachmentUrl = deleteField();
+
+    await updateDoc(doc(db, 'achievements', id), firestoreUpdate);
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
