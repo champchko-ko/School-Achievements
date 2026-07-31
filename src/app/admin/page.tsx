@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react';
 import { db } from '../../lib/firebase';
 import { collection, query, onSnapshot, doc, getDoc } from 'firebase/firestore';
-import { ShieldCheck, Trophy, Medal, Award, ExternalLink, Loader2, CheckCircle2, TrendingUp, Files, UserX } from 'lucide-react';
+import { ShieldCheck, Trophy, Medal, Award, ExternalLink, Loader2, CheckCircle2, TrendingUp, Files, UserX, Clock } from 'lucide-react';
 import { useAdmin } from '../../lib/useAdmin';
 import { useRouter } from 'next/navigation';
+import { header, panel, toast } from '../../lib/ui';
 
 export default function AdminDashboard() {
   const [allAchievements, setAllAchievements] = useState<any[]>([]);
@@ -112,7 +113,7 @@ export default function AdminDashboard() {
       
       {/* Notification Toast */}
       {notification && (
-        <div className="fixed top-4 right-4 left-4 md:left-auto md:right-4 md:w-96 z-[200] p-4 rounded-2xl shadow-2xl font-bold text-white animate-in slide-in-from-top-2 duration-300" style={{ background: notification.type === "success" ? "#26890c" : "#ef4444" }}>
+        <div className={`${toast} z-[200]`} style={{ background: notification.type === "success" ? "#26890c" : "#eb1f36" }}>
           <div className="flex items-center gap-3">
             <span>{notification.type === "success" ? "✅" : "❌"}</span>
             <span>{notification.message}</span>
@@ -122,7 +123,7 @@ export default function AdminDashboard() {
       )}
       
       {/* Admin Header */}
-      <div className="bg-[#380e6e] rounded-2xl p-8 shadow-md text-center text-white relative overflow-hidden">
+      <div className={`${header} p-8 text-center relative overflow-hidden`}>
         <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-full -translate-y-16 translate-x-16"></div>
         <div className="absolute bottom-0 left-0 w-24 h-24 bg-white opacity-5 rounded-full translate-y-8 -translate-x-8"></div>
         
@@ -136,22 +137,22 @@ export default function AdminDashboard() {
       {/* Analytics Overview */}
       {!isLoading && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 my-8">
-          <div className="bg-white rounded-2xl p-6 shadow-lg border-t-4 border-purple-500 flex items-center gap-4 hover:shadow-md transition-shadow">
-            <div className="bg-purple-100 p-4 rounded-xl text-purple-600"><TrendingUp size={32} /></div>
+          <div className={`${panel} p-6 flex items-center gap-4 hover:shadow-lg transition-shadow`}>
+            <div className="bg-purple-100 p-3 rounded-2xl text-purple-600"><TrendingUp size={28} /></div>
             <div>
               <p className="text-gray-500 text-sm font-bold">القسم الأنشط هذا الشهر</p>
               <p className="text-2xl font-black text-gray-800">{mostActiveDept}</p>
             </div>
           </div>
-          <div className="bg-white rounded-2xl p-6 shadow-lg border-t-4 border-blue-500 flex items-center gap-4 hover:shadow-md transition-shadow">
-            <div className="bg-blue-100 p-4 rounded-xl text-blue-600"><Files size={32} /></div>
+          <div className={`${panel} p-6 flex items-center gap-4 hover:shadow-lg transition-shadow`}>
+            <div className="bg-blue-100 p-3 rounded-2xl text-blue-600"><Files size={28} /></div>
             <div>
               <p className="text-gray-500 text-sm font-bold">إجمالي الملفات المرفوعة</p>
               <p className="text-3xl font-black text-gray-800">{totalFiles}</p>
             </div>
           </div>
-          <div className="bg-white rounded-2xl p-6 shadow-lg border-t-4 border-red-500 flex items-center gap-4 min-w-0 hover:shadow-md transition-shadow">
-            <div className="bg-red-100 p-4 rounded-xl text-red-600 shrink-0"><UserX size={32} /></div>
+          <div className={`${panel} p-6 flex items-center gap-4 min-w-0 hover:shadow-lg transition-shadow`}>
+            <div className="bg-red-100 p-3 rounded-2xl text-red-600 shrink-0"><UserX size={28} /></div>
             <div className="min-w-0 flex-1">
               <p className="text-gray-500 text-sm font-bold">معلمون بلا إنجازات</p>
               <p className="text-3xl font-black text-gray-800">{inactiveTeachers.length}</p>
@@ -167,12 +168,11 @@ export default function AdminDashboard() {
 
       {/* Pending Queue */}
       <div>
-        <h3 className="text-xl font-black text-gray-800 mb-4 flex items-center gap-2">
-          <span className="bg-orange-100 text-orange-600 px-3 py-1 rounded-lg text-sm">
-            {pendingAchievements.length}
-          </span>
-          في انتظار المراجعة والتقييم
-        </h3>
+        <div className="flex items-center gap-3 mb-4">
+          <span className="p-3 bg-red-50 text-[#eb1f36] rounded-2xl"><Clock size={22} /></span>
+          <h3 className="text-xl md:text-2xl font-black text-white">في انتظار المراجعة والتقييم</h3>
+          <span className="bg-[#eb1f36] text-white px-3 py-1 rounded-full text-sm font-black">{pendingAchievements.length}</span>
+        </div>
 
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-12 text-purple-200">
@@ -180,7 +180,7 @@ export default function AdminDashboard() {
             <p className="font-bold">جاري تحميل السجلات...</p>
           </div>
         ) : pendingAchievements.length === 0 ? (
-          <div className="bg-green-50 rounded-2xl p-10 border border-green-200 text-center text-green-700">
+          <div className="bg-green-50 rounded-3xl p-10 border-2 border-green-200 text-center text-green-700">
             <CheckCircle2 size={48} className="mx-auto mb-3 text-green-500" />
             <p className="font-bold text-lg">عمل رائع! لا توجد إنجازات معلقة.</p>
             <p className="text-sm mt-1 opacity-80">تمت مراجعة جميع الإنجازات المرفوعة.</p>
@@ -188,13 +188,13 @@ export default function AdminDashboard() {
         ) : (
           <div className="grid grid-cols-1 gap-4">
             {pendingAchievements.map((item) => (
-              <div key={item.id} className="bg-white rounded-2xl p-5 md:p-6 shadow-lg border border-purple-100/50 flex flex-col md:flex-row gap-6 items-start md:items-center">
+              <div key={item.id} className={`${panel} p-5 md:p-6 flex flex-col md:flex-row gap-6 items-start md:items-center`}>
                 
                 {/* Details */}
                 <div className="flex-1 space-y-2">
                   <div className="flex items-center gap-3">
                     <h4 className="text-lg font-black text-[#46178f]">{item.title}</h4>
-                    <span className="bg-purple-50 text-[#46178f] px-2 py-1 rounded-md text-xs font-bold">{item.department}</span>
+                    <span className="bg-purple-50 text-[#46178f] px-3 py-1 rounded-full text-xs font-bold">{item.department}</span>
                   </div>
                   <p className="text-gray-600 text-sm font-medium leading-relaxed">{item.desc}</p>
                   
@@ -202,7 +202,7 @@ export default function AdminDashboard() {
                     <span className="text-gray-500 flex items-center gap-1">👤 {item.teacherName}</span>
                     <span className="text-gray-500 flex items-center gap-1">📅 {item.date}</span>
                     {item.fileUrl && (
-                      <a href={item.fileUrl} target="_blank" rel="noopener noreferrer" className="text-[#0087ed] hover:underline flex items-center gap-1 bg-blue-50 px-2 py-1 rounded-md">
+                      <a href={item.fileUrl} target="_blank" rel="noopener noreferrer" className="text-[#0087ed] hover:underline flex items-center gap-1 bg-blue-50 px-3 py-1 rounded-full">
                         <ExternalLink size={14} /> عرض المرفق
                       </a>
                     )}
@@ -214,21 +214,21 @@ export default function AdminDashboard() {
                   <button 
                     onClick={() => handleScore(item.id, 95)}
                     disabled={processingId === item.id}
-                    className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-[#ffb000] hover:bg-[#e69f00] text-yellow-900 px-4 py-2 rounded-xl font-black border-b-4 border-[#cc8d00] active:border-b-0 active:translate-y-1 transition-all"
+                    className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-[#ffb000] hover:bg-[#e69f00] text-yellow-900 px-4 py-2 rounded-2xl font-black border-b-4 border-[#cc8d00] active:border-b-0 active:translate-y-1 transition-all"
                   >
                     {processingId === item.id ? <Loader2 className="animate-spin" size={18} /> : <><Trophy size={18} /> ذهبي</>}
                   </button>
                   <button 
                     onClick={() => handleScore(item.id, 85)}
                     disabled={processingId === item.id}
-                    className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-[#e5e7eb] hover:bg-[#d1d5db] text-gray-800 px-4 py-2 rounded-xl font-black border-b-4 border-[#9ca3af] active:border-b-0 active:translate-y-1 transition-all"
+                    className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-[#e5e7eb] hover:bg-[#d1d5db] text-gray-800 px-4 py-2 rounded-2xl font-black border-b-4 border-[#9ca3af] active:border-b-0 active:translate-y-1 transition-all"
                   >
                     {processingId === item.id ? <Loader2 className="animate-spin" size={18} /> : <><Medal size={18} /> فضي</>}
                   </button>
                   <button 
                     onClick={() => handleScore(item.id, 75)}
                     disabled={processingId === item.id}
-                    className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-[#f97316] hover:bg-[#ea580c] text-white px-4 py-2 rounded-xl font-black border-b-4 border-[#c2410c] active:border-b-0 active:translate-y-1 transition-all"
+                    className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-[#f97316] hover:bg-[#ea580c] text-white px-4 py-2 rounded-2xl font-black border-b-4 border-[#c2410c] active:border-b-0 active:translate-y-1 transition-all"
                   >
                     {processingId === item.id ? <Loader2 className="animate-spin" size={18} /> : <><Award size={18} /> برونزي</>}
                   </button>

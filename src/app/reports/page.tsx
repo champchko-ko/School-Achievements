@@ -6,6 +6,7 @@ import { Printer, BarChart3, Medal, UserSquare, FileSpreadsheet, Loader2 } from 
 
 import { useRouter } from 'next/navigation';
 import { useAdmin } from '../../lib/useAdmin';
+import { btn, header, inputSmall, panel, toast } from '../../lib/ui';
 
 export default function ReportsPage() {
   const [activeReport, setActiveReport] = useState('department');
@@ -211,7 +212,7 @@ export default function ReportsPage() {
     const statsArray = computeDepartmentStats();
 
     return (
-      <div className="bg-white rounded-2xl shadow-lg border border-purple-100/50 p-8 print:shadow-none print:border-none print:p-0">
+      <div className={`${panel} p-8 print:shadow-none print:border-none print:p-0`}>
         <div className="text-center mb-8 pb-6 border-b-2 border-gray-200">
           <div className="hidden print:flex items-center justify-start gap-4 mb-6">
             {schoolSettings?.logoUrl && <img src={schoolSettings.logoUrl} alt="School Logo" className="w-24 h-24 object-contain" />}
@@ -264,7 +265,7 @@ export default function ReportsPage() {
     const honorList = computeHonorList();
 
     return (
-      <div className="bg-white rounded-2xl shadow-lg border border-purple-100/50 p-8 print:shadow-none print:border-none print:p-0">
+      <div className={`${panel} p-8 print:shadow-none print:border-none print:p-0`}>
         <div className="text-center mb-8 pb-6 border-b-2 border-gray-200">
           <div className="hidden print:flex items-center justify-start gap-4 mb-6">
             {schoolSettings?.logoUrl && <img src={schoolSettings.logoUrl} alt="School Logo" className="w-24 h-24 object-contain" />}
@@ -313,13 +314,13 @@ export default function ReportsPage() {
     const filteredData = selectedTeacher === "all" ? [] : achievements.filter(a => a.teacherName === selectedTeacher).sort((a,b) => b.date.localeCompare(a.date));
 
     return (
-      <div className="bg-white rounded-2xl shadow-lg border border-purple-100/50 p-8 print:shadow-none print:border-none print:p-0">
-        <div className="print:hidden mb-8 bg-purple-50 p-6 rounded-xl border border-purple-100">
+      <div className={`${panel} p-8 print:shadow-none print:border-none print:p-0`}>
+        <div className="print:hidden mb-8 bg-purple-50 p-6 rounded-2xl border-2 border-purple-100">
            <label className="block text-sm font-bold text-gray-700 mb-2">اختر المعلمة لعرض وطباعة السجل الفردي:</label>
            <select 
              value={selectedTeacher} 
              onChange={(e) => setSelectedTeacher(e.target.value)}
-             className="w-full md:w-1/2 bg-white border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-[#0087ed] outline-none cursor-pointer font-bold"
+             className={`${inputSmall} w-full md:w-1/2 cursor-pointer`}
            >
              <option value="all">-- يرجى اختيار المعلمة --</option>
              {teachers.map(t => <option key={t} value={t}>{t}</option>)}
@@ -375,25 +376,25 @@ export default function ReportsPage() {
       
       {/* Notification Toast */}
       {notification && (
-        <div className="fixed top-4 right-4 left-4 md:left-auto md:right-4 md:w-96 z-[200] p-4 rounded-2xl shadow-2xl font-bold text-white animate-in slide-in-from-top-2 duration-300" style={{ background: notification.type === "success" ? "#26890c" : "#ef4444" }}>
+        <div className={`${toast} z-[200]`} style={{ background: notification.type === "success" ? "#26890c" : "#eb1f36" }}>
           {notification.message}
         </div>
       )}
 
       {/* Header & Print Button */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 print:hidden">
+      <div className={`${header} flex flex-col md:flex-row justify-between items-start md:items-center gap-4 p-6 md:p-8 print:hidden`}>
         <div>
-          <h2 className="text-2xl font-black text-yellow-400 flex items-center justify-center md:justify-start gap-2">
-            <Printer className="text-pink-400" size={28} />
+          <h2 className="text-2xl md:text-3xl font-black text-white flex items-center justify-center md:justify-start gap-2">
+            <Printer className="text-[#ffb800]" size={28} />
             طباعة التقارير
           </h2>
-          <p className="text-gray-500 font-bold mt-1 text-center md:text-right">اختر التقرير المطلوب وقم بطباعته أو تصديره.</p>
+          <p className="text-purple-100 font-bold mt-1 text-center md:text-right">اختر التقرير المطلوب وقم بطباعته أو تصديره.</p>
         </div>
         
         <button 
           onClick={handleExportPdf}
           disabled={isExporting}
-          className="flex items-center justify-center gap-2 bg-[#380e6e] hover:bg-[#2a0a54] text-white px-6 py-3 rounded-xl font-bold transition-all shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+          className={`${btn.green} px-6 py-3 disabled:opacity-50 disabled:cursor-not-allowed`}
         >
           {isExporting ? <Loader2 size={18} className="animate-spin" /> : <Printer size={18} />} {isExporting ? 'جارٍ إنشاء PDF...' : 'تصدير التقرير PDF'}
         </button>
@@ -401,24 +402,24 @@ export default function ReportsPage() {
 
       {/* Report Selection Tabs */}
       <div className="grid grid-cols-4 gap-2 md:gap-4 print:hidden">
-        <button onClick={() => setActiveReport('department')} className={`flex flex-col items-center justify-center gap-1 p-2 md:p-4 rounded-2xl border-2 transition-all text-center ${activeReport === 'department' ? 'border-[#0087ed] bg-blue-50/50' : 'border-gray-100 bg-white hover:border-gray-200'}`}>
+        <button onClick={() => setActiveReport('department')} className={`flex flex-col items-center justify-center gap-1 p-2 md:p-4 rounded-2xl border-2 transition-all text-center ${activeReport === 'department' ? 'border-[#0087ed] bg-blue-50/50 shadow-md' : 'border-purple-100 bg-white hover:border-purple-200'}`}>
           <BarChart3 size={16} className={`md:size-[24] ${activeReport === 'department' ? 'text-[#0087ed]' : 'text-gray-400'}`} />
           <h3 className={`text-[10px] md:text-sm font-bold leading-tight ${activeReport === 'department' ? 'text-[#0087ed]' : 'text-gray-700'}`}>أداء الأقسام</h3>
           <p className="hidden md:block text-xs text-gray-500">مقارنة الإنجازات والتقييمات</p>
         </button>
-        <button onClick={() => setActiveReport('honor')} className={`flex flex-col items-center justify-center gap-1 p-2 md:p-4 rounded-2xl border-2 transition-all text-center ${activeReport === 'honor' ? 'border-[#ffb000] bg-yellow-50/50' : 'border-gray-100 bg-white hover:border-gray-200'}`}>
+        <button onClick={() => setActiveReport('honor')} className={`flex flex-col items-center justify-center gap-1 p-2 md:p-4 rounded-2xl border-2 transition-all text-center ${activeReport === 'honor' ? 'border-[#ffb000] bg-yellow-50/50 shadow-md' : 'border-purple-100 bg-white hover:border-purple-200'}`}>
           <Medal size={16} className={`md:size-[24] ${activeReport === 'honor' ? 'text-[#ffb000]' : 'text-gray-400'}`} />
           <h3 className={`text-[10px] md:text-sm font-bold leading-tight ${activeReport === 'honor' ? 'text-[#ffb000]' : 'text-gray-700'}`}>قائمة الشرف</h3>
           <p className="hidden md:block text-xs text-gray-500">المعلمات المتميزات</p>
         </button>
-        <button onClick={() => setActiveReport('individual')} className={`flex flex-col items-center justify-center gap-1 p-2 md:p-4 rounded-2xl border-2 transition-all text-center ${activeReport === 'individual' ? 'border-[#26890c] bg-green-50/50' : 'border-gray-100 bg-white hover:border-gray-200'}`}>
+        <button onClick={() => setActiveReport('individual')} className={`flex flex-col items-center justify-center gap-1 p-2 md:p-4 rounded-2xl border-2 transition-all text-center ${activeReport === 'individual' ? 'border-[#26890c] bg-green-50/50 shadow-md' : 'border-purple-100 bg-white hover:border-purple-200'}`}>
           <UserSquare size={16} className={`md:size-[24] ${activeReport === 'individual' ? 'text-[#26890c]' : 'text-gray-400'}`} />
           <h3 className={`text-[10px] md:text-sm font-bold leading-tight ${activeReport === 'individual' ? 'text-[#26890c]' : 'text-gray-700'}`}>سجل المعلمة</h3>
           <p className="hidden md:block text-xs text-gray-500">تقرير فردي مفصل</p>
         </button>
-        <button onClick={() => setActiveReport('master')} className={`flex flex-col items-center justify-center gap-1 p-2 md:p-4 rounded-2xl border-2 transition-all text-center ${activeReport === 'master' ? 'border-[#1368ce] bg-blue-50/50' : 'border-gray-100 bg-white hover:border-gray-200'}`}>
-          <FileSpreadsheet size={16} className={`md:size-[24] ${activeReport === 'master' ? 'text-[#1368ce]' : 'text-gray-400'}`} />
-          <h3 className={`text-[10px] md:text-sm font-bold leading-tight ${activeReport === 'master' ? 'text-[#1368ce]' : 'text-gray-700'}`}>السجل الشامل</h3>
+        <button onClick={() => setActiveReport('master')} className={`flex flex-col items-center justify-center gap-1 p-2 md:p-4 rounded-2xl border-2 transition-all text-center ${activeReport === 'master' ? 'border-[#0087ed] bg-blue-50/50 shadow-md' : 'border-purple-100 bg-white hover:border-purple-200'}`}>
+          <FileSpreadsheet size={16} className={`md:size-[24] ${activeReport === 'master' ? 'text-[#0087ed]' : 'text-gray-400'}`} />
+          <h3 className={`text-[10px] md:text-sm font-bold leading-tight ${activeReport === 'master' ? 'text-[#0087ed]' : 'text-gray-700'}`}>السجل الشامل</h3>
           <p className="hidden md:block text-xs text-gray-500">تصدير البيانات الخام</p>
         </button>
       </div>
@@ -435,11 +436,11 @@ export default function ReportsPage() {
           {activeReport === 'honor' && renderHonorReport()}
           {activeReport === 'individual' && renderIndividualReport()}
           {activeReport === 'master' && (
-            <div className="bg-white rounded-2xl shadow-lg border border-purple-100/50 p-12 text-center print:hidden">
-              <FileSpreadsheet className="mx-auto text-[#1368ce] mb-4" size={48} />
+            <div className={`${panel} p-12 text-center print:hidden`}>
+              <FileSpreadsheet className="mx-auto text-[#0087ed] mb-4" size={48} />
               <h2 className="text-2xl font-black text-gray-800 mb-2">السجل الشامل وتصدير البيانات</h2>
               <p className="text-gray-500 mb-6">للوصول إلى السجل الشامل مع خيارات الفلترة المتقدمة والتصدير إلى Excel و PDF، يرجى الانتقال إلى صفحة السجل الكامل.</p>
-              <a href="/full-record" className="inline-block bg-[#1368ce] hover:bg-[#0f56b0] text-white px-6 py-3 rounded-xl font-bold transition-colors shadow-md">الانتقال إلى السجل الكامل</a>
+              <a href="/full-record" className={`${btn.blue} px-6 py-3 inline-flex`}>الانتقال إلى السجل الكامل</a>
             </div>
           )}
         </div>

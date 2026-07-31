@@ -39,7 +39,7 @@ export default function IntroPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#4a154b] via-[#6b1d6d] to-[#8e2490] flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-[#46178f] via-[#380e6e] to-[#2a0a54] flex items-center justify-center">
         <div className="text-center">
           <div className="w-20 h-20 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
           <p className="text-purple-200 font-bold text-lg animate-pulse">جاري التحميل...</p>
@@ -57,7 +57,7 @@ export default function IntroPage() {
   const assistant2 = settings?.assistantManager2;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#4a154b] via-[#6b1d6d] to-[#8e2490] flex flex-col relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-[#46178f] via-[#380e6e] to-[#2a0a54] flex flex-col relative overflow-hidden">
       
       {/* Animated Background Particles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -166,7 +166,7 @@ export default function IntroPage() {
         {/* Enter Button */}
         <button
           onClick={handleEnter}
-          className={`group px-10 py-4 bg-gradient-to-l from-yellow-500 to-yellow-400 hover:from-yellow-400 hover:to-yellow-300 text-[#4a154b] rounded-2xl font-black text-lg shadow-2xl shadow-yellow-500/30 transition-all duration-300 hover:scale-105 active:scale-95 flex items-center gap-3 transition-all duration-1000 delay-900 ${fadeIn ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}
+          className={`group px-10 py-4 bg-[#ffb800] hover:bg-[#f0a800] text-gray-900 rounded-2xl font-black text-lg border-b-4 border-[#cc9400] active:border-b-0 active:translate-y-1 shadow-2xl shadow-yellow-500/30 transition-all duration-300 hover:scale-105 active:scale-95 flex items-center gap-3 transition-all duration-1000 delay-900 ${fadeIn ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}
         >
           <Sparkles size={22} className="group-hover:rotate-12 transition-transform" />
           دخول

@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { X, CloudUpload, Lock, Loader2 } from 'lucide-react';
 import { collection, doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { compact, input } from '../lib/ui';
 
 export default function AddAchievementModal({ isOpen, onClose, initialData, docId, verifiedPin }: { isOpen: boolean, onClose: () => void, initialData?: any, docId?: string, verifiedPin?: string }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -198,9 +199,9 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
       {/* Modal Container */}
       <div className="bg-white w-full max-w-lg rounded-[2rem] shadow-2xl relative overflow-hidden animate-in zoom-in-95 duration-300 mx-4 max-h-[90vh] overflow-y-auto">
         
-        {/* Header - Kahoot Purple */}
-        <div className="bg-[#4a154b] p-4 md:p-6 text-white flex justify-between items-center">
-          <h2 className="text-lg md:text-xl font-bold flex items-center gap-2">{docId ? "✏️ تعديل الإنجاز" : "✨ إضافة إنجاز جديد"}</h2>
+        {/* Header - Kahoot Purple Gradient (settings theme) */}
+        <div className="bg-gradient-to-r from-[#46178f] to-[#7b2cbf] p-4 md:p-6 text-white flex justify-between items-center border-b-8 border-[#321067]">
+          <h2 className="text-lg md:text-xl font-black flex items-center gap-2">{docId ? "✏️ تعديل الإنجاز" : "✨ إضافة إنجاز جديد"}</h2>
           <button onClick={onClose} className="hover:bg-white/20 p-2 rounded-full transition-colors">
             <X size={24} />
           </button>
@@ -216,7 +217,7 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
                 <select 
                   value={formData.teacherName}
                   onChange={(e) => setFormData({...formData, teacherName: e.target.value})}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-[#0087ed] outline-none transition-all cursor-pointer"
+                  className={`${input} w-full cursor-pointer`}
                 >
                   <option value="" disabled>-- اختر المعلمة --</option>
                   {Array.from(new Set([...teachersList, formData.teacherName])).filter(Boolean).map(t => (
@@ -229,7 +230,7 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
                   value={formData.teacherName}
                   onChange={(e) => setFormData({...formData, teacherName: e.target.value})}
                   placeholder="اسم المعلمة" 
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-[#0087ed] outline-none transition-all" 
+                  className={`${input} w-full`} 
                 />
               )}
             </div>
@@ -238,7 +239,7 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
               <select 
                 value={formData.department}
                 onChange={(e) => setFormData({...formData, department: e.target.value})}
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-[#0087ed] outline-none transition-all cursor-pointer"
+                className={`${input} w-full cursor-pointer`}
               >
                 {departmentsList.map(dept => (
                   <option key={dept} value={dept}>{dept}</option>
@@ -254,7 +255,7 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
               value={formData.title}
               onChange={(e) => setFormData({...formData, title: e.target.value})}
               placeholder="مثال: تطوير أداة حسابية" 
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-[#0087ed] outline-none transition-all" 
+              className={`${input} w-full`} 
             />
           </div>
 
@@ -265,7 +266,7 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
               value={formData.desc}
               onChange={(e) => setFormData({...formData, desc: e.target.value})}
               placeholder="اكتب تفاصيل الإنجاز هنا..." 
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-[#0087ed] outline-none transition-all resize-none"
+              className={`${input} w-full resize-none`}
             ></textarea>
           </div>
 
@@ -307,7 +308,7 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
                     e.stopPropagation();
                     fileInputRef.current?.click();
                   }}
-                  className="bg-[#1368ce] hover:bg-[#0f56b0] text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors inline-block shadow-sm"
+                  className={`${compact.blue} text-sm inline-block`}
                 >
                   + إضافة المزيد من الملفات
                 </button>
@@ -325,7 +326,7 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
             <div className="bg-[#46178f]/10 p-3 rounded-xl text-[#46178f]"><Lock size={20} /></div>
             <div className="flex-1">
               <label className="block text-sm font-bold text-[#46178f] mb-1">{docId ? "رمز الحماية (غير قابل للتغيير)" : "رمز الحماية السري (PIN) * مطلوب"}</label>
-              <p className="text-xs text-[#380e6e] mb-2">{docId ? "رمز الحماية لا يمكن تغييره بعد إنشاء الإنجاز" : "مطلوب: يجب إدخال 4 أرقام لتتمكن من تعديل الإنجاز لاحقاً"}</p>
+              <p className="text-xs text-[#46178f] mb-2">{docId ? "رمز الحماية لا يمكن تغييره بعد إنشاء الإنجاز" : "مطلوب: يجب إدخال 4 أرقام لتتمكن من تعديل الإنجاز لاحقاً"}</p>
             <input 
                 type="password" 
                 maxLength={4} 
@@ -333,14 +334,14 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
                 onChange={(e) => setFormData({...formData, pin: e.target.value})}
                 placeholder="****" 
                 disabled={!!docId}
-                className="w-24 text-center tracking-[0.5em] font-mono font-bold text-lg bg-white border border-purple-200 rounded-xl p-2 focus:ring-2 focus:ring-[#e21b3c] outline-none disabled:opacity-50" />            </div>
+                className="w-24 text-center tracking-[0.5em] font-mono font-bold text-lg bg-white border-2 border-purple-200 rounded-2xl p-2 focus:ring-4 focus:ring-red-100 outline-none transition-all disabled:opacity-50" />            </div>
           </div>
 
         </div>
 
         {/* Alert Message */}
         {alertMsg && (
-          <div className="fixed bottom-6 right-4 left-4 md:left-auto md:right-4 md:w-96 z-[200] p-4 rounded-2xl shadow-2xl font-bold text-white bg-red-500 animate-in slide-in-from-bottom-2 duration-300">
+          <div className="fixed bottom-6 right-4 left-4 md:left-auto md:right-4 md:w-96 z-[200] p-4 rounded-2xl shadow-2xl font-black text-white bg-[#eb1f36] border-4 border-white/20 animate-in slide-in-from-bottom-2 duration-300">
             <div className="flex items-center gap-3">
               <span>❌</span>
               <span>{alertMsg}</span>
@@ -350,17 +351,17 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
         )}
 
         {/* Footer Buttons */}
-        <div className="p-6 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
-          <button onClick={onClose} className="px-6 py-3 rounded-xl font-bold text-gray-500 hover:bg-gray-200 transition-colors">
+        <div className="p-6 bg-purple-50/50 border-t border-purple-100 flex justify-end gap-3">
+          <button onClick={onClose} className="px-6 py-3 rounded-2xl font-black text-gray-600 hover:bg-purple-100 transition-all">
             إلغاء
           </button>
           {/* Kahoot style button with bottom border for depth */}
           <button 
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className={`px-8 py-3 rounded-xl font-bold text-white flex items-center gap-2 transition-all ${
+            className={`px-8 py-3 rounded-2xl font-black text-white flex items-center gap-2 transition-all ${
               isSubmitting 
-                ? "bg-gray-400 cursor-not-allowed" 
+                ? "bg-gray-500 cursor-not-allowed" 
                 : "bg-[#26890c] hover:bg-[#20730a] border-b-4 border-[#165406] active:border-b-0 active:translate-y-1"
             }`}
           >

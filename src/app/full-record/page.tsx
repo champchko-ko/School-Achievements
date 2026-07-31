@@ -10,6 +10,7 @@ import { collection, onSnapshot, query, orderBy, doc, getDoc } from 'firebase/fi
 import { db } from '../../lib/firebase';
 import AddAchievementModal from '../../components/AddAchievementModal';
 import { sanitizeText } from '../../lib/sanitize';
+import { btn, header, icon, input, inputSmall, panel, toast, table } from '../../lib/ui';
 
 const getScoreBadge = (score: number | null) => {
   if (score === null) return <span className="bg-gray-100 text-gray-500 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 w-fit"><Clock size={14} /> مراجعة</span>;
@@ -332,27 +333,27 @@ export default function FullRecordPage() {
       </div>
 
       {/* Header & Actions */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pr-14 sm:pr-0 print:hidden">
+      <div className={`${header} flex flex-col md:flex-row justify-between items-start md:items-center gap-4 p-6 md:p-8 pr-14 sm:pr-0 print:hidden`}>
         <div>
-          <h2 className="text-2xl font-black text-yellow-400 flex items-center justify-center md:justify-start gap-2">
-            <FileText className="text-yellow-400" size={28} />
+          <h2 className="text-2xl md:text-3xl font-black text-white flex items-center justify-center md:justify-start gap-2">
+            <FileText className="text-[#ffb800]" size={28} />
               السجل الكامل  
           </h2>
-          <p className="text-gray-500 font-bold mt-1 text-center md:text-right">إدارة وتصدير جميع الإنجازات الموثقة.</p>
+          <p className="text-purple-100 font-bold mt-1 text-center md:text-right">إدارة وتصدير جميع الإنجازات الموثقة.</p>
         </div>
         
         <div className="flex gap-2 w-full md:w-auto">
           <button 
             onClick={handlePdfExport}
             disabled={isExporting}
-            className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white border-2 border-gray-200 hover:border-[#26890c] hover:text-[#26890c] text-gray-600 px-4 py-2 rounded-xl font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className={`${btn.blue} flex-1 md:flex-none px-5 py-2.5 disabled:opacity-50 disabled:cursor-not-allowed`}
           >
             {isExporting ? <Loader2 size={18} className="animate-spin" /> : <FileText size={18} />} {isExporting ? 'جارٍ التصدير...' : 'PDF'}
           </button>
           <button 
             onClick={exportToExcel}
             disabled={isExporting}
-            className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white border-2 border-gray-200 hover:border-[#26890c] hover:text-[#26890c] text-gray-600 px-4 py-2 rounded-xl font-bold transition-colors"
+            className={`${btn.green} flex-1 md:flex-none px-5 py-2.5 disabled:opacity-50 disabled:cursor-not-allowed`}
           >
             {isExporting ? <Loader2 size={18} className="animate-spin" /> : <DownloadCloud size={18} />} {isExporting ? 'جارٍ التصدير...' : 'Excel'}
           </button>
@@ -360,7 +361,7 @@ export default function FullRecordPage() {
       </div>
 
       {/* Search & Filters Control Panel */}
-      <div className="bg-white p-4 rounded-2xl shadow-lg border border-purple-100/50 flex flex-col gap-4 print:hidden">
+      <div className={`${panel} p-4 md:p-6 flex flex-col gap-4 print:hidden`}>
         <div className="flex flex-col md:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
@@ -369,13 +370,13 @@ export default function FullRecordPage() {
               placeholder="ابحث بالاسم، الإنجاز، أو القسم..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 pr-10 pl-4 focus:ring-2 focus:ring-[#46178f] outline-none transition-all font-bold text-sm"
+              className={`${input} pr-10 pl-4 text-sm`}
             />
           </div>
           
           <button 
             onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-            className={`flex items-center justify-center gap-2 border px-6 py-3 rounded-xl font-bold transition-colors whitespace-nowrap ${showAdvancedFilters ? 'bg-[#1368ce] border-[#1368ce] text-white' : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'}`}
+            className={`flex items-center justify-center gap-2 border-2 px-6 py-3 rounded-2xl font-black transition-all whitespace-nowrap shadow-sm ${showAdvancedFilters ? 'bg-[#0087ed] border-[#0087ed] text-white' : 'bg-purple-50 border-purple-100 text-gray-600 hover:bg-purple-100'}`}
           >
             <Filter size={18} /> تصفية متقدمة
           </button>
@@ -387,7 +388,7 @@ export default function FullRecordPage() {
             <div>
               <label className="block text-xs font-bold text-gray-500 mb-1">القسم</label>
               <select value={filterDepartment} onChange={(e) => setFilterDepartment(e.target.value)}
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl p-2 focus:ring-2 focus:ring-[#46178f] outline-none transition-all text-sm cursor-pointer"
+                className={`${inputSmall} w-full cursor-pointer`}
               >
                 <option value="all">جميع الأقسام</option>
                 {availableDepartments.map(dept => (
@@ -398,19 +399,19 @@ export default function FullRecordPage() {
             <div>
               <label className="block text-xs font-bold text-gray-500 mb-1">من تاريخ</label>
               <input type="date" value={filterDateFrom} onChange={(e) => setFilterDateFrom(e.target.value)}
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl p-2 focus:ring-2 focus:ring-[#46178f] outline-none transition-all text-sm"
+                className={`${inputSmall} w-full`}
               />
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-500 mb-1">إلى تاريخ</label>
               <input type="date" value={filterDateTo} onChange={(e) => setFilterDateTo(e.target.value)}
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl p-2 focus:ring-2 focus:ring-[#46178f] outline-none transition-all text-sm"
+                className={`${inputSmall} w-full`}
               />
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-500 mb-1">التقييم</label>
               <select value={filterScore} onChange={(e) => setFilterScore(e.target.value)}
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl p-2 focus:ring-2 focus:ring-[#46178f] outline-none transition-all text-sm cursor-pointer"
+                className={`${inputSmall} w-full cursor-pointer`}
               >
                 <option value="all">الكل</option>
                 <option value="gold">ذهبي (90+)</option>
@@ -424,11 +425,11 @@ export default function FullRecordPage() {
       </div>
 
       {/* The Data Table */}
-      <div className="bg-white rounded-2xl shadow-lg border border-purple-100/50 print:shadow-none print:border-none print:w-full w-full overflow-hidden">
+      <div className={`${panel} print:shadow-none print:border-none print:w-full w-full overflow-hidden`}>
         <div className="w-full max-w-full overflow-x-auto block">
           <table className="w-full min-w-max text-right border-collapse">
             <thead>
-              <tr className="bg-purple-50 border-b border-purple-100 text-gray-500 text-sm print:bg-white print:text-black print:border-b-2 print:border-black">
+              <tr className="bg-purple-50 border-b-2 border-purple-200 text-[#46178f] text-sm print:bg-white print:text-black print:border-b-2 print:border-black">
                 <th className="p-4 font-bold whitespace-nowrap">المعلمة</th>
                 <th className="p-4 font-bold whitespace-nowrap">القسم</th>
                 <th className="p-4 font-bold min-w-[200px]">الإنجاز</th>
@@ -447,9 +448,9 @@ export default function FullRecordPage() {
                   </td>
                 </tr>
               ) : filteredData.map((row) => (
-                <tr key={row.id} className="border-b border-gray-50 hover:bg-blue-50/30 transition-colors group">
-                  <td className="p-4 font-bold text-[#4a154b] whitespace-nowrap">{row.teacherName}</td>
-                  <td className="p-4 whitespace-nowrap"><span className="bg-purple-50 text-[#46178f] px-2 py-1 rounded-md text-xs font-bold whitespace-nowrap">{row.department}</span></td>
+                <tr key={row.id} className={`${table.row} group`}>
+                  <td className="p-4 font-bold text-[#46178f] whitespace-nowrap">{row.teacherName}</td>
+                  <td className="p-4 whitespace-nowrap"><span className="bg-purple-50 text-[#46178f] px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap">{row.department}</span></td>
                   <td className="p-4 text-sm font-bold text-gray-700 min-w-[200px] whitespace-normal">
                     <Link href={`/achievement/${row.id}`} className="hover:text-[#0087ed] hover:underline transition-colors block">
                       {row.title}
@@ -465,7 +466,7 @@ export default function FullRecordPage() {
                       <div className="flex items-center justify-center gap-2">
                         <Link 
                           href={`/achievement/${row.id}`} 
-                          className="flex items-center justify-center text-blue-600 bg-blue-50 hover:bg-blue-100 hover:text-blue-700 p-2.5 rounded-lg transition-colors" 
+                          className={icon.blue} 
                           title="عرض التفاصيل"
                         >
                           <Eye size={18} />
@@ -473,7 +474,7 @@ export default function FullRecordPage() {
                         
                         <button 
                           onClick={() => { setSelectedDoc(row); setShowEditModal(true); }} 
-                          className="flex items-center justify-center text-green-600 bg-green-50 hover:bg-green-100 hover:text-green-700 p-2.5 rounded-lg transition-colors" 
+                          className={icon.green} 
                           title="تعديل"
                         >
                           <Pencil size={18} />
@@ -481,7 +482,7 @@ export default function FullRecordPage() {
                         
                         <button 
                           onClick={() => handleDeleteClick(row.id)} 
-                          className="flex items-center justify-center text-red-600 bg-red-50 hover:bg-red-100 hover:text-red-700 p-2.5 rounded-lg transition-colors" 
+                          className={icon.red} 
                           title="حذف"
                         >
                           <Trash2 size={18} />
@@ -491,7 +492,7 @@ export default function FullRecordPage() {
                       <div className="flex items-center justify-center gap-2">
                         <Link 
                           href={`/achievement/${row.id}`} 
-                          className="flex items-center justify-center text-blue-600 bg-blue-50 hover:bg-blue-100 hover:text-blue-700 p-2.5 rounded-lg transition-colors" 
+                          className={icon.blue} 
                           title="عرض التفاصيل"
                         >
                           <Eye size={18} />
@@ -499,7 +500,7 @@ export default function FullRecordPage() {
                         
                         <button 
                           onClick={() => handleActionClick(row)} 
-                          className="flex items-center justify-center text-purple-600 bg-purple-50 hover:bg-purple-100 hover:text-purple-700 p-2.5 rounded-lg transition-colors" 
+                          className={icon.purple} 
                           title="تعديل الإنجاز (يتطلب رمز الحماية)"
                         >
                           <Pencil size={18} />
@@ -525,7 +526,7 @@ export default function FullRecordPage() {
           {showPinPrompt && !isAdmin && (
             <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60] animate-in fade-in duration-200 p-4">
               <div className="bg-white p-8 rounded-3xl shadow-2xl max-w-sm w-full text-center animate-in zoom-in-95 duration-300" onClick={e => e.stopPropagation()}>
-                <h3 className="text-xl font-black text-[#4a154b] mb-2">تعديل الإنجاز ✏️</h3>
+                <h3 className="text-xl font-black text-[#46178f] mb-2">تعديل الإنجاز ✏️</h3>
                 <p className="text-sm text-gray-500 mb-6">الرجاء إدخال رمز الحماية (PIN) الخاص بهذا الإنجاز لتتمكن من تعديله.</p>
                 
                 <input 
@@ -535,15 +536,15 @@ export default function FullRecordPage() {
                   onChange={e => setPinInput(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handlePinSubmit()}
                   placeholder="****"
-                  className={`w-full text-center tracking-[1em] font-mono font-bold text-2xl bg-gray-50 border-2 rounded-xl p-3 outline-none transition-all ${pinError ? 'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100' : 'border-gray-200 focus:border-[#e21b3c] focus:ring-4 focus:ring-red-100'}`}
+                  className={`w-full text-center tracking-[1em] font-mono font-black text-2xl bg-white border-2 rounded-2xl p-4 outline-none transition-all ${pinError ? 'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100' : 'border-red-200 focus:border-[#eb1f36] focus:ring-4 focus:ring-red-200'}`}
                 />
                 {pinError && <p className="text-red-500 font-bold text-sm mt-3 animate-in slide-in-from-top-1">{pinError}</p>}
                 
                 <div className="flex gap-3 mt-6">
-                  <button onClick={() => { setShowPinPrompt(false); setPinError(''); setPinInput(''); }} className="flex-1 py-3 rounded-xl font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 transition-colors">
+                  <button onClick={() => { setShowPinPrompt(false); setPinError(''); setPinInput(''); }} className="flex-1 py-3 rounded-2xl font-black text-gray-600 bg-gray-100 hover:bg-gray-200 transition-all">
                     إلغاء
                   </button>
-                  <button onClick={handlePinSubmit} className="flex-1 py-3 rounded-xl font-bold text-white bg-[#4a154b] hover:bg-[#3a103a] transition-colors">
+                  <button onClick={handlePinSubmit} className="flex-1 py-3 rounded-2xl font-black text-white bg-[#0087ed] hover:bg-[#0073cc] border-b-4 border-[#005fa3] active:border-b-0 active:translate-y-1 transition-all shadow-lg">
                     تأكيد
                   </button>
                 </div>
@@ -553,7 +554,7 @@ export default function FullRecordPage() {
 
           
           {notification && (
-            <div className="fixed top-4 right-4 left-4 md:left-auto md:right-4 md:w-96 z-[200] p-4 rounded-2xl shadow-2xl font-bold text-white animate-in slide-in-from-top-2 duration-300" style={{ background: notification.type === "success" ? "#26890c" : "#ef4444" }}>
+            <div className={`${toast} z-[200]`} style={{ background: notification.type === "success" ? "#26890c" : "#eb1f36" }}>
               <div className="flex items-center gap-3">
                 <span>{notification.type === "success" ? "✅" : "❌"}</span>
                 <span>{notification.message}</span>
@@ -567,11 +568,11 @@ export default function FullRecordPage() {
                 <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
                   <Trash2 className="text-red-500" size={32} />
                 </div>
-                <h3 className="text-xl font-black text-[#4a154b] mb-2">تأكيد الحذف</h3>
+                <h3 className="text-xl font-black text-[#46178f] mb-2">تأكيد الحذف</h3>
                 <p className="text-gray-500 font-bold mb-6">هل أنت متأكد من حذف هذا الإنجاز بشكل نهائي؟ لا يمكن التراجع عن هذه الخطوة.</p>
                 <div className="flex gap-3">
-                  <button onClick={() => { setShowConfirm(false); setPendingDeleteId(null); }} className="flex-1 py-3 rounded-xl font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 transition-colors">إلغاء</button>
-                  <button onClick={handleConfirmDelete} className="flex-1 py-3 rounded-xl font-bold text-white bg-red-500 hover:bg-red-600 transition-colors">حذف</button>
+                  <button onClick={() => { setShowConfirm(false); setPendingDeleteId(null); }} className="flex-1 py-3 rounded-2xl font-black text-gray-600 bg-gray-100 hover:bg-gray-200 transition-all">إلغاء</button>
+                  <button onClick={handleConfirmDelete} className="flex-1 py-3 rounded-2xl font-black text-white bg-[#eb1f36] hover:bg-[#c9172c] border-b-4 border-[#b51427] active:border-b-0 active:translate-y-1 transition-all shadow-lg">حذف</button>
                 </div>
               </div>
             </div>

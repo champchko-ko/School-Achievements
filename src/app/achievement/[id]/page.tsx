@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { doc, getDoc, Timestamp } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { ArrowRight, Clock, Trophy, Medal, Award, Loader2, DownloadCloud, Image as ImageIcon, User, Building, Calendar, FileText, X, Printer, Video, PlayCircle } from "lucide-react";
+import { btn, card } from "../../../lib/ui";
 
 const getScoreBadge = (score: number | null | undefined) => {
   if (score === null || score === undefined) return <span className="bg-gray-100 text-gray-500 px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 w-fit"><Clock size={16} /> قيد المراجعة</span>;
@@ -84,9 +85,9 @@ export default function AchievementDetailsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] text-gray-400">
-        <Loader2 className="animate-spin mb-4 text-[#1368ce]" size={48} />
-        <p className="font-bold text-lg">جاري تحميل تفاصيل الإنجاز...</p>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-purple-100">
+        <Loader2 className="animate-spin mb-4 text-[#ffb800]" size={48} />
+        <p className="font-black text-lg">جاري تحميل تفاصيل الإنجاز...</p>
       </div>
     );
   }
@@ -94,11 +95,11 @@ export default function AchievementDetailsPage() {
   if (error || !achievement) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-gray-500">
-        <div className="bg-white p-8 rounded-3xl shadow-lg border border-purple-100/50 text-center max-w-md">
+        <div className={`${card} rounded-3xl p-8 text-center max-w-md`}>
           <FileText className="mx-auto text-purple-400 mb-4" size={48} />
           <h2 className="text-2xl font-black mb-2 text-gray-800">عذراً</h2>
           <p className="font-bold mb-6">{error}</p>
-          <button onClick={() => router.back()} className="bg-gray-100 hover:bg-gray-200 text-white bg-[#380e6e] hover:bg-[#2a0a54] px-6 py-3 rounded-xl font-bold transition-colors w-full">
+          <button onClick={() => router.back()} className={`${btn.green} w-full px-6 py-3`}>
             العودة للسابق
           </button>
         </div>
@@ -136,7 +137,7 @@ export default function AchievementDetailsPage() {
       <div className="flex justify-between items-center mb-2 print:hidden">
         <button 
           onClick={() => router.back()}
-          className="flex items-center gap-2 text-gray-500 hover:text-[#1368ce] font-bold transition-colors bg-white px-4 py-2 rounded-xl border border-gray-100 shadow-sm w-fit hover:shadow-md"
+          className={`${card} flex items-center gap-2 text-[#46178f] hover:bg-purple-50 px-4 py-2.5 rounded-2xl font-black w-fit`}
         >
           <ArrowRight size={20} />
           العودة
@@ -144,17 +145,17 @@ export default function AchievementDetailsPage() {
 
         <button 
           onClick={() => window.print()}
-          className="flex items-center gap-2 bg-[#380e6e] hover:bg-[#2a0a54] text-white px-4 py-2 rounded-xl font-bold transition-all shadow-sm hover:shadow-md active:scale-95"
+          className={`${btn.blue} px-4 py-2.5`}
         >
           <Printer size={20} />
           طباعة كملف PDF
         </button>
       </div>
 
-      <div className="bg-white rounded-3xl shadow-lg border border-purple-100/50 overflow-hidden print:shadow-none print:border-none print:rounded-none">
+      <div className={`${card} rounded-3xl overflow-hidden print:shadow-none print:border-none print:rounded-none`}>
         
         {/* Header Details */}
-        <div className="p-8 border-b border-gray-50 bg-gray-50/50">
+        <div className="p-8 border-b-2 border-purple-100 bg-purple-50/40">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
             <h1 className="text-3xl font-black text-[#46178f] leading-tight flex-1">
               {achievement.title}
@@ -163,15 +164,15 @@ export default function AchievementDetailsPage() {
           </div>
           
           <div className="flex flex-wrap items-center gap-6 text-gray-600 font-bold text-sm">
-            <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-gray-100">
-              <User size={16} className="text-[#1368ce]" />
+            <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border-2 border-purple-100">
+              <User size={16} className="text-[#0087ed]" />
               {achievement.teacherName || "غير محدد"}
             </div>
-            <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-gray-100">
+            <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border-2 border-purple-100">
               <Building size={16} className="text-purple-500" />
               {achievement.department || "غير محدد"}
             </div>
-            <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-gray-100">
+            <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border-2 border-purple-100">
               <Calendar size={16} className="text-[#26890c]" />
               {achievement.date || "غير محدد"}
             </div>
@@ -203,7 +204,7 @@ export default function AchievementDetailsPage() {
                 {images.map((imgUrl, idx) => (
                   <div 
                     key={idx} 
-                    className={`cursor-pointer relative group bg-white rounded-2xl border-2 border-gray-200 overflow-hidden shadow-sm break-inside-avoid print:border-gray-300 print:shadow-none ${images.length === 1 ? '' : 'aspect-square'}`} 
+                    className={`cursor-pointer relative group bg-white rounded-2xl border-2 border-purple-100 overflow-hidden shadow-sm break-inside-avoid print:border-gray-300 print:shadow-none ${images.length === 1 ? '' : 'aspect-square'}`} 
                     onClick={() => setSelectedImage(imgUrl)}
                   >
                     <img src={imgUrl} alt={`Attachment ${idx + 1}`} className={`w-full transition-transform duration-500 group-hover:scale-105 ${images.length === 1 ? 'max-h-150 object-contain' : 'h-full object-cover'}`} />
@@ -245,13 +246,13 @@ export default function AchievementDetailsPage() {
             {documents.length > 0 && (
               <div className="flex flex-col gap-6 mt-6">
                 {documents.map((docUrl, idx) => (
-                  <div key={idx} className="bg-white border-2 border-purple-100/50 rounded-2xl overflow-hidden shadow-sm flex flex-col break-inside-avoid print:border-gray-300 print:shadow-none">
+                  <div key={idx} className="bg-white border-2 border-purple-100 rounded-2xl overflow-hidden shadow-sm flex flex-col break-inside-avoid print:border-gray-300 print:shadow-none">
                     <div className="bg-purple-50/50 px-6 py-4 border-b border-purple-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                       <div className="flex items-center gap-3 overflow-hidden w-full">
-                        <FileText size={24} className="text-[#1368ce] shrink-0" />
+                        <FileText size={24} className="text-[#0087ed] shrink-0" />
                         <span className="font-bold text-gray-700 truncate block" dir="ltr">{getFileName(docUrl)}</span>
                       </div>
-                      <a href={getDownloadUrl(docUrl)} target="_blank" rel="noopener noreferrer" className="shrink-0 inline-flex items-center justify-center gap-2 bg-[#1368ce] hover:bg-[#0f56b0] text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-sm active:scale-95 w-full md:w-auto print:hidden">
+                      <a href={getDownloadUrl(docUrl)} target="_blank" rel="noopener noreferrer" className={`${btn.blue} shrink-0 px-5 py-2.5 w-full md:w-auto print:hidden`}>
                         <DownloadCloud size={18} />
                         تحميل المستند
                       </a>
@@ -259,7 +260,7 @@ export default function AchievementDetailsPage() {
                     {/* Google Docs Viewer Iframe for showing the actual document preview */}
                     <div className="w-full h-[60vh] bg-gray-50 relative print:hidden">
                       <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400 z-0">
-                        <Loader2 className="animate-spin mb-2 text-[#1368ce]" size={32} />
+                        <Loader2 className="animate-spin mb-2 text-[#0087ed]" size={32} />
                         <p className="font-bold text-sm">جاري تحميل عرض المستند...</p>
                       </div>
                       <iframe 
