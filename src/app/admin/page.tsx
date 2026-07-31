@@ -7,6 +7,9 @@ import { ShieldCheck, Trophy, Medal, Award, ExternalLink, Loader2, CheckCircle2,
 import { useAdmin } from '../../lib/useAdmin';
 import { useRouter } from 'next/navigation';
 
+// Temporary flag: admin dashboard disabled (keep code, can be re-enabled later)
+const ADMIN_ACCESS_ENABLED = false;
+
 export default function AdminDashboard() {
   const [allAchievements, setAllAchievements] = useState<any[]>([]);
   const [allTeachers, setAllTeachers] = useState<string[]>([]);
@@ -106,6 +109,19 @@ export default function AdminDashboard() {
       setProcessingId(null);
     }
   };
+
+  if (!ADMIN_ACCESS_ENABLED) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+        <div className="bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl border border-purple-100/50 p-10 max-w-md w-full">
+          <ShieldCheck className="mx-auto text-purple-300 mb-4" size={56} />
+          <h2 className="text-2xl font-black text-[#46178f] mb-2">لوحة الإدارة</h2>
+          <p className="text-gray-500 font-bold leading-relaxed mb-6">لوحة الإدارة معطلة حالياً بشكل مؤقت.<br />سيتم إعادة تفعيلها لاحقاً.</p>
+          <button onClick={() => router.push('/')} className="w-full py-3 rounded-xl font-bold text-white bg-[#380e6e] hover:bg-[#2a0a54] transition-colors">العودة للرئيسية</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-10">
