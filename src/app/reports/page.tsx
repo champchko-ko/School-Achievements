@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { collection, onSnapshot, query, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { Printer, BarChart3, Medal, UserSquare, FileSpreadsheet, Loader2 } from 'lucide-react';
+import { attachmentsCell, generateCategorizedPdf, generateTablePdf } from '../../lib/pdf';
 import { useRouter } from 'next/navigation';
 import { useAdmin } from '../../lib/useAdmin';
 
@@ -13,6 +14,8 @@ export default function ReportsPage() {
   const [mounted, setMounted] = useState(false);
   const [selectedTeacher, setSelectedTeacher] = useState('all');
   const [schoolSettings, setSchoolSettings] = useState<{ schoolName?: string, logoUrl?: string } | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
+  const [notification, setNotification] = useState<{ type: string, message: string } | null>(null);
   const { isAdmin, loading: adminLoading } = useAdmin();
   const router = useRouter();
 
@@ -47,30 +50,172 @@ export default function ReportsPage() {
     fetchSettings();
   }, []);
 
-  const renderDepartmentReport = () => {
-    // Group achievements by department and calculate averages
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => setNotification(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
+
+  const computeDepartmentStats = () => {
     const deptStats: Record<string, { count: number; totalScore: number; scoredCount: number }> = {};
-    
     achievements.forEach(ach => {
       const dept = ach.department || 'غير محدد';
       if (!deptStats[dept]) {
         deptStats[dept] = { count: 0, totalScore: 0, scoredCount: 0 };
       }
       deptStats[dept].count += 1;
-      
       if (ach.score !== null && ach.score !== undefined) {
         deptStats[dept].totalScore += ach.score;
         deptStats[dept].scoredCount += 1;
       }
     });
-
-    const statsArray = Object.keys(deptStats).map(dept => ({
+    return Object.keys(deptStats).map(dept => ({
       department: dept,
       count: deptStats[dept].count,
-      averageScore: deptStats[dept].scoredCount > 0 
-        ? Math.round(deptStats[dept].totalScore / deptStats[dept].scoredCount) 
+      averageScore: deptStats[dept].scoredCount > 0
+        ? Math.round(deptStats[dept].totalScore / deptStats[dept].scoredCount)
         : null
-    })).sort((a, b) => b.count - a.count); // Sort by most active department
+    })).sort((a, b) => b.count - a.count);
+  };
+
+  const computeHonorList = () => {
+    const teacherStats: Record<string, { dept: string, count: number; totalScore: number; scoredCount: number }> = {};
+    achievements.forEach(ach => {
+      const name = ach.teacherName;
+      if (!name) return;
+      if (!teacherStats[name]) {
+        teacherStats[name] = { dept: ach.department || 'غير محدد', count: 0, totalScore: 0, scoredCount: 0 };
+      }
+      teacherStats[name].count += 1;
+      if (ach.score !== null && ach.score !== undefined) {
+        teacherStats[name].totalScore += ach.score;
+        teacherStats[name].scoredCount += 1;
+      }
+    });
+    return Object.keys(teacherStats).map(name => ({
+      name,
+      department: teacherStats[name].dept,
+      count: teacherStats[name].count,
+    })).sort((a, b) => b.count - a.count).slice(0, 10);
+  };
+
+  const getScoreCategory = (score: number | null | undefined) => {
+    if (score === null || score === undefined) return 'قيد المراجعة';
+    if (score >= 90) return `${score} - ذهبي`;
+    if (score >= 80) return `${score} - فضي`;
+    return `${score} - برونزي`;
+  };
+
+  const handleExportPdf = async () => {
+    setIsExporting(true);
+    try {
+      const dateStamp = new Date().toLocaleDateString('ar-SA');
+      const timeStamp = new Date().toLocaleTimeString('ar-SA');
+
+      if (activeReport === 'department') {
+        const statsArray = computeDepartmentStats();
+        await generateTablePdf({
+          header: {
+            logoUrl: schoolSettings?.logoUrl,
+            schoolName: schoolSettings?.schoolName,
+            title: 'تقرير أداء الأقسام',
+            subtitle: 'مقارنة تفصيلية لعدد الإنجازات ومتوسط التقييم لكل قسم',
+          },
+          columns: [
+            { header: 'القسم', width: '*' },
+            { header: 'إجمالي الإنجازات', width: 110, alignment: 'center' },
+            { header: 'متوسط التقييم', width: 110, alignment: 'center' },
+          ],
+          rows: statsArray.map(s => [s.department, String(s.count), s.averageScore ?? 'قيد المراجعة']),
+          filename: 'تقرير_أداء_الأقسام.pdf',
+        });
+      } else if (activeReport === 'honor') {
+        const honorList = computeHonorList();
+        await generateTablePdf({
+          header: {
+            logoUrl: schoolSettings?.logoUrl,
+            schoolName: schoolSettings?.schoolName,
+            title: 'قائمة الشرف للمتميزين',
+            subtitle: 'أكثر المعلمات إنجازاً وتميزاً في الأداء',
+          },
+          columns: [
+            { header: 'الترتيب', width: 50, alignment: 'center' },
+            { header: 'المعلمة', width: '*' },
+            { header: 'القسم', width: 120 },
+            { header: 'إجمالي الإنجازات', width: 110, alignment: 'center' },
+          ],
+          rows: honorList.map((s, idx) => [String(idx + 1), s.name, s.department, String(s.count)]),
+          filename: 'قائمة_الشرف.pdf',
+        });
+      } else {
+        // Individual teacher report
+        if (selectedTeacher === 'all') {
+          setNotification({ type: 'error', message: 'يرجى اختيار معلمة أولاً لتصدير سجلها.' });
+          return;
+        }
+        const filteredData = achievements
+          .filter(a => a.teacherName === selectedTeacher)
+          .sort((a, b) => b.date.localeCompare(a.date));
+
+        const groups = new Map<string, any[]>();
+        for (const ach of filteredData) {
+          const dept = ach.department || 'غير محدد';
+          if (!groups.has(dept)) groups.set(dept, []);
+          groups.get(dept)!.push(ach);
+        }
+
+        const sections: any[] = [];
+        const sortedDepts = Array.from(groups.keys()).sort((a, b) => a.localeCompare(b, 'ar'));
+        for (const dept of sortedDepts) {
+          const deptRows: any[][] = [];
+          for (const ach of groups.get(dept)!) {
+            const attachments: string[] = [];
+            if (ach.attachmentUrls) attachments.push(...ach.attachmentUrls);
+            if (ach.fileUrl && !attachments.includes(ach.fileUrl)) attachments.push(ach.fileUrl);
+            if (ach.attachmentUrl && !attachments.includes(ach.attachmentUrl)) attachments.push(ach.attachmentUrl);
+            const attachmentCell = await attachmentsCell(attachments);
+            deptRows.push([
+              [{ text: ach.title || '', bold: true }, ...(ach.desc ? [{ text: ach.desc, margin: [0, 2, 0, 0], color: '#555555' }] : [])],
+              ach.date || '',
+              getScoreCategory(ach.score),
+              attachmentCell,
+            ]);
+          }
+          sections.push({
+            title: `القسم: ${dept}`,
+            subtitle: `${deptRows.length} إنجاز${deptRows.length === 1 ? '' : 'ات'}`,
+            columns: [
+              { header: 'الإنجاز', width: '*' },
+              { header: 'التاريخ', width: 60 },
+              { header: 'التقييم', width: 60 },
+              { header: 'المرفقات', width: 100 },
+            ],
+            rows: deptRows,
+          });
+        }
+
+        await generateCategorizedPdf({
+          header: {
+            logoUrl: schoolSettings?.logoUrl,
+            schoolName: schoolSettings?.schoolName,
+            title: 'السجل الفردي للإنجازات',
+            subtitle: `المعلمة: ${selectedTeacher}`,
+          },
+          sections,
+          filename: `السجل_الفردي_${selectedTeacher}.pdf`,
+        });
+      }
+    } catch (error) {
+      console.error('PDF export error:', error);
+      setNotification({ type: 'error', message: 'حدث خطأ أثناء إنشاء ملف PDF.' });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const renderDepartmentReport = () => {
+    const statsArray = computeDepartmentStats();
 
     return (
       <div className="bg-white rounded-2xl shadow-lg border border-purple-100/50 p-8 print:shadow-none print:border-none print:p-0">
@@ -123,26 +268,7 @@ export default function ReportsPage() {
   };
 
   const renderHonorReport = () => {
-    const teacherStats: Record<string, { dept: string, count: number; totalScore: number; scoredCount: number }> = {};
-    
-    achievements.forEach(ach => {
-      const name = ach.teacherName;
-      if (!name) return;
-      if (!teacherStats[name]) {
-        teacherStats[name] = { dept: ach.department || 'غير محدد', count: 0, totalScore: 0, scoredCount: 0 };
-      }
-      teacherStats[name].count += 1;
-      if (ach.score !== null && ach.score !== undefined) {
-        teacherStats[name].totalScore += ach.score;
-        teacherStats[name].scoredCount += 1;
-      }
-    });
-
-    const honorList = Object.keys(teacherStats).map(name => ({
-      name,
-      department: teacherStats[name].dept,
-      count: teacherStats[name].count,
-    })).sort((a, b) => b.count - a.count).slice(0, 10);
+    const honorList = computeHonorList();
 
     return (
       <div className="bg-white rounded-2xl shadow-lg border border-purple-100/50 p-8 print:shadow-none print:border-none print:p-0">
@@ -254,6 +380,13 @@ export default function ReportsPage() {
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-10">
       
+      {/* Notification Toast */}
+      {notification && (
+        <div className="fixed top-4 right-4 left-4 md:left-auto md:right-4 md:w-96 z-[200] p-4 rounded-2xl shadow-2xl font-bold text-white animate-in slide-in-from-top-2 duration-300" style={{ background: notification.type === "success" ? "#26890c" : "#ef4444" }}>
+          {notification.message}
+        </div>
+      )}
+
       {/* Header & Print Button */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 print:hidden">
         <div>
@@ -265,10 +398,11 @@ export default function ReportsPage() {
         </div>
         
         <button 
-          onClick={() => window.print()}
-          className="flex items-center justify-center gap-2 bg-[#380e6e] hover:bg-[#2a0a54] text-white px-6 py-3 rounded-xl font-bold transition-all shadow-md active:scale-95"
+          onClick={handleExportPdf}
+          disabled={isExporting}
+          className="flex items-center justify-center gap-2 bg-[#380e6e] hover:bg-[#2a0a54] text-white px-6 py-3 rounded-xl font-bold transition-all shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <Printer size={18} /> طباعة التقرير الحالي
+          {isExporting ? <Loader2 size={18} className="animate-spin" /> : <Printer size={18} />} {isExporting ? 'جارٍ إنشاء PDF...' : 'تصدير التقرير PDF'}
         </button>
       </div>
 
