@@ -2,7 +2,7 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Search, Filter, DownloadCloud, FileText, Trophy, Clock, Medal, Award, Loader2, Pencil, Trash2, Eye, CheckCircle2 } from 'lucide-react';
+import { Search, Filter, DownloadCloud, FileText, Trophy, Clock, Medal, Award, Loader2, Pencil, Trash2, Eye } from 'lucide-react';
 import { useAdmin } from '../../lib/useAdmin';
 import Link from 'next/link';
 import { collection, onSnapshot, query, orderBy, doc, getDoc } from 'firebase/firestore';
@@ -11,7 +11,7 @@ import AddAchievementModal from '../../components/AddAchievementModal';
 import { sanitizeText } from '../../lib/sanitize';
 
 const getScoreBadge = (score: number | null) => {
-  if (score === null) return <span className="bg-green-50 text-green-700 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 w-fit"><CheckCircle2 size={14} /> معتمد</span>;
+  if (score === null) return <span className="bg-gray-100 text-gray-500 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 w-fit"><Clock size={14} /> مراجعة</span>;
   if (score >= 90) return <span className="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 w-fit"><Trophy size={14} /> {score} ذهبي</span>;
   if (score >= 80) return <span className="bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 w-fit"><Medal size={14} /> {score} فضي</span>;
   return <span className="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 w-fit"><Award size={14} /> {score} برونزي</span>;
@@ -141,7 +141,7 @@ export default function FullRecordPage() {
               const safeDept = sanitizeText(row.department || '');
               const safeTitle = sanitizeText(row.title || '');
               const safeDate = sanitizeText(row.date || '');
-              return `<tr><td>${safeTeacher}</td><td>${safeDept}</td><td>${safeTitle}</td><td>${safeDate}</td><td>${row.score ?? 'معتمد'}</td><td>${attachmentsHtml}</td></tr>`;
+              return `<tr><td>${safeTeacher}</td><td>${safeDept}</td><td>${safeTitle}</td><td>${safeDate}</td><td>${row.score ?? 'قيد المراجعة'}</td><td>${attachmentsHtml}</td></tr>`;
             }).join('')}
           </tbody>
         </table>

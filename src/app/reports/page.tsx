@@ -110,7 +110,7 @@ export default function ReportsPage() {
                       {stat.averageScore}%
                     </span>
                   ) : (
-                    <span className="text-green-600 text-sm font-bold">بدون تقييم</span>
+                    <span className="text-gray-400 text-sm font-bold">قيد المراجعة</span>
                   )}
                 </td>
               </tr>
@@ -233,7 +233,7 @@ export default function ReportsPage() {
                      {ach.score ? (
                        <span className="text-xs font-bold px-3 py-1 rounded-full bg-blue-100 text-blue-700">التقييم: {ach.score}%</span>
                      ) : (
-                       <span className="text-xs font-bold px-3 py-1 rounded-full bg-green-50 text-green-700">معتمد</span>
+                       <span className="text-xs font-bold px-3 py-1 rounded-full bg-purple-100 text-[#46178f]">قيد المراجعة</span>
                      )}
                      <span className="text-xs font-bold px-3 py-1 rounded-full bg-purple-100 text-purple-700">{ach.department}</span>
                   </div>
