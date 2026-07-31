@@ -261,7 +261,7 @@ function HomeContent() {
                   <th className="p-3 md:p-4 whitespace-nowrap text-xs md:text-sm font-bold text-gray-600">المعلمة</th>
                   <th className="p-3 md:p-4 whitespace-nowrap text-xs md:text-sm font-bold text-gray-600">القسم</th>
                   <th className="p-3 md:p-4 whitespace-nowrap text-xs md:text-sm font-bold text-gray-600">العنوان</th>
-                  <th className="p-3 md:p-4 whitespace-nowrap text-xs md:text-sm font-bold text-gray-600">التقييم</th>
+                  <th className="p-3 md:p-4 whitespace-nowrap text-xs md:text-sm font-bold text-gray-600 hidden">التقييم</th>
                   <th className="p-3 md:p-4 whitespace-nowrap text-xs md:text-sm font-bold text-gray-600">التاريخ</th>
                 </tr>
               </thead>
@@ -275,7 +275,7 @@ function HomeContent() {
                     <td className="p-3 md:p-4 text-xs md:text-sm font-bold text-[#46178f]">{achievement.teacherName || ''}</td>
                     <td className="p-3 md:p-4 text-xs md:text-sm text-gray-500">{achievement.department || ''}</td>
                     <td className="p-3 md:p-4 text-xs md:text-sm font-bold text-gray-800 max-w-[200px] truncate" title={achievement.title}>{achievement.title || ''}</td>
-                    <td className="p-3 md:p-4">{getBadge(achievement.score)}</td>
+                    <td className="p-3 md:p-4 hidden">{getBadge(achievement.score)}</td>
                     <td className="p-3 md:p-4 text-xs md:text-sm text-gray-400">{achievement.date || ''}</td>
                   </tr>
                 ))}
