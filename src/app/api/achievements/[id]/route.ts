@@ -6,6 +6,7 @@ import { NextResponse } from 'next/server';
 import { isAdminSession } from '../../../../lib/admin-session';
 import { sanitizeAchievementPayload } from '../../../../lib/sanitize';
 import { pbkdf2Sync } from 'crypto';
+import { collectAttachmentUrls, destroyCloudinaryAsset } from '../../../../lib/cloudinary';
 
 function getPepper(): string {
   return process.env.PIN_PEPPER || 'school-achievements-default-pepper-change-in-production';
@@ -16,73 +17,6 @@ function hashPin(pin: string, achievementId: string): string {
   const salt = `${achievementId}-${pepper}`;
   const hash = pbkdf2Sync(pin, salt, 10000, 64, 'sha512');
   return hash.toString('hex');
-}
-
-// --- Cloudinary cleanup helpers ---
-
-// Extracts the public_id and resource type from a Cloudinary URL like
-// https://res.cloudinary.com/{cloud}/image/upload/v123/folder/name.jpg
-function extractCloudinaryAsset(url: string): { publicId: string; resourceType: string } | null {
-  try {
-    const u = new URL(url);
-    if (!u.hostname.endsWith('cloudinary.com')) return null;
-    const segments = u.pathname.split('/').filter(Boolean);
-    if (segments.length < 3) return null;
-    const resourceType = segments[1];
-    if (resourceType !== 'image' && resourceType !== 'video' && resourceType !== 'raw') return null;
-    const uploadIdx = segments.indexOf('upload');
-    if (uploadIdx === -1) return null;
-    const rest = segments.slice(uploadIdx + 1);
-    // Skip transformation segments (e.g. fl_attachment, f_auto) until the version segment (v123456)
-    let start = 0;
-    for (let i = 0; i < rest.length; i++) {
-      if (/^v\d+$/.test(rest[i])) {
-        start = i + 1;
-        break;
-      }
-    }
-    if (start >= rest.length) return null;
-    const publicId = rest.slice(start).join('/').replace(/\.[^./]+$/, '');
-    if (!publicId) return null;
-    return { publicId, resourceType };
-  } catch {
-    return null;
-  }
-}
-
-// Deletes a single asset from Cloudinary (best-effort).
-async function destroyCloudinaryAsset(url: string): Promise<{ ok: boolean; result?: string }> {
-  try {
-    const asset = extractCloudinaryAsset(url);
-    if (!asset) return { ok: true, result: 'skipped' };
-    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-    const apiKey = process.env.CLOUDINARY_API_KEY;
-    const apiSecret = process.env.CLOUDINARY_API_SECRET;
-    if (!cloudName || !apiKey || !apiSecret) return { ok: false, result: 'not-configured' };
-    const endpoint = `https://api.cloudinary.com/v1_1/${cloudName}/${asset.resourceType}/destroy`;
-    const body = new URLSearchParams({ public_id: asset.publicId });
-    const res = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        Authorization: `Basic ${Buffer.from(`${apiKey}:${apiSecret}`).toString('base64')}`,
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: body.toString(),
-    });
-    const data = await res.json();
-    return { ok: res.ok, result: data?.result || data?.error?.message || 'unknown' };
-  } catch (error: any) {
-    console.error('Cloudinary destroy error:', error?.message || error);
-    return { ok: false, result: 'error' };
-  }
-}
-
-function collectAttachmentUrls(docData: any): string[] {
-  const urls: string[] = [];
-  if (Array.isArray(docData?.attachmentUrls)) urls.push(...docData.attachmentUrls);
-  if (typeof docData?.fileUrl === 'string') urls.push(docData.fileUrl);
-  if (typeof docData?.attachmentUrl === 'string') urls.push(docData.attachmentUrl);
-  return Array.from(new Set(urls.filter(Boolean)));
 }
 
 

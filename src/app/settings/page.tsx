@@ -1,7 +1,7 @@
 // src/app/settings/page.tsx
 "use client";
-import { useState, useEffect } from 'react';
-import { Settings, Building, Phone, User, UploadCloud, Save, Loader2, Image as ImageIcon, Trash2, Users, BookOpen, ShieldCheck, Sparkles, Award } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Settings, Building, Phone, User, UploadCloud, Save, Loader2, Image as ImageIcon, Trash2, Users, BookOpen, ShieldCheck, Sparkles, Award, Database, RefreshCw } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAdmin } from '../../lib/useAdmin';
 
@@ -41,6 +41,14 @@ export default function SettingsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [notification, setNotification] = useState<{ type: string, message: string } | null>(null);
+  const [maintenance, setMaintenance] = useState<{
+    scanning: boolean;
+    cleaning: boolean;
+    report: any | null;
+    showCleanConfirm: boolean;
+    cleanResult: any | null;
+  }>({ scanning: false, cleaning: false, report: null, showCleanConfirm: false, cleanResult: null });
+  const maintenanceScannedRef = useRef(false);
   
   const { isAdmin, loading: adminLoading } = useAdmin();
   const router = useRouter();
@@ -58,6 +66,60 @@ export default function SettingsPage() {
       return () => clearTimeout(timer);
     }
   }, [notification]);
+
+  // Auto-run a maintenance scan the first time the Security tab (maintenance section) is opened
+  useEffect(() => {
+    if (activeTab === 'security' && !maintenanceScannedRef.current) {
+      maintenanceScannedRef.current = true;
+      runMaintenanceScan();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
+
+  const formatBytes = (n: number) => {
+    if (!n) return '0 KB';
+    if (n < 1024) return `${n} B`;
+    if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+    return `${(n / (1024 * 1024)).toFixed(2)} MB`;
+  };
+
+  const runMaintenanceScan = async () => {
+    setMaintenance((m) => ({ ...m, scanning: true }));
+    try {
+      const res = await fetch('/api/cleanup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'scan' }),
+      });
+      if (!res.ok) throw new Error('scan failed');
+      const data = await res.json();
+      setMaintenance((m) => ({ ...m, report: data, scanning: false }));
+    } catch (error) {
+      console.error('Scan error:', error);
+      setMaintenance((m) => ({ ...m, scanning: false }));
+      setNotification({ type: 'error', message: 'فشل فحص قاعدة البيانات. حاول مرة أخرى.' });
+    }
+  };
+
+  const handleMaintenanceClean = async () => {
+    setMaintenance((m) => ({ ...m, cleaning: true, showCleanConfirm: false }));
+    try {
+      const res = await fetch('/api/cleanup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'clean' }),
+      });
+      if (!res.ok) throw new Error('clean failed');
+      const data = await res.json();
+      setMaintenance((m) => ({ ...m, cleanResult: data, cleaning: false }));
+      setNotification({ type: 'success', message: `تم التنظيف: إصلاح ${data.fixedReferences} مرجع وحذف ${data.orphansDeleted} ملف معزول (${data.storageFreed}).` });
+      runMaintenanceScan();
+    } catch (error) {
+      console.error('Clean error:', error);
+      setMaintenance((m) => ({ ...m, cleaning: false }));
+      setNotification({ type: 'error', message: 'فشل تنظيف قاعدة البيانات. حاول مرة أخرى.' });
+    }
+  };
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -491,6 +553,124 @@ export default function SettingsPage() {
               <p className="text-xs text-gray-500 font-bold leading-relaxed">
                 ⚠️ احرص على حفظ هذا الرقم سراً، حيث يتم استخدامه لتأكيد صلاحية الدخول للوحة التحكم.
               </p>
+            </div>
+
+            {/* Data Maintenance */}
+            <div className="border-t-2 border-purple-50 pt-6 mt-2">
+              <div className="flex items-center gap-3 mb-4">
+                <span className="p-3 bg-purple-50 text-[#46178f] rounded-2xl"><Database size={22} /></span>
+                <div>
+                  <h3 className="text-xl font-black text-gray-800">صيانة البيانات</h3>
+                  <p className="text-sm font-bold text-gray-400">فحص المراجع المعطلة والملفات المعزولة وتنظيف التخزين السحابي.</p>
+                </div>
+              </div>
+
+              {maintenance.report && (
+                <div className="bg-purple-50/40 p-4 rounded-2xl border-2 border-purple-100 mb-4">
+                  <p className="text-sm font-black text-gray-700">
+                    💾 سعة التخزين المستخدمة: <span className="text-[#46178f]">{maintenance.report.storage.formatted}</span> ({maintenance.report.storage.count} ملف)
+                  </p>
+                </div>
+              )}
+
+              <button
+                onClick={runMaintenanceScan}
+                disabled={maintenance.scanning || maintenance.cleaning}
+                className={`flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-black text-white transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed ${
+                  maintenance.scanning ? "bg-gray-500" : "bg-[#0087ed] hover:bg-[#0073cc] border-b-4 border-[#005fa3] active:border-b-0 active:translate-y-1"
+                }`}
+              >
+                {maintenance.scanning ? <Loader2 className="animate-spin" size={20} /> : <RefreshCw size={20} />}
+                {maintenance.scanning ? 'جارٍ الفحص...' : 'فحص قاعدة البيانات'}
+              </button>
+
+              {maintenance.report && (maintenance.report.broken.length > 0 || maintenance.report.orphans.length > 0) && (
+                <div className="mt-4 space-y-3">
+                  {maintenance.report.broken.length > 0 && (
+                    <div className="bg-red-50/50 p-4 rounded-2xl border-2 border-red-100">
+                      <p className="text-sm font-black text-[#eb1f36] mb-2">🔗 مراجع معطلة: {maintenance.report.broken.length}</p>
+                      <ul className="text-xs font-bold text-gray-700 space-y-1 max-h-24 overflow-y-auto">
+                        {maintenance.report.broken.map((b: any, i: number) => (
+                          <li key={i}>• {b.title} — <span dir="ltr" className="text-red-500">{b.publicId}</span></li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {maintenance.report.orphans.length > 0 && (
+                    <div className="bg-amber-50/50 p-4 rounded-2xl border-2 border-amber-100">
+                      <p className="text-sm font-black text-amber-700 mb-2">
+                        🗂️ ملفات معزولة: {maintenance.report.orphans.length} (
+                        {formatBytes(maintenance.report.orphans.reduce((s: number, o: any) => s + (o.bytes || 0), 0))})
+                      </p>
+                      <ul className="text-xs font-bold text-gray-700 space-y-1 max-h-24 overflow-y-auto">
+                        {maintenance.report.orphans.map((o: any, i: number) => (
+                          <li key={i}>• <span dir="ltr">{o.publicId}</span> ({o.formatted})</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  <button
+                    onClick={() => setMaintenance((m) => ({ ...m, showCleanConfirm: true }))}
+                    disabled={maintenance.cleaning}
+                    className={`flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-black text-white transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed ${
+                      maintenance.cleaning ? "bg-gray-500" : "bg-[#eb1f36] hover:bg-[#c9172c] border-b-4 border-[#b51427] active:border-b-0 active:translate-y-1"
+                    }`}
+                  >
+                    {maintenance.cleaning ? <Loader2 className="animate-spin" size={20} /> : <Trash2 size={20} />}
+                    {maintenance.cleaning ? 'جارٍ التنظيف...' : 'تنظيف قاعدة البيانات'}
+                  </button>
+                </div>
+              )}
+
+              {maintenance.report && maintenance.report.broken.length === 0 && maintenance.report.orphans.length === 0 && (
+                <p className="text-sm font-black text-[#26890c] mt-3">✅ قاعدة البيانات سليمة — لا توجد مراجع معطلة أو ملفات معزولة.</p>
+              )}
+
+              {maintenance.cleanResult && (
+                <div className="bg-green-50/50 p-4 rounded-2xl border-2 border-green-100 mt-3">
+                  <p className="text-sm font-black text-[#26890c]">
+                    ✅ تم التنظيف: إصلاح {maintenance.cleanResult.fixedReferences} مرجع في {maintenance.cleanResult.achievementsFixed} إنجازات،
+                    حذف {maintenance.cleanResult.orphansDeleted} ملفات معزولة ({maintenance.cleanResult.storageFreed}).
+                  </p>
+                  {maintenance.cleanResult.errors?.length > 0 && (
+                    <p className="text-xs font-bold text-red-500 mt-1">أخطاء: {maintenance.cleanResult.errors.join('، ')}</p>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Clean confirmation modal */}
+        {maintenance.showCleanConfirm && maintenance.report && (
+          <div
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[80] animate-in fade-in duration-200 p-4"
+            onClick={() => setMaintenance((m) => ({ ...m, showCleanConfirm: false }))}
+          >
+            <div className="bg-white p-8 rounded-3xl shadow-2xl max-w-md w-full text-center animate-in zoom-in-95 duration-300" onClick={(e) => e.stopPropagation()}>
+              <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+                <Trash2 className="text-[#eb1f36]" size={32} />
+              </div>
+              <h3 className="text-xl font-black text-[#46178f] mb-2">تأكيد تنظيف قاعدة البيانات</h3>
+              <p className="text-gray-500 font-bold mb-6">
+                سيتم إصلاح {maintenance.report.broken.length} مرجع معطل وحذف {maintenance.report.orphans.length} ملفات معزولة
+                ({formatBytes(maintenance.report.orphans.reduce((s: number, o: any) => s + (o.bytes || 0), 0))}) نهائياً من التخزين السحابي. لا يمكن التراجع عن هذه الخطوة.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setMaintenance((m) => ({ ...m, showCleanConfirm: false }))}
+                  className="flex-1 py-3 rounded-2xl font-black text-gray-600 bg-gray-100 hover:bg-gray-200 transition-all"
+                >
+                  إلغاء
+                </button>
+                <button
+                  onClick={handleMaintenanceClean}
+                  className="flex-1 py-3 rounded-2xl font-black text-white bg-[#eb1f36] hover:bg-[#c9172c] border-b-4 border-[#b51427] active:border-b-0 active:translate-y-1 transition-all shadow-lg"
+                >
+                  نعم، نظف
+                </button>
+              </div>
             </div>
           </div>
         )}
