@@ -70,6 +70,7 @@ export default function AchievementDetailsPage() {
   const [isRemoving, setIsRemoving] = useState(false);
   const [showRemoveAllConfirm, setShowRemoveAllConfirm] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [schoolSettings, setSchoolSettings] = useState<any>(null);
 
   useEffect(() => {
     if (toastMsg) {
@@ -223,6 +224,12 @@ export default function AchievementDetailsPage() {
     };
 
     fetchAchievement();
+
+    // Fetch school settings for PDF header
+    getDoc(doc(db, 'settings', 'global_info')).then(snap => {
+      if (snap.exists()) setSchoolSettings(snap.data());
+    }).catch(() => {});
+
     return () => { cancelled = true; };
   }, [id]);
 
@@ -267,18 +274,28 @@ export default function AchievementDetailsPage() {
   const documents = attachmentUrls.filter(url => !isImageField(url) && !isVideoField(url)).filter(Boolean);
 
   const handlePrint = async () => {
-    const el = document.getElementById('printable-achievement');
-    if (!el) return;
     try {
-      const html2pdf = (await import('html2pdf.js')).default;
-      const opt: any = {
-        margin: [10, 10, 10, 10],
-        filename: (achievement.title || 'achievement') + '.pdf',
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, logging: false },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-      };
-      await html2pdf().set(opt).from(el).save();
+      const { printReport, buildPrintAttachments } = await import('../../../lib/printPdf');
+      const appUrl = window.location.origin + '/achievement/' + id;
+      const attachments = buildPrintAttachments(attachmentUrls, appUrl);
+      const descCell = { type: 'text' as const, text: achievement.desc || achievement.description || 'لا يوجد وصف' };
+      const attachSection = attachments.length > 0 ? [{
+        title: 'المرفقات',
+        columns: ['المرفقات'],
+        rows: [[{ type: 'achievement' as const, title: achievement.title || '', desc: '', items: attachments }]],
+      }] : [];
+      printReport({
+        documentTitle: achievement.title || 'achievement',
+        logoUrl: schoolSettings?.logoUrl,
+        schoolName: schoolSettings?.schoolName,
+        title: achievement.title || '',
+        subtitle: (achievement.teacherName || 'غير محدد') + ' — ' + (achievement.department || 'غير محدد') + ' — ' + (achievement.date || ''),
+        sections: [{
+          title: 'وصف الإنجاز',
+          columns: ['الوصف'],
+          rows: [[descCell]],
+        }, ...attachSection],
+      });
     } catch (err) {
       console.error('PDF generation failed:', err);
       setToastMsg('فشل إنشاء ملف PDF. حاول مرة أخرى.');
@@ -311,7 +328,7 @@ export default function AchievementDetailsPage() {
 
         <button 
           onClick={handlePrint}
-          className={`${btn.blue} px-4 py-2.5`}
+          className={`${btn.red} px-4 py-2.5`}
         >
           <Printer size={20} />
           طباعة كملف PDF
