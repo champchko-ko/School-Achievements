@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="0.65" y2="1">
+      <stop offset="0%" stop-color="#7C3AED"/>
+      <stop offset="52%" stop-color="#46178F"/>
+      <stop offset="100%" stop-color="#260A53"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0.15" y1="0" x2="0.85" y2="1">
+      <stop offset="0%" stop-color="#FFF0A6"/>
+      <stop offset="48%" stop-color="#FFD54A"/>
+      <stop offset="100%" stop-color="#EBA800"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.36" r="0.62">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.28"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#background)"/>
+  <rect width="1024" height="1024" fill="url(#glow)"/>
+  <g opacity="0.10" fill="#FFFFFF">
+    <circle cx="128" cy="132" r="7"/><circle cx="248" cy="92" r="5"/><circle cx="352" cy="168" r="4"/>
+    <circle cx="664" cy="104" r="6"/><circle cx="784" cy="164" r="4"/><circle cx="892" cy="112" r="7"/>
+    <circle cx="116" cy="812" r="6"/><circle cx="236" cy="884" r="4"/><circle cx="372" cy="928" r="6"/>
+    <circle cx="684" cy="900" r="4"/><circle cx="816" cy="852" r="6"/><circle cx="908" cy="920" r="4"/>
+  </g>
+  <g>
+    <path d="M258 228h508v72c0 126-82 218-190 245l-14 55H462l-14-55c-108-27-190-119-190-245z" fill="url(#gold)"/>
+    <path d="M188 264h70v76c0 75 39 130 97 159l-21 74c-91-38-146-117-146-215zM836 264h-70v76c0 75-39 130-97 159l21 74c91-38 146-117 146-215z" fill="url(#gold)" opacity="0.82"/>
+    <path d="M452 600h120v86c0 17 13 30 30 30h44v64H378v-64h44c17 0 30-13 30-30z" fill="url(#gold)"/>
+    <rect x="330" y="762" width="364" height="84" rx="31" fill="url(#gold)"/>
+  </g>
+  <path fill="#46178F" d="M512 292l49 100 110 16-80 78 19 109-98-51-98 51 19-109-80-78 110-16z"/>
+</svg>

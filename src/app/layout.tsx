@@ -1,13 +1,39 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import { Tajawal } from "next/font/google";
 import "./globals.css";
 import Sidebar from '../components/Sidebar';
+import PwaInstallPrompt from '../components/PwaInstallPrompt';
 
 const tajawal = Tajawal({ subsets: ["arabic"], weight: ['400', '500', '700', '900'] });
 
 export const metadata: Metadata = {
-  title: "منصة إنجازات المدرسة",
-  description: "تطبيق لتوثيق وتحفيز الإنجازات المدرسية",
+  title: {
+    default: 'School Achievements',
+    template: '%s | School Achievements',
+  },
+  description: 'A showcase for student achievement records, ceremonies, and school activities.',
+  applicationName: 'School Achievements',
+  manifest: '/manifest.webmanifest',
+  icons: {
+    icon: [
+      { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: '/apple-touch-icon.png',
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'School Achievements',
+  },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+  themeColor: '#46178F',
 };
 
 export default function RootLayout({
@@ -36,6 +62,17 @@ export default function RootLayout({
           </main>
           
         </div>
+
+        <PwaInstallPrompt />
+
+        {process.env.NEXT_PUBLIC_CF_BEACON_TOKEN && (
+          <Script
+            defer
+            strategy="afterInteractive"
+            src="https://static.cloudflareinsights.com/beacon.min.js"
+            data-cf-beacon={JSON.stringify({ token: process.env.NEXT_PUBLIC_CF_BEACON_TOKEN })}
+          />
+        )}
       </body>
     </html>
   );
