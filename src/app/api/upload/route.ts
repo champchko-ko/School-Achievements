@@ -16,7 +16,14 @@ const ALLOWED_MIME_TYPES = [
   'application/zip', 'application/x-rar-compressed',
 ];
 
-const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
+// Per-type size limits
+const SIZE_LIMITS: Record<string, number> = {
+  'image': 10 * 1024 * 1024,    // 10 MB for images
+  'video': 100 * 1024 * 1024,   // 100 MB for videos
+  'application': 20 * 1024 * 1024, // 20 MB for documents
+  'text': 5 * 1024 * 1024,      // 5 MB for text files
+};
+const DEFAULT_MAX = 20 * 1024 * 1024; // 20 MB fallback
 
 export async function POST(request: Request) {
   try {
@@ -34,11 +41,14 @@ export async function POST(request: Request) {
       }, { status: 400 });
     }
 
-    // Validate file size server-side
-    if (file.size > MAX_FILE_SIZE) {
-      const maxMB = MAX_FILE_SIZE / (1024 * 1024);
+    // Validate file size server-side (per type)
+    const category = file.type.split('/')[0] || '';
+    const maxSize = SIZE_LIMITS[category] || DEFAULT_MAX;
+    if (file.size > maxSize) {
+      const fileMB = (file.size / (1024 * 1024)).toFixed(1);
+      const maxMB = (maxSize / (1024 * 1024)).toFixed(0);
       return NextResponse.json({
-        error: `حجم الملف كبير جداً (${(file.size / (1024 * 1024)).toFixed(1)} MB). الحد الأقصى هو ${maxMB} MB`
+        error: `حجم الملف كبير جداً (${fileMB} MB). الحد الأقصى لهذا النوع هو ${maxMB} MB`
       }, { status: 400 });
     }
 
