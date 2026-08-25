@@ -98,13 +98,9 @@ export async function POST(request: Request) {
       }
     }
 
-    // Match assets by publicId only (ignore resourceType mismatch from auto/upload)
-    const broken = Array.from(refs.values()).filter((r) => {
-      return !cloudAssets.has(`${r.resourceType}:${r.publicId}`) &&
-             !cloudAssets.has(`image:${r.publicId}`) &&
-             !cloudAssets.has(`video:${r.publicId}`) &&
-             !cloudAssets.has(`raw:${r.publicId}`);
-    });
+    // Build flat sets: auto/upload may store as different resourceType than URL shows
+    const allCloudPublicIds = new Set(Array.from(cloudAssets.keys()).map(k => k.split(':')[1]));
+    const broken = Array.from(refs.values()).filter((r) => !allCloudPublicIds.has(r.publicId));
     const refPublicIds = new Set(Array.from(refs.values()).map(r => r.publicId));
     const orphans = Array.from(cloudAssets.values()).filter(
       (a) => !refPublicIds.has(a.publicId) && a.publicId !== 'sample'
