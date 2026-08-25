@@ -22,13 +22,24 @@ const fileNameFromUrl = (url: string) => {
   }
 };
 
+// Teacher type: supports both old string[] and new {name,department}[]
+type TeacherEntry = string | { name: string; department: string };
+
+function normalizeTeachers(raw: TeacherEntry[]): { name: string; department: string }[] {
+  return (raw || []).map(t =>
+    typeof t === 'string'
+      ? { name: t, department: '' }
+      : { name: t.name, department: t.department || '' }
+  );
+}
+
 export default function AddAchievementModal({ isOpen, onClose, initialData, docId, verifiedPin }: { isOpen: boolean, onClose: () => void, initialData?: any, docId?: string, verifiedPin?: string }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [existingAttachments, setExistingAttachments] = useState<string[]>([]);
   const [mounted, setMounted] = useState(false);
   const [departmentsList, setDepartmentsList] = useState<string[]>(['الرياضيات', 'العلوم', 'اللغة العربية', 'الحاسب الآلي', 'التربية البدنية']);
-  const [teachersList, setTeachersList] = useState<string[]>([]);
+  const [teachersRaw, setTeachersRaw] = useState<TeacherEntry[]>([]);
   const [formData, setFormData] = useState({
     teacherName: '',
     department: 'الرياضيات',
@@ -39,6 +50,15 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [alertMsg, setAlertMsg] = useState<string | null>(null);
+
+  const teachers = normalizeTeachers(teachersRaw);
+
+  // Teachers filtered by selected department (show all if department is empty / unassigned)
+  const filteredTeachers = formData.department
+    ? teachers.filter(t => t.department === formData.department)
+    : teachers;
+
+  const uniqueFilteredNames = [...new Set(filteredTeachers.map(t => t.name).filter(Boolean))];
 
   useEffect(() => {
     setMounted(true);
@@ -62,7 +82,6 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
           date: initialData.date || todayLocal(),
           pin: initialData.pin || ''
         });
-        // Merge all current attachment sources (normal + legacy single-file fields)
         const merged = [
           ...(initialData.attachmentUrls || []),
           initialData.fileUrl,
@@ -88,7 +107,7 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
               }
             }
             if (data.teachers && data.teachers.length > 0) {
-              setTeachersList(data.teachers);
+              setTeachersRaw(data.teachers);
             }
           }
         } catch (error) {
@@ -111,228 +130,178 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const newFiles = Array.from(e.target.files);
-      // Validate file types
       const invalidFiles = newFiles.filter(f => !allowedFileTypes.includes(f.type));
       if (invalidFiles.length > 0) {
         setAlertMsg('نوع الملف غير مدعوم: ' + invalidFiles.map(f => f.name).join(', '));
         return;
       }
       setFiles((prev) => [...prev, ...newFiles]);
-      e.target.value = ''; // Reset input to allow selecting the same file again
+      e.target.value = '';
     }
   };
 
   const handleSubmit = async () => {
-    console.log('handleSubmit called', { docId, formData, files: files.length });
-    // Basic validation
     if (!formData.teacherName || !formData.title || !formData.desc || !formData.date || (!docId && !formData.pin)) {
-      console.log('Validation failed', { teacher: !!formData.teacherName, title: !!formData.title, desc: !!formData.desc, pin: !!formData.pin, docId });
-      const missing = [];
-      if (!formData.teacherName) missing.push('اسم المعلمة');
-      if (!formData.title) missing.push('عنوان الإنجاز');
-      if (!formData.desc) missing.push('الوصف');
-      if (!formData.date) missing.push('تاريخ الإنجاز');
-      if (!docId && !formData.pin) missing.push('رمز الحماية (PIN)');
-      setAlertMsg("الرجاء ملء: " + missing.join('، '));
+      setAlertMsg("الرجاء ملء جميع الحقول المطلوبة (اسم المعلمة، القسم، العنوان، الوصف، التاريخ، والرمز السري)");
       return;
     }
 
     setIsSubmitting(true);
-    console.log('isSubmitting set to true, starting save...');
     try {
-      let attachmentUrls: string[] = [];
-      if (files.length > 0) {
-        const uploadPromises = files.map(async (f) => {
-          const formDataUpload = new FormData();
-          formDataUpload.append('file', f);
+      const formDataObj = new FormData();
+      if (docId) formDataObj.append('docId', docId);
+      if (verifiedPin) formDataObj.append('verifiedPin', verifiedPin);
+      formDataObj.append('teacherName', formData.teacherName);
+      formDataObj.append('department', formData.department);
+      formDataObj.append('title', formData.title);
+      formDataObj.append('desc', formData.desc);
+      formDataObj.append('date', formData.date);
+      if (!docId) formDataObj.append('pin', formData.pin);
 
-          const res = await fetch('/api/upload', {
-            method: 'POST',
-            body: formDataUpload,
-          });
-          
-          const uploadData = await res.json();
-          if (!res.ok) throw new Error(uploadData.error || 'فشل رفع الملف');
-          return uploadData.secure_url;
-        });
-        attachmentUrls = await Promise.all(uploadPromises);
-      }
+      // Existing attachments to keep
+      existingAttachments.forEach(url => {
+        formDataObj.append('existingAttachments', url);
+      });
 
-      // Send data via API (Add or Update)
-      if (docId) {
-        const updatePayload: any = {
-          teacherName: formData.teacherName,
-          department: formData.department,
-          title: formData.title,
-          desc: formData.desc,
-          date: formData.date,
-          // Final list after removals + new uploads; the server deletes removed files from Cloudinary
-          attachmentUrls: [...existingAttachments, ...attachmentUrls],
-        };
-        // If we have a verified PIN, send it for server-side auth
-        if (verifiedPin) {
-          updatePayload.pin = verifiedPin;
-        }
-        const res = await fetch(`/api/achievements/${docId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(updatePayload),
-        });
-        if (!res.ok) {
-          const errData = await res.json();
-          throw new Error(errData.error || 'فشل تحديث الإنجاز');
-        }
+      // New files
+      files.forEach(file => {
+        formDataObj.append('files', file);
+      });
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formDataObj,
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        onClose();
       } else {
-        // Create via API (PIN is hashed server-side)
-        const { pin, ...achievementData } = formData;
-        const createPayload: any = {
-          ...achievementData,
-          attachmentUrls,
-        };
-        if (pin) {
-          createPayload.pin = pin;
-        }
-        const res = await fetch('/api/achievements', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(createPayload),
-        });
-        if (!res.ok) {
-          const errData = await res.json();
-          throw new Error(errData.error || 'فشل حفظ الإنجاز في قاعدة البيانات');
-        }
+        setAlertMsg(data.error || 'حدث خطأ أثناء حفظ الإنجاز. تحقق من حجم ونوع الملفات.');
       }
-      
-      console.log('Save completed successfully, calling onClose');
-      // Clear form and close modal
-      setFormData({ teacherName: '', department: 'الرياضيات', title: '', desc: '', date: todayLocal(), pin: '' });
-      setFiles([]);
-      onClose();
     } catch (error) {
-      console.error("Error saving to database: ", error);
-      setAlertMsg("حدث خطأ. تحقق من أذونات Firebase.");
+      console.error('Submit error:', error);
+      setAlertMsg('حدث خطأ في الاتصال بالخادم. تحقق من اتصالك بالإنترنت.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  if (!isOpen || !mounted) return null;
+  if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in duration-200">
-      
-      {/* Modal Container */}
-      <div className="bg-white w-full max-w-lg rounded-[2rem] shadow-2xl relative overflow-hidden animate-in zoom-in-95 duration-300 mx-4 max-h-[90vh] overflow-y-auto">
-        
-        {/* Header - Kahoot Purple Gradient (settings theme) */}
-        <div className="bg-gradient-to-r from-[#46178f] to-[#7b2cbf] p-4 md:p-6 text-white flex justify-between items-center border-b-8 border-[#321067]">
-          <h2 className="text-lg md:text-xl font-black flex items-center gap-2">{docId ? "✏️ تعديل الإنجاز" : "✨ إضافة إنجاز جديد"}</h2>
-          <button onClick={onClose} className="hover:bg-white/20 p-2 rounded-full transition-colors">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-2 sm:p-4 animate-in fade-in duration-200" onClick={onClose}>
+      <div
+        className="bg-gradient-to-br from-white via-white to-purple-50/50 rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto relative animate-in zoom-in-95 duration-300"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="sticky top-0 bg-white/90 backdrop-blur-md px-6 py-4 border-b border-purple-100 flex items-center justify-between z-10 rounded-t-3xl">
+          <h2 className="text-xl font-black text-[#46178f]">{docId ? "تعديل الإنجاز ✏️" : "إضافة إنجاز جديد 🏆"}</h2>
+          <button onClick={onClose} className="p-2 hover:bg-purple-100 rounded-xl transition-colors text-gray-400 hover:text-gray-600">
             <X size={24} />
           </button>
         </div>
 
-        {/* Form Body */}
-        <div className="p-4 md:p-6 space-y-4">
-          
+        <div className="p-6 space-y-5">
+          {/* Teacher & Department Row */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-bold text-gray-700 mb-1">الاسم *</label>
-              {teachersList.length > 0 ? (
-                <select 
-                  value={formData.teacherName}
-                  onChange={(e) => setFormData({...formData, teacherName: e.target.value})}
-                  className={`${input} w-full cursor-pointer`}
-                >
-                  <option value="" disabled>-- اختر المعلمة --</option>
-                  {Array.from(new Set([...teachersList, formData.teacherName])).filter(Boolean).map(t => (
-                    <option key={t} value={t}>{t}</option>
-                  ))}
-                </select>
-              ) : (
-                <input 
-                  type="text" 
-                  value={formData.teacherName}
-                  onChange={(e) => setFormData({...formData, teacherName: e.target.value})}
-                  placeholder="اسم المعلمة" 
-                  className={`${input} w-full`} 
-                />
+            <div className={input}>
+              <label className={input.label}>اسم المعلمة / المعلم *</label>
+              <select
+                value={formData.teacherName}
+                onChange={(e) => setFormData({ ...formData, teacherName: e.target.value })}
+                className={input.field}
+              >
+                <option value="">— اختر المعلمة —</option>
+                {uniqueFilteredNames.map((name) => (
+                  <option key={name} value={name}>{name}</option>
+                ))}
+              </select>
+              {formData.department && uniqueFilteredNames.length === 0 && (
+                <p className="text-xs text-orange-500 font-bold mt-1">لا توجد معلمات مسجلات في هذا القسم. أضفهن من صفحة الإعدادات.</p>
               )}
             </div>
-            <div>
-              <label className="block text-sm font-bold text-gray-700 mb-1">القسم *</label>
-              <select 
+            <div className={input}>
+              <label className={input.label}>القسم *</label>
+              <select
                 value={formData.department}
-                onChange={(e) => setFormData({...formData, department: e.target.value})}
-                className={`${input} w-full cursor-pointer`}
+                onChange={(e) => {
+                  const newDept = e.target.value;
+                  setFormData({ ...formData, department: newDept, teacherName: '' });
+                }}
+                className={input.field}
               >
-                {departmentsList.map(dept => (
+                {departmentsList.map((dept) => (
                   <option key={dept} value={dept}>{dept}</option>
                 ))}
               </select>
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-bold text-gray-700 mb-1">عنوان الإنجاز *</label>
-            <input 
-              type="text" 
+          {/* Title */}
+          <div className={input.group}>
+            <label className={input.label}>عنوان الإنجاز *</label>
+            <input
+              type="text"
               value={formData.title}
-              onChange={(e) => setFormData({...formData, title: e.target.value})}
-              placeholder="مثال: تطوير أداة حسابية" 
-              className={`${input} w-full`} 
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              placeholder="مثال: بطولة المنطقة في العلوم"
+              className={input.field}
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-bold text-gray-700 mb-1">الوصف *</label>
-            <textarea 
-              rows={3} 
+          {/* Description */}
+          <div className={input.group}>
+            <label className={input.label}>وصف الإنجاز *</label>
+            <textarea
               value={formData.desc}
-              onChange={(e) => setFormData({...formData, desc: e.target.value})}
-              placeholder="اكتب تفاصيل الإنجاز هنا..." 
-              className={`${input} w-full resize-none`}
-            ></textarea>
+              onChange={(e) => setFormData({ ...formData, desc: e.target.value })}
+              placeholder="اشرح تفاصيل الإنجاز..."
+              rows={3}
+              className={input.field}
+            />
           </div>
 
-          <div>
-            <label className="block text-sm font-bold text-gray-700 mb-1">تاريخ الإنجاز *</label>
-            <input 
-              type="date" 
+          {/* Date */}
+          <div className={input.group}>
+            <label className={input.label}>تاريخ الإنجاز *</label>
+            <input
+              type="date"
               value={formData.date}
-              onChange={(e) => setFormData({...formData, date: e.target.value})}
-              className={`${input} w-full cursor-pointer`}
+              onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+              className={input.field}
             />
           </div>
 
-          {/* Drag & Drop Zone */}
-          <div className="border-2 border-dashed border-[#46178f]/40 bg-purple-50/50 rounded-2xl p-4 md:p-6 text-center transition-colors">
-            <input 
-              type="file" 
-              className="hidden" 
-              ref={fileInputRef} 
-              onChange={handleFileChange} 
-              accept="image/*,video/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,application/zip,.rar" 
+          {/* File Upload */}
+          <div className="bg-purple-50 border border-purple-100 rounded-2xl p-4">
+            <input
+              ref={fileInputRef}
+              type="file"
               multiple
+              onChange={handleFileChange}
+              className="hidden"
+              accept="image/*,.pdf,.doc,.docx,video/*,.zip,.rar,.txt"
             />
-            <CloudUpload size={32} className="text-[#46178f] mx-auto mb-2 cursor-pointer" onClick={() => fileInputRef.current?.click()} />
-
-            {/* Existing attachments (edit mode) — removable, deleted from Cloudinary on save */}
-            {docId && existingAttachments.length > 0 && (
-              <div className="space-y-2 mb-3">
-                <p className="text-sm font-bold text-[#46178f]">الملفات الحالية ({existingAttachments.length}) — اضغط ✕ للحذف</p>
-                <div className="flex flex-wrap gap-2 justify-center max-h-32 overflow-y-auto px-2">
+            
+            {existingAttachments.length > 0 && (
+              <div className="mb-3">
+                <p className="text-sm font-bold text-[#46178f] mb-2">الملفات الحالية:</p>
+                <div className="flex flex-wrap gap-2">
                   {existingAttachments.map((url, i) => (
                     <span key={i} className="bg-white text-xs font-bold px-2 py-1 rounded-md border border-purple-200 flex items-center gap-2 shadow-sm">
-                      <span className="truncate max-w-[140px]" title={url}>{fileNameFromUrl(url)}</span>
+                      <span className="truncate max-w-[120px]" title={fileNameFromUrl(url)}>
+                        {fileNameFromUrl(url)}
+                      </span>
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          setExistingAttachments(existingAttachments.filter((_, idx) => idx !== i));
+                          setExistingAttachments(prev => prev.filter((_, index) => index !== i));
                         }}
                         className="text-red-500 hover:bg-red-50 rounded-full p-0.5 transition-colors"
-                        title="حذف هذا الملف"
                       >
                         <X size={14} />
                       </button>
@@ -387,16 +356,17 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
             <div className="flex-1">
               <label className="block text-sm font-bold text-[#46178f] mb-1">{docId ? "رمز الحماية (غير قابل للتغيير)" : "رمز الحماية السري (PIN) * مطلوب"}</label>
               <p className="text-xs text-[#46178f] mb-2">{docId ? "رمز الحماية لا يمكن تغييره بعد إنشاء الإنجاز" : "مطلوب: يجب إدخال 4 أرقام لتتمكن من تعديل الإنجاز لاحقاً"}</p>
-            <input 
+              <input 
                 type="password" 
                 maxLength={4} 
                 value={formData.pin}
                 onChange={(e) => setFormData({...formData, pin: e.target.value})}
                 placeholder="****" 
                 disabled={!!docId}
-                className="w-24 text-center tracking-[0.5em] font-mono font-bold text-lg bg-white border-2 border-purple-200 rounded-2xl p-2 focus:ring-4 focus:ring-red-100 outline-none transition-all disabled:opacity-50" />            </div>
+                className="w-24 text-center tracking-[0.5em] font-mono font-bold text-lg bg-white border-2 border-purple-200 rounded-2xl p-2 focus:ring-4 focus:ring-red-100 outline-none transition-all disabled:opacity-50" 
+              />
+            </div>
           </div>
-
         </div>
 
         {/* Alert Message */}
@@ -415,7 +385,6 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
           <button onClick={onClose} className="px-6 py-3 rounded-2xl font-black text-gray-600 hover:bg-purple-100 transition-all">
             إلغاء
           </button>
-          {/* Kahoot style button with bottom border for depth */}
           <button 
             onClick={handleSubmit}
             disabled={isSubmitting}
@@ -428,7 +397,6 @@ export default function AddAchievementModal({ isOpen, onClose, initialData, docI
             {isSubmitting ? <Loader2 className="animate-spin" size={20} /> : (docId ? "حفظ التعديلات 💾" : "نشر الإنجاز 🚀")}
           </button>
         </div>
-
       </div>
     </div>,
     document.body

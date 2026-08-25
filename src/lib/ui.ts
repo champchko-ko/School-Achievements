@@ -34,8 +34,17 @@ export const card = "bg-white shadow-xl border-2 border-purple-100";
 
 export const panel = `${card} rounded-3xl`;
 
-export const input =
+const _inputBase =
   "bg-gray-50 border-2 border-purple-100 rounded-2xl p-4 font-bold focus:ring-4 focus:ring-purple-200 focus:border-[#46178f] outline-none transition-all";
+
+export const input: string & { group: string; label: string; field: string } = Object.assign(
+  _inputBase as string,
+  {
+    group: "space-y-2",
+    label: "block text-sm font-black text-gray-700 mb-1.5",
+    field: _inputBase,
+  }
+);
 
 export const inputSmall =
   "bg-white border-2 border-purple-100 rounded-2xl p-3 font-bold focus:ring-4 focus:ring-purple-200 focus:border-[#46178f] outline-none transition-all text-sm";
