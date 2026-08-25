@@ -28,9 +28,11 @@ export function preventExcelFormula(value: string): string {
  * Full sanitize for text fields: strip HTML, then prevent Excel formula injection.
  * Use this for all user-supplied text before storing to Firestore.
  */
+const MAX_TEXT_LENGTH = 10000;
+
 export function sanitizeText(value: string): string {
   if (!value) return '';
-  return preventExcelFormula(stripHtml(value).trim());
+  return preventExcelFormula(stripHtml(value).trim().slice(0, MAX_TEXT_LENGTH));
 }
 
 /**

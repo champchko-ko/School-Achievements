@@ -17,11 +17,6 @@ export async function isAdminSession(): Promise<boolean> {
     
     if (!cookie) return false;
 
-    // Handle legacy cookie value "1" (set before idle timeout was added)
-    if (cookie === '1') {
-      return true; // Old sessions remain valid — will be migrated on next login
-    }
-
     // Parse the stored timestamp (base64 encoded)
     let loginTime: number;
     try {
@@ -60,7 +55,7 @@ export function getSessionCookieOptions() {
   return {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax' as const,
+    sameSite: 'strict' as const,
     path: '/',
     maxAge: SESSION_MAX_AGE_SECONDS, // 8 hours absolute
   };

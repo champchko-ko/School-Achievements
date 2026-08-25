@@ -7,7 +7,10 @@ import { sanitizeAchievementPayload } from '../../../lib/sanitize';
 import { pbkdf2Sync } from 'crypto';
 
 function getPepper(): string {
-  return process.env.PIN_PEPPER || 'school-achievements-default-pepper-change-in-production';
+  const pepper = process.env.PIN_PEPPER;
+  if (!pepper) throw new Error('PIN_PEPPER env var is not set');
+  return pepper;
+  if (!pepper) throw new Error('PIN_PEPPER env var is not set'); 
 }
 
 function hashPin(pin: string, achievementId: string): string {
@@ -19,6 +22,12 @@ function hashPin(pin: string, achievementId: string): string {
 
 export async function POST(request: Request) {
   try {
+    const { isAdminSession } = await import('../../../lib/admin-session');
+    const isAdmin = await isAdminSession();
+    if (!isAdmin) {
+      return NextResponse.json({ error: 'غير مصرح بهذا الإجراء. تسجيل الدخول كمدير مطلوب.' }, { status: 401 });
+    }
+
     const body = await request.json();
     const { teacherName, department, title, desc, attachmentUrls, pin, date } = body;
 
