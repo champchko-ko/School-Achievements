@@ -70,6 +70,7 @@ export default function AchievementDetailsPage() {
   const [isRemoving, setIsRemoving] = useState(false);
   const [showRemoveAllConfirm, setShowRemoveAllConfirm] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [loadedIframes, setLoadedIframes] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
     if (toastMsg) {
@@ -442,15 +443,18 @@ export default function AchievementDetailsPage() {
                     </div>
                     {/* Google Docs Viewer Iframe for showing the actual document preview */}
                     <div className="w-full h-[60vh] bg-gray-50 relative print:hidden">
-                      <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400 z-0">
-                        <Loader2 className="animate-spin mb-2 text-[#0087ed]" size={32} />
-                        <p className="font-bold text-sm">جاري تحميل عرض المستند...</p>
-                      </div>
+                      {!loadedIframes[idx] && (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400 z-20 bg-gray-50">
+                          <Loader2 className="animate-spin mb-2 text-[#0087ed]" size={32} />
+                          <p className="font-bold text-sm">جاري تحميل عرض المستند...</p>
+                        </div>
+                      )}
                       <iframe 
                         src={`https://docs.google.com/gview?url=${encodeURIComponent(docUrl)}&embedded=true`} 
-                        className="w-full h-full relative z-10 border-none bg-transparent"
+                        className="w-full h-full relative z-10 border-none bg-white"
                         title={`Document Preview ${idx + 1}`}
                         loading="lazy"
+                        onLoad={() => setLoadedIframes(prev => ({ ...prev, [idx]: true }))}
                       />
                     </div>
                   </div>
