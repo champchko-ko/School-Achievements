@@ -6,7 +6,6 @@ import { doc, getDoc, Timestamp } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { ArrowRight, Clock, Trophy, Medal, Award, Loader2, DownloadCloud, Image as ImageIcon, User, Building, Calendar, FileText, X, Printer, Video, PlayCircle, Trash2, Lock } from "lucide-react";
 import { btn, card, toast } from "../../../lib/ui";
-import html2pdf from "html2pdf.js";
 import { useAdmin } from "../../../lib/useAdmin";
 
 const getScoreBadge = (score: number | null | undefined) => {
@@ -270,14 +269,20 @@ export default function AchievementDetailsPage() {
   const handlePrint = async () => {
     const el = document.getElementById('printable-achievement');
     if (!el) return;
-    const opt: any = {
-      margin: [10, 10, 10, 10],
-      filename: (achievement.title || 'achievement') + '.pdf',
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, logging: false },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-    };
-    await html2pdf().set(opt).from(el).save();
+    try {
+      const html2pdf = (await import('html2pdf.js')).default;
+      const opt: any = {
+        margin: [10, 10, 10, 10],
+        filename: (achievement.title || 'achievement') + '.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, logging: false },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      };
+      await html2pdf().set(opt).from(el).save();
+    } catch (err) {
+      console.error('PDF generation failed:', err);
+      setToastMsg('فشل إنشاء ملف PDF. حاول مرة أخرى.');
+    }
   };
 
   return (
