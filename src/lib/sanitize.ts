@@ -79,7 +79,11 @@ export function sanitizeSettingsPayload(body: Record<string, any>): Record<strin
     body.departments = sanitizeStringArray(body.departments);
   }
   if (body.teachers && Array.isArray(body.teachers)) {
-    body.teachers = sanitizeStringArray(body.teachers);
+    body.teachers = body.teachers.map((t: any) =>
+      typeof t === 'string'
+        ? sanitizeText(t)
+        : { name: sanitizeText(t.name || ''), department: sanitizeText(t.department || '') }
+    ).filter((t: any) => typeof t === 'string' ? Boolean(t) : Boolean(t.name));
   }
   return body;
 }

@@ -10,7 +10,7 @@ import { header, panel, toast } from '../../lib/ui';
 
 export default function AdminDashboard() {
   const [allAchievements, setAllAchievements] = useState<any[]>([]);
-  const [allTeachers, setAllTeachers] = useState<string[]>([]);
+  const [allTeachers, setAllTeachers] = useState<(string | { name: string; department: string })[]>([]);
   const { isAdmin, loading: adminLoading } = useAdmin();
   const [isLoading, setIsLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
@@ -85,7 +85,8 @@ export default function AdminDashboard() {
 
   // 4. Teachers without Submissions
   const activeTeacherNames = new Set(allAchievements.map(a => a.teacherName).filter(Boolean));
-  const inactiveTeachers = allTeachers.filter(t => !activeTeacherNames.has(t));
+  const allTeacherNames = allTeachers.map(t => typeof t === 'string' ? t : t.name || '');
+  const inactiveTeachers = allTeacherNames.filter(t => !activeTeacherNames.has(t));
 
   // Handle Scoring
   const handleScore = async (id: string, score: number) => {
