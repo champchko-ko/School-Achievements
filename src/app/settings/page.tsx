@@ -17,7 +17,7 @@ export default function SettingsPage() {
     phone: string;
     logoUrl: string;
     departments: string[];
-    teachers: string[];
+    teachers: { name: string; department: string }[];
     adminPin: string;
   }>({
     schoolName: '',
@@ -30,13 +30,14 @@ export default function SettingsPage() {
     phone: '',
     logoUrl: '',
     departments: ['الرياضيات', 'العلوم', 'اللغة العربية', 'الحاسب الآلي', 'التربية البدنية'],
-    teachers: [],
+    teachers: [] as { name: string; department: string }[],
     adminPin: ""
   });
 
   const [activeTab, setActiveTab] = useState<'general' | 'leadership' | 'lists' | 'security'>('general');
   const [newDept, setNewDept] = useState('');
   const [newTeacher, setNewTeacher] = useState('');
+  const [newTeacherDept, setNewTeacherDept] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -168,9 +169,10 @@ export default function SettingsPage() {
       }
 
       const finalTeachers = [...formData.teachers];
-      if (newTeacher.trim() && !finalTeachers.includes(newTeacher.trim())) {
-        finalTeachers.push(newTeacher.trim());
+      if (newTeacher.trim() && newTeacherDept && !finalTeachers.some(t => t.name === newTeacher.trim() && t.department === newTeacherDept)) {
+        finalTeachers.push({ name: newTeacher.trim(), department: newTeacherDept });
         setNewTeacher('');
+        setNewTeacherDept('');
       }
 
       const finalData = {
@@ -496,30 +498,44 @@ export default function SettingsPage() {
               {/* Teachers Management */}
               <div className="bg-purple-50/30 p-6 rounded-3xl border-2 border-purple-100 min-w-0">
                 <h4 className="font-black text-gray-800 mb-4 flex items-center gap-2"><Users size={18} className="text-[#26890c]" /> قائمة المعلمات</h4>
-                <div className="flex flex-col sm:flex-row gap-2 mb-4">
-                  <input 
-                    type="text" 
-                    value={newTeacher} 
-                    onChange={e => setNewTeacher(e.target.value)} 
-                    onKeyDown={e => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        if (newTeacher.trim() && !formData.teachers.includes(newTeacher.trim())) {
-                          setFormData(prev => ({...prev, teachers: [...prev.teachers, newTeacher.trim()]}));
-                          setNewTeacher('');
+                <div className="flex flex-col gap-2 mb-4">
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <input 
+                      type="text" 
+                      value={newTeacher} 
+                      onChange={e => setNewTeacher(e.target.value)} 
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          if (newTeacher.trim() && newTeacherDept && !formData.teachers.some(t => t.name === newTeacher.trim() && t.department === newTeacherDept)) {
+                            setFormData(prev => ({...prev, teachers: [...prev.teachers, { name: newTeacher.trim(), department: newTeacherDept }]}));
+                            setNewTeacher('');
+                          }
                         }
-                      }
-                    }}
-                    placeholder="اسم المعلمة الجديدة" 
-                    className="w-full sm:flex-1 min-w-0 bg-white border-2 border-purple-100 rounded-2xl p-3 font-bold focus:ring-4 focus:ring-purple-200 focus:border-[#46178f] outline-none text-sm" 
-                  />
-                  <button type="button" onClick={() => { if(newTeacher.trim() && !formData.teachers.includes(newTeacher.trim())) { setFormData({...formData, teachers: [...formData.teachers, newTeacher.trim()]}); setNewTeacher(''); } }} className="shrink-0 w-full sm:w-auto bg-[#26890c] text-white px-5 py-2.5 rounded-2xl font-black hover:bg-[#20730a] transition-all shadow-md">إضافة</button>
+                      }}
+                      placeholder="اسم المعلمة الجديدة" 
+                      className="w-full sm:flex-1 min-w-0 bg-white border-2 border-purple-100 rounded-2xl p-3 font-bold focus:ring-4 focus:ring-purple-200 focus:border-[#46178f] outline-none text-sm" 
+                    />
+                    <select
+                      value={newTeacherDept}
+                      onChange={e => setNewTeacherDept(e.target.value)}
+                      className="w-full sm:w-48 bg-white border-2 border-purple-100 rounded-2xl p-3 font-bold focus:ring-4 focus:ring-purple-200 focus:border-[#46178f] outline-none text-sm"
+                    >
+                      <option value="">اختر القسم</option>
+                      {formData.departments.map(dept => (
+                        <option key={dept} value={dept}>{dept}</option>
+                      ))}
+                    </select>
+                    <button type="button" onClick={() => { if(newTeacher.trim() && newTeacherDept && !formData.teachers.some(t => t.name === newTeacher.trim() && t.department === newTeacherDept)) { setFormData({...formData, teachers: [...formData.teachers, { name: newTeacher.trim(), department: newTeacherDept }]}); setNewTeacher(''); setNewTeacherDept(''); } }} className="shrink-0 w-full sm:w-auto bg-[#26890c] text-white px-5 py-2.5 rounded-2xl font-black hover:bg-[#20730a] transition-all shadow-md">إضافة</button>
+                  </div>
+                  {!newTeacherDept && newTeacher.trim() && <p className="text-xs text-amber-600 font-bold">⚠️ يجب اختيار القسم أولاً</p>}
                 </div>
                 <div className="flex flex-wrap gap-2 max-h-52 overflow-y-auto p-2 border-2 border-dashed border-purple-200 rounded-2xl bg-white">
-                  {formData.teachers.map(teacher => (
-                    <span key={teacher} className="bg-emerald-50 border-2 border-emerald-200 text-gray-700 text-sm font-black px-3 py-2 rounded-xl flex items-center gap-2 shadow-sm">
-                      {teacher}
-                      <button type="button" onClick={() => setFormData({...formData, teachers: formData.teachers.filter(t => t !== teacher)})} className="text-red-400 hover:text-red-600 transition-colors"><Trash2 size={16} /></button>
+                  {formData.teachers.map((teacher, idx) => (
+                    <span key={`${teacher.name}-${teacher.department}-${idx}`} className="bg-emerald-50 border-2 border-emerald-200 text-gray-700 text-sm font-black px-3 py-2 rounded-xl flex items-center gap-2 shadow-sm">
+                      {teacher.name}
+                      {teacher.department && <span className="text-[10px] bg-purple-100 text-[#46178f] px-1.5 py-0.5 rounded-lg font-bold">{teacher.department}</span>}
+                      <button type="button" onClick={() => setFormData({...formData, teachers: formData.teachers.filter((_, i) => i !== idx)})} className="text-red-400 hover:text-red-600 transition-colors"><Trash2 size={16} /></button>
                     </span>
                   ))}
                   {formData.teachers.length === 0 && <p className="text-xs text-gray-400 p-3 font-bold">لا يوجد معلمون مضافون حالياً.</p>}
