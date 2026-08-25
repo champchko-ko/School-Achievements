@@ -98,9 +98,16 @@ export async function POST(request: Request) {
       }
     }
 
-    const broken = Array.from(refs.values()).filter((r) => !cloudAssets.has(`${r.resourceType}:${r.publicId}`));
+    // Match assets by publicId only (ignore resourceType mismatch from auto/upload)
+    const broken = Array.from(refs.values()).filter((r) => {
+      return !cloudAssets.has(`${r.resourceType}:${r.publicId}`) &&
+             !cloudAssets.has(`image:${r.publicId}`) &&
+             !cloudAssets.has(`video:${r.publicId}`) &&
+             !cloudAssets.has(`raw:${r.publicId}`);
+    });
+    const refPublicIds = new Set(Array.from(refs.values()).map(r => r.publicId));
     const orphans = Array.from(cloudAssets.values()).filter(
-      (a) => !refs.has(`${a.resourceType}:${a.publicId}`) && a.publicId !== 'sample'
+      (a) => !refPublicIds.has(a.publicId) && a.publicId !== 'sample'
     );
     const storageBytes = Array.from(cloudAssets.values()).reduce((sum, a) => sum + a.bytes, 0);
 
