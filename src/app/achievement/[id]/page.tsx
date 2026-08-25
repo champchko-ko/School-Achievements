@@ -6,6 +6,7 @@ import { doc, getDoc, Timestamp } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { ArrowRight, Clock, Trophy, Medal, Award, Loader2, DownloadCloud, Image as ImageIcon, User, Building, Calendar, FileText, X, Printer, Video, PlayCircle, Trash2, Lock } from "lucide-react";
 import { btn, card, toast } from "../../../lib/ui";
+import html2pdf from "html2pdf.js";
 import { useAdmin } from "../../../lib/useAdmin";
 
 const getScoreBadge = (score: number | null | undefined) => {
@@ -266,6 +267,19 @@ export default function AchievementDetailsPage() {
   const videos = attachmentUrls.filter(isVideoField).filter(Boolean);
   const documents = attachmentUrls.filter(url => !isImageField(url) && !isVideoField(url)).filter(Boolean);
 
+  const handlePrint = async () => {
+    const el = document.getElementById('printable-achievement');
+    if (!el) return;
+    const opt: any = {
+      margin: [10, 10, 10, 10],
+      filename: (achievement.title || 'achievement') + '.pdf',
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, logging: false },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+    };
+    await html2pdf().set(opt).from(el).save();
+  };
+
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-500 pb-16">
       
@@ -273,6 +287,10 @@ export default function AchievementDetailsPage() {
         @media print {
           @page { margin: 0.5cm; }
           body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          .print\:hidden { display: none !important; }
+          .print\:bg-white { background-color: white !important; }
+          .print\:border-none { border: none !important; }
+          .print\:shadow-none { box-shadow: none !important; }
         }
       `}} />
 
@@ -287,7 +305,7 @@ export default function AchievementDetailsPage() {
         </button>
 
         <button 
-          onClick={() => window.print()}
+          onClick={handlePrint}
           className={`${btn.blue} px-4 py-2.5`}
         >
           <Printer size={20} />
@@ -295,7 +313,7 @@ export default function AchievementDetailsPage() {
         </button>
       </div>
 
-      <div className={`${card} rounded-3xl overflow-hidden print:shadow-none print:border-none print:rounded-none`}>
+      <div id="printable-achievement" className={`${card} rounded-3xl overflow-hidden print:shadow-none print:border-none print:rounded-none`}>
         
         {/* Header Details */}
         <div className="p-8 border-b-2 border-purple-100 bg-purple-50/40">
