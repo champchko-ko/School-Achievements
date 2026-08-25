@@ -77,6 +77,32 @@ export async function POST(request: Request) {
       return NextResponse.json({ assets: results });
     }
 
+    // DEBUG: show what the scan finds
+    if (action === 'debug') {
+      const db = await getAppDb();
+      const { collection, getDocs } = await import('firebase/firestore');
+      const snapshot = await getDocs(collection(db, 'achievements'));
+      const achievementDocs = snapshot.docs.map((d) => ({ id: d.id, data: d.data() }));
+      const cloudAssets = await listCloudinaryAssets();
+
+      const debugInfo: any[] = [];
+      for (const { id, data } of achievementDocs) {
+        const urls = collectAttachmentUrls(data);
+        const extracted = urls.map((url: string) => {
+          const asset = extractCloudinaryAsset(url);
+          return { url: url.substring(0, 80), asset, found: asset ? cloudAssets.has(`${asset.resourceType}:${asset.publicId}`) || cloudAssets.has(`image:${asset.publicId}`) || cloudAssets.has(`video:${asset.publicId}`) || cloudAssets.has(`raw:${asset.publicId}`) : false };
+        });
+        debugInfo.push({ id, title: data?.title, fieldNames: Object.keys(data || {}), urls, extracted });
+      }
+
+      return NextResponse.json({
+        achievementCount: achievementDocs.length,
+        cloudAssetCount: cloudAssets.size,
+        cloudPublicIds: Array.from(cloudAssets.keys()).slice(0, 20),
+        achievements: debugInfo,
+      });
+    }
+
     const db = await getAppDb();
     const { collection, getDocs, doc, updateDoc, deleteField } = await import('firebase/firestore');
 
