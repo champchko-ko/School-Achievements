@@ -38,6 +38,29 @@ const allowedFileTypes = [
   'application/zip', 'application/x-rar-compressed', 'text/plain',
 ];
 
+const SIZE_LIMITS: Record<string, number> = {
+  image: 10 * 1024 * 1024,
+  video: 100 * 1024 * 1024,
+  application: 20 * 1024 * 1024,
+  text: 5 * 1024 * 1024,
+};
+
+function validateFiles(fileList: File[]): string | null {
+  for (const f of fileList) {
+    if (!allowedFileTypes.includes(f.type)) {
+      return `نوع الملف غير مدعوم: ${f.name}`;
+    }
+    const category = f.type.split('/')[0] || '';
+    const max = SIZE_LIMITS[category] || 20 * 1024 * 1024;
+    if (f.size > max) {
+      const fileMB = (f.size / (1024 * 1024)).toFixed(1);
+      const maxMB = (max / (1024 * 1024)).toFixed(0);
+      return `${f.name}: الحجم ${fileMB} MB يتجاوز الحد الأقصى ${maxMB} MB`;
+    }
+  }
+  return null;
+}
+
 export default function AddAchievementModal({
   isOpen, onClose, initialData, docId, verifiedPin,
 }: {
@@ -122,11 +145,8 @@ export default function AddAchievementModal({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.length) return;
     const newFiles = Array.from(e.target.files);
-    const bad = newFiles.filter(f => !allowedFileTypes.includes(f.type));
-    if (bad.length) {
-      setAlertMsg('نوع ملف غير مدعوم: ' + bad.map(f => f.name).join(', '));
-      return;
-    }
+    const err = validateFiles(newFiles);
+    if (err) { setAlertMsg(err); return; }
     setFiles(prev => [...prev, ...newFiles]);
     e.target.value = '';
   };
@@ -136,11 +156,8 @@ export default function AddAchievementModal({
     setDragOver(false);
     if (!e.dataTransfer.files.length) return;
     const dropped = Array.from(e.dataTransfer.files);
-    const bad = dropped.filter(f => !allowedFileTypes.includes(f.type));
-    if (bad.length) {
-      setAlertMsg('نوع ملف غير مدعوم: ' + bad.map(f => f.name).join(', '));
-      return;
-    }
+    const err = validateFiles(dropped);
+    if (err) { setAlertMsg(err); return; }
     setFiles(prev => [...prev, ...dropped]);
   };
 
@@ -400,7 +417,12 @@ export default function AddAchievementModal({
             >
               <CloudUpload size={28} className={`mx-auto mb-1.5 ${dragOver ? 'text-[#eb1f36]' : 'text-purple-300'}`} />
               <p className="text-sm font-bold text-gray-600">اسحب الملفات هنا أو اضغط للاختيار</p>
-              <p className="text-[10px] text-gray-400 mt-1">صور (JPG/PNG/WebP/GIF) • مستندات (PDF/DOC) • فيديو • أرشيف</p>
+              <div className="mt-2 flex flex-wrap justify-center gap-1.5 text-[10px] font-bold">
+                <span className="bg-blue-50 text-blue-600 px-2 py-0.5 rounded-md">🖼️ صور ≤ 10 MB</span>
+                <span className="bg-purple-50 text-purple-600 px-2 py-0.5 rounded-md">📄 مستندات ≤ 20 MB</span>
+                <span className="bg-rose-50 text-rose-600 px-2 py-0.5 rounded-md">🎬 فيديو ≤ 100 MB</span>
+              </div>
+              <p className="text-[10px] text-gray-400 mt-1.5">JPG, PNG, WebP, GIF • PDF, DOC, DOCX • MP4, WebM, MOV • ZIP, RAR</p>
             </div>
             <input
               ref={fileInputRef}
