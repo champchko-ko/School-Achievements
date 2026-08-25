@@ -151,27 +151,63 @@ export default function AddAchievementModal({
     }
     setIsSubmitting(true);
     try {
-      const fd = new FormData();
-      if (docId) fd.append('docId', docId);
-      if (verifiedPin) fd.append('verifiedPin', verifiedPin);
-      fd.append('teacherName', formData.teacherName);
-      fd.append('department', formData.department);
-      fd.append('title', formData.title);
-      fd.append('desc', formData.desc);
-      fd.append('date', formData.date);
-      if (!docId) fd.append('pin', formData.pin);
-      existingAttachments.forEach(url => fd.append('existingAttachments', url));
-      files.forEach(file => fd.append('files', file));
-
-      const res = await fetch('/api/upload', { method: 'POST', body: fd });
-      const data = await res.json();
-      if (res.ok) {
-        onClose();
-      } else {
-        setAlertMsg(data.error || 'حدث خطأ أثناء حفظ الإنجاز');
+      // Step 1: Upload files to Cloudinary (if any)
+      let attachmentUrls: string[] = [];
+      if (files.length > 0) {
+        const uploadPromises = files.map(async (f) => {
+          const fd = new FormData();
+          fd.append('file', f);
+          const res = await fetch('/api/upload', { method: 'POST', body: fd });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'فشل رفع الملف');
+          return data.secure_url;
+        });
+        attachmentUrls = await Promise.all(uploadPromises);
       }
-    } catch {
-      setAlertMsg('حدث خطأ في الاتصال بالخادم');
+
+      // Step 2: Create or update achievement via JSON API
+      if (docId) {
+        const updatePayload: any = {
+          teacherName: formData.teacherName,
+          department: formData.department,
+          title: formData.title,
+          desc: formData.desc,
+          date: formData.date,
+          attachmentUrls: [...existingAttachments, ...attachmentUrls],
+        };
+        if (verifiedPin) updatePayload.pin = verifiedPin;
+        const res = await fetch(`/api/achievements/${docId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatePayload),
+        });
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.error || 'فشل تحديث الإنجاز');
+        }
+      } else {
+        const createPayload: any = {
+          teacherName: formData.teacherName,
+          department: formData.department,
+          title: formData.title,
+          desc: formData.desc,
+          date: formData.date,
+          attachmentUrls,
+        };
+        if (formData.pin) createPayload.pin = formData.pin;
+        const res = await fetch('/api/achievements', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(createPayload),
+        });
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.error || 'فشل حفظ الإنجاز');
+        }
+      }
+      onClose();
+    } catch (err: any) {
+      setAlertMsg(err.message || 'حدث خطأ في الاتصال بالخادم');
     } finally {
       setIsSubmitting(false);
     }
