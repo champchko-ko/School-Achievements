@@ -166,30 +166,24 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Mobile hamburger button */}
+      {/* Hamburger button – always visible except on kiosk/intro */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="fixed top-3 right-3 z-30 sm:hidden bg-[#380e6e] text-white p-2.5 rounded-xl shadow-lg"
+        className="fixed top-3 right-3 z-30 bg-[#380e6e] text-white p-2.5 rounded-xl shadow-lg print:hidden"
       >
         <Menu size={22} />
       </button>
 
-      {/* Mobile overlay sidebar */}
+      {/* Overlay sidebar (desktop + mobile) */}
       {mounted && mobileOpen && createPortal(
-        <div className="fixed inset-0 z-50 sm:hidden">
-          {/* Backdrop */}
+        <div className="fixed inset-0 z-50">
           <div className="absolute inset-0 bg-black/50" onClick={closeMobile} />
-          {/* Sidebar panel */}
-          <div className="absolute inset-y-0 right-0 w-64 max-w-[75vw] animate-in slide-in-from-left duration-200 overflow-y-auto">
+          <div className="absolute inset-y-0 right-0 w-64 max-w-[85vw] sm:max-w-[22rem] overflow-y-auto shadow-2xl">
             {sidebarContent}
           </div>
         </div>,
         document.body
       )}
-
-      {/* Desktop sidebar: hidden on mobile, visible on sm+ */}
-      <div className="hidden sm:flex sm:flex-col sm:w-64 flex-shrink-0 h-full overflow-y-auto">
-        {sidebarContent}
 
       {/* Admin PIN prompt modal */}
       {mounted && showAdminPrompt && createPortal(
@@ -217,7 +211,6 @@ export default function Sidebar() {
         </div>,
         document.body
       )}
-      </div>
     </>
   );
 }
