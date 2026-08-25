@@ -11,7 +11,6 @@ const MAINTENANCE_BYPASS_KEY = process.env.MAINTENANCE_BYPASS_KEY || '';
 // Mirrors src/lib/admin-session.ts (legacy "1" + base64 timestamp formats).
 function isAdminCookie(cookieValue: string | undefined): boolean {
   if (!cookieValue) return false;
-  if (cookieValue === '1') return true;
   try {
     const decoded = atob(cookieValue);
     const loginTime = parseInt(decoded, 10);
