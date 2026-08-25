@@ -45,20 +45,25 @@ const SIZE_LIMITS: Record<string, number> = {
   text: 5 * 1024 * 1024,
 };
 
-function validateFiles(fileList: File[]): string | null {
+function validateFiles(fileList: File[]): { accepted: File[]; rejected: string[] } {
+  const accepted: File[] = [];
+  const rejected: string[] = [];
   for (const f of fileList) {
     if (!allowedFileTypes.includes(f.type)) {
-      return `نوع الملف غير مدعوم: ${f.name}`;
+      rejected.push(`❌ ${f.name} — نوع الملف غير مدعوم`);
+      continue;
     }
     const category = f.type.split('/')[0] || '';
     const max = SIZE_LIMITS[category] || 20 * 1024 * 1024;
     if (f.size > max) {
       const fileMB = (f.size / (1024 * 1024)).toFixed(1);
       const maxMB = (max / (1024 * 1024)).toFixed(0);
-      return `${f.name}: الحجم ${fileMB} MB يتجاوز الحد الأقصى ${maxMB} MB`;
+      rejected.push(`❌ ${f.name} — الحجم ${fileMB} MB يتجاوز الحد الأقصى ${maxMB} MB`);
+      continue;
     }
+    accepted.push(f);
   }
-  return null;
+  return { accepted, rejected };
 }
 
 export default function AddAchievementModal({
@@ -145,9 +150,9 @@ export default function AddAchievementModal({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.length) return;
     const newFiles = Array.from(e.target.files);
-    const err = validateFiles(newFiles);
-    if (err) { setAlertMsg(err); return; }
-    setFiles(prev => [...prev, ...newFiles]);
+    const { accepted, rejected } = validateFiles(newFiles);
+    if (accepted.length > 0) setFiles(prev => [...prev, ...accepted]);
+    if (rejected.length > 0) setAlertMsg(rejected.join('\n'));
     e.target.value = '';
   };
 
@@ -156,9 +161,9 @@ export default function AddAchievementModal({
     setDragOver(false);
     if (!e.dataTransfer.files.length) return;
     const dropped = Array.from(e.dataTransfer.files);
-    const err = validateFiles(dropped);
-    if (err) { setAlertMsg(err); return; }
-    setFiles(prev => [...prev, ...dropped]);
+    const { accepted, rejected } = validateFiles(dropped);
+    if (accepted.length > 0) setFiles(prev => [...prev, ...accepted]);
+    if (rejected.length > 0) setAlertMsg(rejected.join('\n'));
   };
 
   const handleSubmit = async () => {
@@ -510,11 +515,14 @@ export default function AddAchievementModal({
 
       {/* ── Alert toast ── */}
       {alertMsg && (
-        <div className="fixed bottom-6 right-4 left-4 md:left-auto md:right-4 md:w-96 z-[200] p-4 rounded-2xl shadow-2xl font-black text-white bg-[#eb1f36] border-4 border-white/20 animate-in slide-in-from-bottom-2 duration-300">
-          <div className="flex items-center gap-3">
-            <span>❌</span>
-            <span className="flex-1 text-sm">{alertMsg}</span>
-            <button onClick={() => setAlertMsg(null)} className="text-white/70 hover:text-white">✕</button>
+        <div className="fixed bottom-6 right-4 left-4 md:left-auto md:right-4 md:w-[28rem] z-[200] p-4 rounded-2xl shadow-2xl font-bold text-white bg-[#eb1f36] border-4 border-white/20 animate-in slide-in-from-bottom-2 duration-300">
+          <div className="flex items-start gap-3">
+            <span className="text-lg mt-0.5">⚠️</span>
+            <div className="flex-1">
+              <p className="font-black text-sm mb-1">تنبيه</p>
+              <p className="text-xs whitespace-pre-line leading-relaxed opacity-95">{alertMsg}</p>
+            </div>
+            <button onClick={() => setAlertMsg(null)} className="text-white/70 hover:text-white mt-0.5">✕</button>
           </div>
         </div>
       )}
