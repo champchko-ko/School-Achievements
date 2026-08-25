@@ -194,12 +194,21 @@ export default function AchievementDetailsPage() {
   };
 
   useEffect(() => {
+    if (!id) {
+      setError("معرف الإنجاز غير صالح.");
+      setIsLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+
     const fetchAchievement = async () => {
-      if (!id) return;
       try {
         const docRef = doc(db, "achievements", id as string);
         const docSnap = await getDoc(docRef);
         
+        if (cancelled) return;
+
         if (docSnap.exists()) {
           setAchievement({ id: docSnap.id, ...docSnap.data() });
         } else {
@@ -207,13 +216,14 @@ export default function AchievementDetailsPage() {
         }
       } catch (err) {
         console.error("Error fetching document:", err);
-        setError("حدث خطأ أثناء تحميل البيانات.");
+        if (!cancelled) setError("حدث خطأ أثناء تحميل البيانات. تحقق من اتصالك بالإنترنت.");
       } finally {
-        setIsLoading(false);
+        if (!cancelled) setIsLoading(false);
       }
     };
 
     fetchAchievement();
+    return () => { cancelled = true; };
   }, [id]);
 
   if (isLoading) {
