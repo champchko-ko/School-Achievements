@@ -9,10 +9,11 @@ const tajawal = Tajawal({ subsets: ["arabic"], weight: ['400', '500', '700', '90
 
 export const metadata: Metadata = {
   title: {
-    default: 'School Achievements',
-    template: '%s | School Achievements',
+    default: 'إنجازات المدرسة',
+    template: '%s | إنجازات المدرسة',
   },
-  description: 'A showcase for student achievement records, ceremonies, and school activities.',
+  description: 'منصة عرض إنجازات الطلاب والأنشطة المدرسية — تتبع التقييمات وال.equivalencies والأنشطة التعليمية.',
+  keywords: ['إنجازات مدرسية', 'طلاب', 'أنشطة تعليمية', 'تقييمات', 'شهادات', ' school achievements', 'student awards', 'education'],
   applicationName: 'School Achievements',
   manifest: '/manifest.webmanifest',
   icons: {
@@ -25,7 +26,42 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'School Achievements',
+    title: 'إنجازات المدرسة',
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'ar_SA',
+    siteName: 'إنجازات المدرسة',
+    title: 'إنجازات المدرسة — منصة عرض إنجازات الطلاب',
+    description: 'منصة عرض إنجازات الطلاب والأنشطة المدرسية مع تقييمات ومتابعة.',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'إنجازات المدرسة',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'إنجازات المدرسة',
+    description: 'منصة عرض إنجازات الطلاب والأنشطة المدرسية.',
+    images: ['/og-image.png'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  alternates: {
+    canonical: 'https://school-achievements-six.vercel.app',
   },
 };
 

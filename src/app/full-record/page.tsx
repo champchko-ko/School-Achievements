@@ -25,6 +25,12 @@ const getStatusBadge = (status: string | undefined) => {
   return null;
 };
 
+export const metadata = {
+  title: 'السجل الكامل',
+  description: 'عرض جميع الإنجازات المدرسية مع إمكانية البحث والتصفية.',
+  robots: { index: false },
+};
+
 export default function FullRecordPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);

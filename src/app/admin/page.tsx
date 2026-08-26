@@ -8,6 +8,12 @@ import { useAdmin } from '../../lib/useAdmin';
 import { useRouter } from 'next/navigation';
 import { header, panel, toast } from '../../lib/ui';
 
+export const metadata = {
+  title: 'لوحة تحكم الإدارة',
+  description: 'إدارة الإنجازات والتقييمات والmittens.',
+  robots: { index: false, follow: false },
+};
+
 export default function AdminDashboard() {
   const [allAchievements, setAllAchievements] = useState<any[]>([]);
   const [allTeachers, setAllTeachers] = useState<(string | { name: string; department: string })[]>([]);
