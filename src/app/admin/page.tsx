@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { db } from '../../lib/firebase';
 import { collection, query, onSnapshot, doc, getDoc } from 'firebase/firestore';
-import { ShieldCheck, Trophy, Medal, Award, ExternalLink, Loader2, CheckCircle2, TrendingUp, Files, UserX, Clock } from 'lucide-react';
+import { ShieldCheck, Trophy, Medal, Award, ExternalLink, Loader2, CheckCircle2, XCircle, TrendingUp, Files, UserX, Clock, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { useAdmin } from '../../lib/useAdmin';
 import { useRouter } from 'next/navigation';
 import { header, panel, toast } from '../../lib/ui';
@@ -56,12 +56,10 @@ export default function AdminDashboard() {
     return () => unsubscribe();
   }, [router]);
 
-  // --- Analytics Derived Stats ---
-  
-  // 1. Pending Queue
-  const pendingAchievements = allAchievements.filter(a => a.score === null);
+  // --- Derived Data ---
+  const pendingAchievements = allAchievements.filter(a => a.status === 'pending');
+  const approvedAchievements = allAchievements.filter(a => a.status === 'approved' || (!a.status && a.score !== null));
 
-  // 2. Most Active Department this Month (device-local month, not UTC)
   const now = new Date();
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   const currentMonthAchievements = allAchievements.filter(a => a.date && a.date.startsWith(currentMonth));
@@ -76,19 +74,42 @@ export default function AdminDashboard() {
     if (count > maxCount) { maxCount = count; mostActiveDept = dept; }
   }
 
-  // 3. Total Files Stored
   let totalFiles = 0;
   allAchievements.forEach(a => {
     if (a.attachmentUrls) totalFiles += a.attachmentUrls.length;
     if (a.attachmentUrl) totalFiles += 1;
   });
 
-  // 4. Teachers without Submissions
   const activeTeacherNames = new Set(allAchievements.map(a => a.teacherName).filter(Boolean));
   const allTeacherNames = allTeachers.map(t => typeof t === 'string' ? t : t.name || '');
   const inactiveTeachers = allTeacherNames.filter(t => !activeTeacherNames.has(t));
 
-  // Handle Scoring
+  // Handle Approve / Reject
+  const handleStatusChange = async (id: string, status: 'approved' | 'rejected') => {
+    setProcessingId(id);
+    try {
+      const res = await fetch(`/api/achievements/${id}/status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || 'فشل تحديث الحالة');
+      }
+      setNotification({
+        type: 'success',
+        message: status === 'approved' ? 'تمت الموافقة على الإنجاز ✓' : 'تم رفض الإنجاز'
+      });
+    } catch (error: any) {
+      console.error("Error updating status:", error);
+      setNotification({ type: "error", message: error.message || "حدث خطأ أثناء تحديث الحالة." });
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  // Handle Scoring (for approved achievements)
   const handleScore = async (id: string, score: number) => {
     setProcessingId(id);
     try {
@@ -101,7 +122,7 @@ export default function AdminDashboard() {
         const errData = await res.json();
         throw new Error(errData.error || 'فشل التقييم');
       }
-      // The onSnapshot listener will automatically remove it from this list!
+      setNotification({ type: 'success', message: 'تم التقييم بنجاح ✓' });
     } catch (error: any) {
       console.error("Error updating score:", error);
       setNotification({ type: "error", message: error.message || "حدث خطأ أثناء تقييم الإنجاز." });
@@ -127,41 +148,52 @@ export default function AdminDashboard() {
       {/* Admin Header */}
       <div className={`${header} p-8 text-center relative overflow-hidden`}>
         <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-full -translate-y-16 translate-x-16"></div>
-        <div className="absolute bottom-0 left-0 w-24 h-24 bg-white opacity-5 rounded-full translate-y-8 -translate-x-8"></div>
-        
-        <h2 className="text-3xl font-black mb-2 flex justify-center items-center gap-3 relative z-10">
-          <ShieldCheck className="text-green-400" size={36} />
-          لوحة تحكم الإدارة
-        </h2>
-        <p className="text-purple-200 font-bold relative z-10">مركز الاعتماد وتقييم إنجازات المعلمات</p>
+        <ShieldCheck size={40} className="mx-auto mb-3 text-white" />
+        <h1 className="text-2xl md:text-3xl font-black text-white mb-2">لوحة تحكم الإدارة</h1>
+        <p className="text-purple-200 font-bold text-sm">مراقبة الإنجازات والتقييم</p>
       </div>
 
-      {/* Analytics Overview */}
-      {!isLoading && (
-        <div className="flex gap-3 md:gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-none pb-2 -mx-3 px-3 md:mx-0 md:px-0">
+      {/* Stats */}
+      <div className="overflow-x-auto pb-2 -mx-1 px-1">
+        <div className="flex gap-3 md:gap-4 min-w-max snap-x snap-mandatory">
           <div className="bg-white rounded-2xl p-3 shadow-lg border-2 border-purple-100 flex flex-col items-center gap-0.5 min-w-[120px] md:min-w-0 snap-center shrink-0">
             <div className="bg-purple-100 p-1.5 rounded-xl text-[#46178f]"><TrendingUp size={18} /></div>
-            <p className="text-[10px] md:text-xs text-gray-500 font-bold text-center leading-tight">القسم الأنشط هذا الشهر</p>
-            <p className="text-xl md:text-2xl font-black text-gray-800 text-center leading-tight break-words">{mostActiveDept}</p>
+            <p className="text-[10px] md:text-xs text-gray-500 font-bold text-center leading-tight">إجمالي الإنجازات</p>
+            <p className="text-xl md:text-2xl font-black text-gray-800">{allAchievements.length}</p>
+          </div>
+          <div className="bg-white rounded-2xl p-3 shadow-lg border-2 border-purple-100 flex flex-col items-center gap-0.5 min-w-[120px] md:min-w-0 snap-center shrink-0">
+            <div className="bg-yellow-100 p-1.5 rounded-xl text-[#ffb000]"><Clock size={18} /></div>
+            <p className="text-[10px] md:text-xs text-gray-500 font-bold text-center leading-tight">بانتظار المراجعة</p>
+            <p className="text-xl md:text-2xl font-black text-[#eb1f36]">{pendingAchievements.length}</p>
+          </div>
+          <div className="bg-white rounded-2xl p-3 shadow-lg border-2 border-purple-100 flex flex-col items-center gap-0.5 min-w-[120px] md:min-w-0 snap-center shrink-0">
+            <div className="bg-green-100 p-1.5 rounded-xl text-[#26890c]"><CheckCircle2 size={18} /></div>
+            <p className="text-[10px] md:text-xs text-gray-500 font-bold text-center leading-tight">معتمدة</p>
+            <p className="text-xl md:text-2xl font-black text-[#26890c]">{approvedAchievements.length}</p>
           </div>
           <div className="bg-white rounded-2xl p-3 shadow-lg border-2 border-purple-100 flex flex-col items-center gap-0.5 min-w-[120px] md:min-w-0 snap-center shrink-0">
             <div className="bg-blue-100 p-1.5 rounded-xl text-[#0087ed]"><Files size={18} /></div>
-            <p className="text-[10px] md:text-xs text-gray-500 font-bold text-center leading-tight">إجمالي الملفات المرفوعة</p>
+            <p className="text-[10px] md:text-xs text-gray-500 font-bold text-center leading-tight">الملفات المخزنة</p>
             <p className="text-xl md:text-2xl font-black text-gray-800">{totalFiles}</p>
           </div>
-          <div className="bg-white rounded-2xl p-3 shadow-lg border-2 border-purple-100 flex flex-col items-center gap-0.5 min-w-[120px] md:min-w-0 snap-center shrink-0" title={inactiveTeachers.length > 0 ? inactiveTeachers.join('، ') : undefined}>
-            <div className="bg-red-100 p-1.5 rounded-xl text-[#eb1f36]"><UserX size={18} /></div>
+          <div className="bg-white rounded-2xl p-3 shadow-lg border-2 border-purple-100 flex flex-col items-center gap-0.5 min-w-[120px] md:min-w-0 snap-center shrink-0">
+            <div className="bg-green-50 p-1.5 rounded-xl text-[#26890c]"><Award size={18} /></div>
+            <p className="text-[10px] md:text-xs text-gray-500 font-bold text-center leading-tight">القسم الأنشط هذا الشهر</p>
+            <p className="text-lg md:text-xl font-black text-gray-800 text-center">{mostActiveDept}</p>
+          </div>
+          <div className="bg-white rounded-2xl p-3 shadow-lg border-2 border-purple-100 flex flex-col items-center gap-0.5 min-w-[120px] md:min-w-0 snap-center shrink-0">
+            <div className="bg-red-50 p-1.5 rounded-xl text-[#eb1f36]"><UserX size={18} /></div>
             <p className="text-[10px] md:text-xs text-gray-500 font-bold text-center leading-tight">معلمون بلا إنجازات</p>
             <p className="text-xl md:text-2xl font-black text-gray-800">{inactiveTeachers.length}</p>
           </div>
         </div>
-      )}
+      </div>
 
-      {/* Pending Queue */}
+      {/* Pending Queue — Approve / Reject / Score */}
       <div>
         <div className="flex items-center gap-3 mb-4">
           <span className="p-3 bg-red-50 text-[#eb1f36] rounded-2xl"><Clock size={22} /></span>
-          <h3 className="text-xl md:text-2xl font-black text-white">في انتظار المراجعة والتقييم</h3>
+          <h3 className="text-xl md:text-2xl font-black text-white">إنجازات بانتظار المراجعة</h3>
           <span className="bg-[#eb1f36] text-white px-3 py-1 rounded-full text-sm font-black">{pendingAchievements.length}</span>
         </div>
 
@@ -173,34 +205,103 @@ export default function AdminDashboard() {
         ) : pendingAchievements.length === 0 ? (
           <div className="bg-green-50 rounded-3xl p-10 border-2 border-green-200 text-center text-green-700">
             <CheckCircle2 size={48} className="mx-auto mb-3 text-green-500" />
-            <p className="font-bold text-lg">عمل رائع! لا توجد إنجازات معلقة.</p>
+            <p className="font-bold text-lg">عمل رائع! لا توجد إنجازات بانتظار المراجعة.</p>
             <p className="text-sm mt-1 opacity-80">تمت مراجعة جميع الإنجازات المرفوعة.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4">
             {pendingAchievements.map((item) => (
               <div key={item.id} className={`${panel} p-5 md:p-6 flex flex-col md:flex-row gap-6 items-start md:items-center`}>
-                
-                {/* Details */}
                 <div className="flex-1 space-y-2">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 flex-wrap">
                     <h4 className="text-lg font-black text-[#46178f]">{item.title}</h4>
                     <span className="bg-purple-50 text-[#46178f] px-3 py-1 rounded-full text-xs font-bold">{item.department}</span>
+                    <span className="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-xs font-bold">⏳ بانتظار المراجعة</span>
                   </div>
                   <p className="text-gray-600 text-sm font-medium leading-relaxed">{item.desc}</p>
-                  
-                  <div className="flex items-center gap-4 text-xs font-bold pt-2">
+                  <div className="flex items-center gap-4 text-xs font-bold pt-2 flex-wrap">
                     <span className="text-gray-500 flex items-center gap-1">👤 {item.teacherName}</span>
                     <span className="text-gray-500 flex items-center gap-1">📅 {item.date}</span>
-                    {item.fileUrl && (
-                      <a href={item.fileUrl} target="_blank" rel="noopener noreferrer" className="text-[#0087ed] hover:underline flex items-center gap-1 bg-blue-50 px-3 py-1 rounded-full">
-                        <ExternalLink size={14} /> عرض المرفق
-                      </a>
+                    {item.attachmentUrls && item.attachmentUrls.length > 0 && (
+                      <span className="text-gray-500 flex items-center gap-1">📎 {item.attachmentUrls.length} مرفق</span>
                     )}
                   </div>
                 </div>
 
-                {/* Scoring Buttons */}
+                {/* Approve / Reject Buttons */}
+                <div className="w-full md:w-auto flex md:flex-col gap-2 shrink-0">
+                  <button 
+                    onClick={() => handleStatusChange(item.id, 'approved')}
+                    disabled={processingId === item.id}
+                    className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-[#26890c] hover:bg-[#20730a] text-white px-4 py-2 rounded-2xl font-black border-b-4 border-[#1c5e08] active:border-b-0 active:translate-y-1 transition-all"
+                  >
+                    {processingId === item.id ? <Loader2 className="animate-spin" size={18} /> : <><ThumbsUp size={18} /> موافقة</>}
+                  </button>
+                  <button 
+                    onClick={() => handleStatusChange(item.id, 'rejected')}
+                    disabled={processingId === item.id}
+                    className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white hover:bg-red-50 text-[#eb1f36] border-2 border-red-200 px-4 py-2 rounded-2xl font-black transition-all"
+                  >
+                    {processingId === item.id ? <Loader2 className="animate-spin" size={18} /> : <><ThumbsDown size={18} /> رفض</>}
+                  </button>
+                  <div className="hidden md:block border-t border-gray-100 my-1"></div>
+                  <button 
+                    onClick={() => handleScore(item.id, 95)}
+                    disabled={processingId === item.id}
+                    className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-[#ffb000] hover:bg-[#e69f00] text-yellow-900 px-4 py-2 rounded-2xl font-black border-b-4 border-[#cc8d00] active:border-b-0 active:translate-y-1 transition-all"
+                  >
+                    {processingId === item.id ? <Loader2 className="animate-spin" size={18} /> : <><Trophy size={18} /> ذهبي</>}
+                  </button>
+                  <button 
+                    onClick={() => handleScore(item.id, 85)}
+                    disabled={processingId === item.id}
+                    className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-[#e5e7eb] hover:bg-[#d1d5db] text-gray-800 px-4 py-2 rounded-2xl font-black border-b-4 border-[#9ca3af] active:border-b-0 active:translate-y-1 transition-all"
+                  >
+                    {processingId === item.id ? <Loader2 className="animate-spin" size={18} /> : <><Medal size={18} /> فضي</>}
+                  </button>
+                  <button 
+                    onClick={() => handleScore(item.id, 75)}
+                    disabled={processingId === item.id}
+                    className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-[#f97316] hover:bg-[#ea580c] text-white px-4 py-2 rounded-2xl font-black border-b-4 border-[#c2410c] active:border-b-0 active:translate-y-1 transition-all"
+                  >
+                    {processingId === item.id ? <Loader2 className="animate-spin" size={18} /> : <><Award size={18} /> برونزي</>}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Approved Achievements — Re-score */}
+      {approvedAchievements.length > 0 && (
+        <div>
+          <div className="flex items-center gap-3 mb-4">
+            <span className="p-3 bg-green-50 text-[#26890c] rounded-2xl"><CheckCircle2 size={22} /></span>
+            <h3 className="text-xl md:text-2xl font-black text-white">إنجازات معتمدة (تقييم)</h3>
+            <span className="bg-[#26890c] text-white px-3 py-1 rounded-full text-sm font-black">{approvedAchievements.length}</span>
+          </div>
+          <div className="grid grid-cols-1 gap-4">
+            {approvedAchievements.map((item) => (
+              <div key={item.id} className={`${panel} p-5 md:p-6 flex flex-col md:flex-row gap-6 items-start md:items-center`}>
+                <div className="flex-1 space-y-2">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <h4 className="text-lg font-black text-[#46178f]">{item.title}</h4>
+                    <span className="bg-purple-50 text-[#46178f] px-3 py-1 rounded-full text-xs font-bold">{item.department}</span>
+                    {item.score ? (
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${item.score >= 90 ? 'bg-yellow-100 text-yellow-700' : item.score >= 80 ? 'bg-gray-200 text-gray-700' : 'bg-orange-100 text-orange-700'}`}>
+                        {item.score >= 90 ? '🏆 ذهبي' : item.score >= 80 ? '🥈 فضي' : '🥉 برونزي'} {item.score}
+                      </span>
+                    ) : (
+                      <span className="bg-gray-100 text-gray-500 px-3 py-1 rounded-full text-xs font-bold">بدون تقييم</span>
+                    )}
+                  </div>
+                  <p className="text-gray-600 text-sm font-medium leading-relaxed line-clamp-2">{item.desc}</p>
+                  <div className="flex items-center gap-4 text-xs font-bold pt-2 flex-wrap">
+                    <span className="text-gray-500 flex items-center gap-1">👤 {item.teacherName}</span>
+                    <span className="text-gray-500 flex items-center gap-1">📅 {item.date}</span>
+                  </div>
+                </div>
                 <div className="w-full md:w-auto flex md:flex-col gap-2 shrink-0">
                   <button 
                     onClick={() => handleScore(item.id, 95)}
@@ -224,12 +325,11 @@ export default function AdminDashboard() {
                     {processingId === item.id ? <Loader2 className="animate-spin" size={18} /> : <><Award size={18} /> برونزي</>}
                   </button>
                 </div>
-
               </div>
             ))}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
     </div>
   );

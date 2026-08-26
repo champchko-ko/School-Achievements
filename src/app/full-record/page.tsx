@@ -19,6 +19,12 @@ const getScoreBadge = (score: number | null) => {
   return <span className="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 w-fit"><Award size={14} /> {score} برونزي</span>;
 };
 
+const getStatusBadge = (status: string | undefined) => {
+  if (status === 'pending') return <span className="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 w-fit">⏳ بانتظار المراجعة</span>;
+  if (status === 'rejected') return <span className="bg-red-100 text-red-600 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 w-fit">❌ مرفوض</span>;
+  return null;
+};
+
 export default function FullRecordPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
@@ -434,6 +440,7 @@ export default function FullRecordPage() {
                 <th className="p-4 font-bold whitespace-nowrap">القسم</th>
                 <th className="p-4 font-bold min-w-[200px]">الإنجاز</th>
                 <th className="p-4 font-bold whitespace-nowrap hidden sm:table-cell">التاريخ</th>
+                <th className="p-4 font-bold whitespace-nowrap">الحالة</th>
                 {/* تم إخفاء عمود التقييم على الشاشات الصغيرة لتوفير المساحة */}
                 <th className="p-4 font-bold whitespace-nowrap hidden lg:table-cell">التقييم</th>
                 <th className="p-4 font-bold text-center print:hidden whitespace-nowrap">إجراء</th>
@@ -442,7 +449,7 @@ export default function FullRecordPage() {
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan={6} className="p-12 text-center text-gray-400">
+                  <td colSpan={7} className="p-12 text-center text-gray-400">
                     <Loader2 className="animate-spin mx-auto mb-3 text-yellow-400" size={32} />
                     <p className="font-bold">جاري تحميل السجل...</p>
                   </td>
@@ -457,6 +464,7 @@ export default function FullRecordPage() {
                     </Link>
                   </td>
                   <td className="p-4 text-sm text-gray-500 whitespace-nowrap hidden sm:table-cell">{row.date}</td>
+                  <td className="p-4 whitespace-nowrap">{getStatusBadge(row.status)}</td>
                   
                   {/* إخفاء محتوى التقييم على الشاشات الصغيرة */}
                   <td className="p-4 whitespace-nowrap hidden lg:table-cell">{getScoreBadge(row.score)}</td>
@@ -512,7 +520,7 @@ export default function FullRecordPage() {
               ))}
               {!isLoading && filteredData.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-gray-400 font-bold">لا توجد نتائج مطابقة للبحث.</td>
+                  <td colSpan={7} className="p-8 text-center text-gray-400 font-bold">لا توجد نتائج مطابقة للبحث.</td>
                 </tr>
               )}
             </tbody>

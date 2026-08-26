@@ -89,10 +89,9 @@ function HomeContent() {
     
     const unsubscribe = onSnapshot(q, 
       (snapshot) => {
-        const achievementsData = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
+        const achievementsData = snapshot.docs
+          .map(d => ({ id: d.id, ...d.data() }))
+          .filter((a: any) => a.status === 'approved' || !a.status);
         setAchievements(achievementsData);
         setIsLoading(false);
       },

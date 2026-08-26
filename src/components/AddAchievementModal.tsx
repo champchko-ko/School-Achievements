@@ -87,6 +87,7 @@ export default function AddAchievementModal({
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [alertMsg, setAlertMsg] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
 
   const teachers = normalizeTeachers(teachersRaw);
@@ -227,7 +228,13 @@ export default function AddAchievementModal({
           throw new Error(errData.error || 'فشل حفظ الإنجاز');
         }
       }
-      onClose();
+      // Show success message for new achievements
+      if (!docId) {
+        setSuccessMsg('تم إرسال إنجازك بنجاح! سيتم مراجعته من قبل الإدارة قبل ظهوره في الصفحة العامة.');
+        setTimeout(() => { setSuccessMsg(null); onClose(); }, 3000);
+      } else {
+        onClose();
+      }
     } catch (err: any) {
       setAlertMsg(err.message || 'حدث خطأ في الاتصال بالخادم');
     } finally {
@@ -512,6 +519,20 @@ export default function AddAchievementModal({
           </button>
         </div>
       </div>
+
+      {/* ── Success toast ── */}
+      {successMsg && (
+        <div className="fixed bottom-6 right-4 left-4 md:left-auto md:right-4 md:w-[28rem] z-[200] p-4 rounded-2xl shadow-2xl font-bold text-white bg-[#26890c] border-4 border-white/20 animate-in slide-in-from-bottom-2 duration-300">
+          <div className="flex items-start gap-3">
+            <span className="text-lg mt-0.5">✅</span>
+            <div className="flex-1">
+              <p className="font-black text-sm mb-1">تم الإرسال</p>
+              <p className="text-xs whitespace-pre-line leading-relaxed opacity-95">{successMsg}</p>
+            </div>
+            <button onClick={() => { setSuccessMsg(null); onClose(); }} className="text-white/70 hover:text-white mt-0.5">✕</button>
+          </div>
+        </div>
+      )}
 
       {/* ── Alert toast ── */}
       {alertMsg && (
