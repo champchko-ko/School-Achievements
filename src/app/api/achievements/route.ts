@@ -65,6 +65,7 @@ export async function POST(request: Request) {
       desc,
       attachmentUrls: sAttachmentUrls || [],
       score: null,
+      status: 'pending',
       date: sDate,
       timestamp: serverTimestamp(),
     });
