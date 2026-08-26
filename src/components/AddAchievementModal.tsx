@@ -45,9 +45,21 @@ const SIZE_LIMITS: Record<string, number> = {
   text: 5 * 1024 * 1024,
 };
 
-function validateFiles(fileList: File[]): { accepted: File[]; rejected: string[] } {
+const FILE_LIMITS = { images: 4, documents: 1, videos: 1 };
+
+function isImage(f: File) { return f.type.startsWith('image/'); }
+function isVideo(f: File) { return f.type.startsWith('video/'); }
+function isDocument(f: File) { return f.type === 'application/pdf' || f.type === 'application/msword' || f.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'; }
+
+function validateFiles(fileList: File[], existingFiles: File[]): { accepted: File[]; rejected: string[] } {
   const accepted: File[] = [];
   const rejected: string[] = [];
+
+  // Count existing files by type
+  let imgCount = existingFiles.filter(isImage).length;
+  let docCount = existingFiles.filter(isDocument).length;
+  let vidCount = existingFiles.filter(isVideo).length;
+
   for (const f of fileList) {
     if (!allowedFileTypes.includes(f.type)) {
       rejected.push(`❌ ${f.name} — نوع الملف غير مدعوم`);
@@ -60,6 +72,26 @@ function validateFiles(fileList: File[]): { accepted: File[]; rejected: string[]
       const maxMB = (max / (1024 * 1024)).toFixed(0);
       rejected.push(`❌ ${f.name} — الحجم ${fileMB} MB يتجاوز الحد الأقصى ${maxMB} MB`);
       continue;
+    }
+    // Per-type limits
+    if (isImage(f)) {
+      if (imgCount >= FILE_LIMITS.images) {
+        rejected.push(`❌ ${f.name} — تم الوصول للحد الأقصى من الصور (${FILE_LIMITS.images})`);
+        continue;
+      }
+      imgCount++;
+    } else if (isDocument(f)) {
+      if (docCount >= FILE_LIMITS.documents) {
+        rejected.push(`❌ ${f.name} — تم الوصول للحد الأقصى من المستندات (${FILE_LIMITS.documents})`);
+        continue;
+      }
+      docCount++;
+    } else if (isVideo(f)) {
+      if (vidCount >= FILE_LIMITS.videos) {
+        rejected.push(`❌ ${f.name} — تم الوصول للحد الأقصى من الفيديوهات (${FILE_LIMITS.videos})`);
+        continue;
+      }
+      vidCount++;
     }
     accepted.push(f);
   }
@@ -151,7 +183,7 @@ export default function AddAchievementModal({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.length) return;
     const newFiles = Array.from(e.target.files);
-    const { accepted, rejected } = validateFiles(newFiles);
+    const { accepted, rejected } = validateFiles(newFiles, files);
     if (accepted.length > 0) setFiles(prev => [...prev, ...accepted]);
     if (rejected.length > 0) setAlertMsg(rejected.join('\n'));
     e.target.value = '';
@@ -162,7 +194,7 @@ export default function AddAchievementModal({
     setDragOver(false);
     if (!e.dataTransfer.files.length) return;
     const dropped = Array.from(e.dataTransfer.files);
-    const { accepted, rejected } = validateFiles(dropped);
+    const { accepted, rejected } = validateFiles(dropped, files);
     if (accepted.length > 0) setFiles(prev => [...prev, ...accepted]);
     if (rejected.length > 0) setAlertMsg(rejected.join('\n'));
   };
@@ -433,12 +465,12 @@ export default function AddAchievementModal({
               <CloudUpload size={28} className={`mx-auto mb-1.5 ${dragOver ? 'text-[#eb1f36]' : 'text-purple-300'}`} />
               <p className="text-sm font-bold text-gray-600">اسحب الملفات هنا أو اضغط للاختيار</p>
               <div className="mt-2 flex flex-wrap justify-center gap-1.5 text-[10px] font-bold">
-                <span className="bg-blue-50 text-blue-600 px-2 py-0.5 rounded-md">🖼️ صور ≤ 10 MB</span>
-                <span className="bg-purple-50 text-purple-600 px-2 py-0.5 rounded-md">📄 مستندات ≤ 20 MB</span>
-                <span className="bg-rose-50 text-rose-600 px-2 py-0.5 rounded-md">🎬 فيديو ≤ 100 MB</span>
+                <span className="bg-blue-50 text-blue-600 px-2 py-0.5 rounded-md">🖼️ صور: حد أقصى 4 (≤ 10 MB)</span>
+                <span className="bg-purple-50 text-purple-600 px-2 py-0.5 rounded-md">📄 مستندات: حد أقصى 1 (≤ 20 MB)</span>
+                <span className="bg-rose-50 text-rose-600 px-2 py-0.5 rounded-md">🎬 فيديو: حد أقصى 1 (≤ 100 MB)</span>
               </div>
               <p className="text-[10px] text-gray-400 mt-1.5">JPG, PNG, WebP, GIF • PDF, DOC, DOCX • MP4, WebM, MOV • ZIP, RAR</p>
-              <p className="text-[10px] text-amber-500 mt-1 font-bold">⚠️ الحد الأقصى: 20 ملف في الساعة</p>
+
             </div>
             <input
               ref={fileInputRef}

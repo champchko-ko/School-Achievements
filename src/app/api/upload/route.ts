@@ -19,6 +19,9 @@ const ALLOWED_MIME_TYPES = [
   'application/zip', 'application/x-rar-compressed',
 ];
 
+// Per-type file count limits (mirror of client-side FILE_LIMITS)
+const FILE_COUNT_LIMITS = { image: 4, video: 1, application: 1 };
+
 // Per-type size limits
 const SIZE_LIMITS: Record<string, number> = {
   'image': 10 * 1024 * 1024,    // 10 MB for images
