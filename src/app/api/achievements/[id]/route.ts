@@ -91,16 +91,28 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
   try {
     const { id } = await params;
     const isAdmin = await isAdminSession();
-
-    if (!isAdmin) {
-      return NextResponse.json({ error: 'غير مصرح بهذا الإجراء. تسجيل الدخول كمدير مطلوب.' }, { status: 401 });
-    }
-
     const db = getAdminDb();
 
     const docSnap = await getDoc(doc(db, 'achievements', id));
     if (!docSnap.exists()) {
       return NextResponse.json({ error: 'Achievement not found' }, { status: 404 });
+    }
+
+    // Authorization: admin session OR correct PIN
+    if (!isAdmin) {
+      const body = await request.json().catch(() => ({}));
+      const { pin } = body;
+      if (!pin) {
+        return NextResponse.json({ error: 'PIN مطلوب لحذف هذا الإنجاز' }, { status: 401 });
+      }
+      const storedHash = docSnap.data()?.pinHash;
+      if (!storedHash) {
+        return NextResponse.json({ error: 'لا يوجد رمز حماية لهذا الإنجاز' }, { status: 401 });
+      }
+      const inputHash = hashPin(pin, id);
+      if (inputHash !== storedHash) {
+        return NextResponse.json({ error: 'رمز الحماية غير صحيح!' }, { status: 401 });
+      }
     }
 
     // Remove the achievement's files from Cloudinary (best-effort — never blocks the deletion)
