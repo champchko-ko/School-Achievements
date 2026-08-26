@@ -120,7 +120,20 @@ function HomeContent() {
     fetchSettings();
   }, []);
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'EducationalOrganization',
+    name: schoolSettings?.schoolName || 'المدرسة',
+    description: 'منصة عرض إنجازات الطلاب والأنشطة المدرسية.',
+    url: 'https://school-achievements-six.vercel.app',
+  };
+
   return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
     <div className="space-y-6 md:space-y-8 pb-10 w-full max-w-full overflow-hidden">
       <Suspense fallback={null}>
         <SearchParamsWatcher onChange={handleParamsChange} />
@@ -286,8 +299,14 @@ function HomeContent() {
       </div>
       <AddAchievementModal isOpen={isModalOpen} onClose={handleCloseModal} />
     </div>
+    </>
   );
 }
+
+export const metadata = {
+  title: 'الرئيسية',
+  description: 'عرض أحدث الإنجازات والأنشطة المدرسية المعتمدة.',
+};
 
 export default function Home() {
   return (
