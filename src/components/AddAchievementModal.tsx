@@ -300,6 +300,9 @@ export default function AddAchievementModal({
   return createPortal(
     <div
       className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-start justify-center z-[100] p-3 sm:p-6 pt-[5vh] sm:pt-[8vh] animate-in fade-in duration-200 overflow-y-auto"
+      role="dialog"
+      aria-modal="true"
+      aria-label="إضافة إنجاز جديد"
       onClick={onClose}
     >
       <div
