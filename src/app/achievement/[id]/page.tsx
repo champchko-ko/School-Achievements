@@ -211,7 +211,13 @@ export default function AchievementDetailsPage() {
         if (cancelled) return;
 
         if (docSnap.exists()) {
-          setAchievement({ id: docSnap.id, ...docSnap.data() });
+          const data: any = { id: docSnap.id, ...docSnap.data() };
+          // Non-admins cannot view non-approved achievements
+          if (data.status && data.status !== 'approved') {
+            setError("هذا الإنجاز بانتظار المراجعة ولا يمكن عرضه حالياً.");
+          } else {
+            setAchievement(data);
+          }
         } else {
           setError("لم يتم العثور على هذا الإنجاز.");
         }

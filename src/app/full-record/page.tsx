@@ -63,10 +63,13 @@ export default function FullRecordPage() {
     setMounted(true);
     const q = query(collection(db, 'achievements'), orderBy('timestamp', 'desc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const achievementsData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      const achievementsData = snapshot.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .filter((a: any) => {
+          // Non-admins only see approved achievements
+          if (!isAdmin && a.status !== 'approved' && a.status !== undefined) return false;
+          return true;
+        });
       setAchievements(achievementsData);
       setIsLoading(false);
     });
