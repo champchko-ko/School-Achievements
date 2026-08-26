@@ -182,7 +182,7 @@ export default function AddAchievementModal({
           fd.append('file', f);
           const res = await fetch('/api/upload', { method: 'POST', body: fd });
           const data = await res.json();
-          if (!res.ok) throw new Error(data.error || 'فشل رفع الملف');
+          if (!res.ok) { if (res.status === 429) throw new Error(data.error || 'تم تجاوز الحد المسموح. حاول مرة أخرى لاحقاً.'); throw new Error(data.error || 'فشل رفع الملف'); }
           return data.secure_url;
         });
         attachmentUrls = await Promise.all(uploadPromises);
@@ -225,6 +225,9 @@ export default function AddAchievementModal({
         });
         if (!res.ok) {
           const errData = await res.json();
+          if (res.status === 429) {
+            throw new Error(errData.error || 'تم تجاوز الحد المسموح. حاول مرة أخرى لاحقاً.');
+          }
           throw new Error(errData.error || 'فشل حفظ الإنجاز');
         }
       }
@@ -435,6 +438,7 @@ export default function AddAchievementModal({
                 <span className="bg-rose-50 text-rose-600 px-2 py-0.5 rounded-md">🎬 فيديو ≤ 100 MB</span>
               </div>
               <p className="text-[10px] text-gray-400 mt-1.5">JPG, PNG, WebP, GIF • PDF, DOC, DOCX • MP4, WebM, MOV • ZIP, RAR</p>
+              <p className="text-[10px] text-amber-500 mt-1 font-bold">⚠️ الحد الأقصى: 20 ملف في الساعة</p>
             </div>
             <input
               ref={fileInputRef}
@@ -499,6 +503,11 @@ export default function AddAchievementModal({
             </section>
           )}
         </div>
+
+        {/* Rate limit hint */}
+        {!docId && (
+          <p className="text-[10px] text-amber-500 font-bold text-center">⚠️ الحد الأقصى: 10 إنجازات في الساعة</p>
+        )}
 
         {/* ── Footer ── */}
         <div className="sticky bottom-0 bg-white/95 backdrop-blur-md border-t border-purple-100 px-5 py-4 flex items-center justify-between gap-3 rounded-b-3xl">

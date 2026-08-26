@@ -4,6 +4,8 @@
 
 import { NextResponse } from 'next/server';
 import { logAchievementCreated, logCsrfBlock, logError } from '../../../lib/logger';
+import { checkRateLimit } from '../../../lib/rate-limit';
+import { logRateLimitHit } from '../../../lib/logger';
 import { sanitizeAchievementPayload } from '../../../lib/sanitize';
 import { pbkdf2Sync } from 'crypto';
 import { getAdminDb, addDoc, collection, doc, serverTimestamp, updateDoc } from '../../../lib/firebase-admin';
@@ -34,6 +36,14 @@ export async function POST(request: Request) {
     if (!origin && referer && host && !referer.includes(host)) {
       logCsrfBlock(request);
       return NextResponse.json({ error: 'Invalid referer' }, { status: 403 });
+    }
+
+    // Rate limit: 10 achievements per hour per IP
+    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+    const { allowed, resetAt } = checkRateLimit(`ach:${ip}`, { maxRequests: 10, windowMs: 3_600_000 });
+    if (!allowed) {
+      logRateLimitHit(`ach:${ip}`, request);
+      return NextResponse.json({ error: 'تم تجاوز الحد المسموح. الرجاء المحاولة لاحقاً.', resetAt }, { status: 429 });
     }
 
     const body = await request.json();

@@ -3,6 +3,8 @@
 
 import { NextResponse } from 'next/server';
 import { logInfo, logWarn, logError } from '../../../lib/logger';
+import { checkRateLimit } from '../../../lib/rate-limit';
+import { logRateLimitHit } from '../../../lib/logger';
 
 const ALLOWED_MIME_TYPES = [
   // Images
@@ -28,6 +30,17 @@ const DEFAULT_MAX = 20 * 1024 * 1024; // 20 MB fallback
 
 export async function POST(request: Request) {
   try {
+    // Rate limit: 20 uploads per hour per IP
+    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+    const { allowed, resetAt } = checkRateLimit(`upload:${ip}`, { maxRequests: 20, windowMs: 3_600_000 });
+    if (!allowed) {
+      logRateLimitHit(`upload:${ip}`, request);
+      return NextResponse.json({
+        error: 'تم تجاوز الحد المسموح برفع الملفات. الرجاء المحاولة لاحقاً.',
+        resetAt
+      }, { status: 429 });
+    }
+
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
 
