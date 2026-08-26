@@ -3,6 +3,7 @@
 // DELETE: Delete an achievement (admin session required)
 
 import { NextResponse } from 'next/server';
+import { logAchievementDeleted, logAchievementStatusChanged, logError } from '../../../../lib/logger';
 import { isAdminSession } from '../../../../lib/admin-session';
 import { sanitizeAchievementPayload } from '../../../../lib/sanitize';
 import { pbkdf2Sync } from 'crypto';
@@ -24,8 +25,8 @@ function hashPin(pin: string, achievementId: string): string {
 
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
-    const { id } = await params;
     const rawBody = await request.json();
     // Sanitize all user-supplied text fields
     const body = sanitizeAchievementPayload(rawBody);
@@ -88,8 +89,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 }
 
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
-    const { id } = await params;
     const isAdmin = await isAdminSession();
     const db = getAdminDb();
 
@@ -128,9 +129,10 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
 
     await deleteDoc(doc(db, 'achievements', id));
 
+    logAchievementDeleted(id, isAdmin, request);
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    console.error('Delete achievement error:', error?.message || error);
+    logError('api', 'Delete achievement failed', { error: error?.message, achievementId: id }, request);
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
 }

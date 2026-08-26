@@ -2,12 +2,13 @@
 // Sets status to "approved" or "rejected"
 
 import { NextResponse } from 'next/server';
+import { logAchievementStatusChanged, logError } from '../../../../../lib/logger';
 import { isAdminSession } from '../../../../../lib/admin-session';
 import { getAdminDb, doc, getDoc, updateDoc } from '../../../../../lib/firebase-admin';
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
-    const { id } = await params;
     const isAdmin = await isAdminSession();
 
     if (!isAdmin) {
@@ -31,9 +32,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
     await updateDoc(docRef, { status });
 
+    logAchievementStatusChanged(id, status, request);
     return NextResponse.json({ success: true, status });
   } catch (error: any) {
-    console.error('Status update error:', error?.message || error);
+    logError('api', 'Status update failed', { error: error?.message, achievementId: id }, request);
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
 }

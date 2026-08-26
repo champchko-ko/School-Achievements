@@ -5,6 +5,7 @@
 //  - action=assets  -> return type/size metadata for given attachment URLs
 
 import { NextResponse } from 'next/server';
+import { logInfo, logError } from '../../../lib/logger';
 import { isAdminSession } from '../../../lib/admin-session';
 import { getAdminDb, collection, deleteField, doc, getDocs, updateDoc } from '../../../lib/firebase-admin';
 import {
@@ -158,7 +159,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   } catch (error: any) {
-    console.error('Cleanup error:', error?.message || error);
+    logError('api', 'Cleanup error:', error?.message || error);
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
 }

@@ -2,6 +2,7 @@
 // Server-side upload proxy: validates files before sending to Cloudinary
 
 import { NextResponse } from 'next/server';
+import { logInfo, logWarn, logError } from '../../../lib/logger';
 
 const ALLOWED_MIME_TYPES = [
   // Images
@@ -36,6 +37,7 @@ export async function POST(request: Request) {
 
     // Validate file type server-side
     if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+      logWarn('upload', 'Rejected file type', { fileName: file.name, fileType: file.type }, request);
       return NextResponse.json({
         error: `نوع الملف غير مدعوم: ${file.type}. الأنواع المسموحة: صور، فيديوهات، PDF، مستندات Word، ملفات نصية، أرشيفات ZIP/RAR`
       }, { status: 400 });
@@ -47,6 +49,7 @@ export async function POST(request: Request) {
     if (file.size > maxSize) {
       const fileMB = (file.size / (1024 * 1024)).toFixed(1);
       const maxMB = (maxSize / (1024 * 1024)).toFixed(0);
+      logWarn('upload', 'Rejected oversized file', { fileName: file.name, fileSize: file.size, maxSize }, request);
       return NextResponse.json({
         error: `حجم الملف كبير جداً (${fileMB} MB). الحد الأقصى لهذا النوع هو ${maxMB} MB`
       }, { status: 400 });
@@ -74,9 +77,10 @@ export async function POST(request: Request) {
       throw new Error(cloudData.error?.message || 'Cloudinary upload failed');
     }
 
+    logInfo('upload', 'File uploaded', { fileName: file.name, fileSize: file.size, fileType: file.type }, request);
     return NextResponse.json({ secure_url: cloudData.secure_url });
   } catch (error: any) {
-    console.error('Upload error:', error?.message || error);
+    logError('upload', 'Upload failed', { error: error?.message }, request);
     return NextResponse.json({ error: 'فشل رفع الملف' }, { status: 500 });
   }
 }

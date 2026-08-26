@@ -1,5 +1,6 @@
 // src/app/api/auth/route.ts
 import { NextResponse } from 'next/server';
+import { logAuthSuccess, logAuthFailure, logError } from '../../../lib/logger';
 import { checkRateLimit } from '../../../lib/rate-limit';
 import { isAdminSession, createSessionValue, getSessionCookieOptions } from '../../../lib/admin-session';
 import { pbkdf2Sync } from 'crypto';
@@ -14,8 +15,9 @@ function hashAdminPin(pin: string): string {
 }
 
 // GET: Check if admin is authenticated (by cookie with idle timeout)
-export async function GET() {
+export async function GET(request: Request) {
   const admin = await isAdminSession();
+  if (admin) logAuthSuccess(true, request);
   return NextResponse.json({ admin });
 }
 
@@ -26,6 +28,8 @@ export async function POST(request: Request) {
     const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
     const { allowed, remaining, resetAt } = checkRateLimit(`auth:${ip}`, { maxRequests: 10, windowMs: 60_000 });
     if (!allowed) {
+      const { logRateLimitHit } = await import('../../../lib/logger');
+      logRateLimitHit(`auth:${ip}`, request);
       return NextResponse.json({ 
         error: 'محاولات كثيرة جداً. الرجاء الانتظار قبل المحاولة مرة أخرى.',
         remaining,
@@ -72,18 +76,20 @@ export async function POST(request: Request) {
     }
 
     if (!valid) {
+      logAuthFailure('incorrect_pin', request, { ip });
       return NextResponse.json({ error: 'PIN غير صحيح' }, { status: 401 });
     }
 
     // Set httpOnly session cookie
+    logAuthSuccess(true, request);
     const response = NextResponse.json({ admin: true });
     const sessionValue = createSessionValue();
     const cookieOptions = getSessionCookieOptions();
     response.cookies.set('admin_session', sessionValue, cookieOptions);
 
     return response;
-  } catch (error) {
-    console.error('Auth error:', error);
+  } catch (error: any) {
+    logError('auth', 'Auth endpoint error', { error: error?.message }, request);
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
 }

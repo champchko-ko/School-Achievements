@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { db } from '../../lib/firebase';
 import { collection, query, onSnapshot, doc, getDoc } from 'firebase/firestore';
-import { ShieldCheck, Trophy, Medal, Award, ExternalLink, Loader2, CheckCircle2, XCircle, TrendingUp, Files, UserX, Clock, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { ShieldCheck, Trophy, Medal, Award, ExternalLink, Loader2, CheckCircle2, XCircle, TrendingUp, Files, UserX, Clock, ThumbsUp, ThumbsDown, ShieldAlert, RefreshCw } from 'lucide-react';
 import { useAdmin } from '../../lib/useAdmin';
 import { useRouter } from 'next/navigation';
 import { header, panel, toast } from '../../lib/ui';
@@ -15,6 +15,9 @@ export default function AdminDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [notification, setNotification] = useState<{ type: string, message: string } | null>(null);
+  const [logs, setLogs] = useState<any[]>([]);
+  const [logsLoading, setLogsLoading] = useState(true);
+  const [showLogs, setShowLogs] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -129,6 +132,23 @@ export default function AdminDashboard() {
       setNotification({ type: "error", message: error.message || "حدث خطأ أثناء تقييم الإنجاز." });
     } finally {
       setProcessingId(null);
+    }
+  };
+
+  // Fetch security logs
+  const fetchLogs = async () => {
+    setLogsLoading(true);
+    try {
+      const { collection, query, orderBy, limit, getDocs } = await import('firebase/firestore');
+      const { db } = await import('../../lib/firebase');
+      const q = query(collection(db, 'logs'), orderBy('timestamp', 'desc'), limit(50));
+      const snapshot = await getDocs(q);
+      const logsData = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      setLogs(logsData);
+    } catch (error) {
+      console.error('Error fetching logs:', error);
+    } finally {
+      setLogsLoading(false);
     }
   };
 
