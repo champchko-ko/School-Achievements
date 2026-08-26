@@ -19,6 +19,7 @@ function getDb() {
       adminDb = getFirestore(app);
     }
   } else {
+    console.warn('[Firebase Admin] No FIREBASE_SERVICE_ACCOUNT configured. Using default credentials.');
     const app = getApps().length > 0 ? getApps()[0] : initializeApp();
     adminDb = getFirestore(app);
   }

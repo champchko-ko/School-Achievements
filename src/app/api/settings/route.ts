@@ -36,6 +36,17 @@ export async function GET() {
 
 export async function PUT(request: Request) {
   try {
+    // CSRF protection
+    const origin = request.headers.get('origin');
+    const referer = request.headers.get('referer');
+    const host = request.headers.get('host');
+    if (origin && host && !origin.includes(host)) {
+      return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
+    }
+    if (!origin && referer && host && !referer.includes(host)) {
+      return NextResponse.json({ error: 'Invalid referer' }, { status: 403 });
+    }
+
     const isAdmin = await isAdminSession();
 
     if (!isAdmin) {
@@ -51,7 +62,8 @@ export async function PUT(request: Request) {
 
     // If admin PIN is provided, hash it and store in protected admin/pinConfig doc
     if (body.adminPin) {
-      const pepper = process.env.PIN_PEPPER || 'school-achievements-default-pepper-change-in-production';
+      const pepper = process.env.PIN_PEPPER;
+      if (!pepper) throw new Error('PIN_PEPPER env var is not set');
       const salt = `admin-pin-${pepper}`;
       const hash = pbkdf2Sync(body.adminPin, salt, 10000, 64, 'sha512').toString('hex');
       await setDoc(doc(db, "admin", "pinConfig"), { pinHash: hash });

@@ -29,6 +29,7 @@ export function preventExcelFormula(value: string): string {
  * Use this for all user-supplied text before storing to Firestore.
  */
 const MAX_TEXT_LENGTH = 10000;
+const MAX_ARRAY_LENGTH = 100;
 
 export function sanitizeText(value: string): string {
   if (!value) return '';
@@ -58,7 +59,7 @@ export function sanitizeAchievementPayload(body: Record<string, any>): Record<st
   if (body.attachmentUrls && Array.isArray(body.attachmentUrls)) {
     body.attachmentUrls = body.attachmentUrls.filter((url: any) => 
       typeof url === 'string' && (url.startsWith('http://') || url.startsWith('https://'))
-    );
+    ).slice(0, MAX_ARRAY_LENGTH);
   }
   return body;
 }
@@ -78,9 +79,10 @@ export function sanitizeSettingsPayload(body: Record<string, any>): Record<strin
   }
   // Sanitize array fields
   if (body.departments && Array.isArray(body.departments)) {
-    body.departments = sanitizeStringArray(body.departments);
+    body.departments = sanitizeStringArray(body.departments).slice(0, MAX_ARRAY_LENGTH);
   }
   if (body.teachers && Array.isArray(body.teachers)) {
+    body.teachers = body.teachers.slice(0, MAX_ARRAY_LENGTH);
     body.teachers = body.teachers.map((t: any) =>
       typeof t === 'string'
         ? sanitizeText(t)
