@@ -135,16 +135,14 @@ export default function AdminDashboard() {
     }
   };
 
-  // Fetch security logs
+  // Fetch security logs via API (Firestore rules block client reads on logs)
   const fetchLogs = async () => {
     setLogsLoading(true);
     try {
-      const { collection, query, orderBy, limit, getDocs } = await import('firebase/firestore');
-      const { db } = await import('../../lib/firebase');
-      const q = query(collection(db, 'logs'), orderBy('timestamp', 'desc'), limit(50));
-      const snapshot = await getDocs(q);
-      const logsData = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-      setLogs(logsData);
+      const res = await fetch('/api/logs');
+      if (!res.ok) throw new Error('Failed to fetch logs');
+      const data = await res.json();
+      setLogs(data.logs || []);
     } catch (error) {
       console.error('Error fetching logs:', error);
     } finally {
