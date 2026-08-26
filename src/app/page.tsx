@@ -303,11 +303,6 @@ function HomeContent() {
   );
 }
 
-export const metadata = {
-  title: 'الرئيسية',
-  description: 'عرض أحدث الإنجازات والأنشطة المدرسية المعتمدة.',
-};
-
 export default function Home() {
   return (
     <ErrorBoundary>
