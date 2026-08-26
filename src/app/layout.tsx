@@ -39,7 +39,7 @@ export const metadata: Metadata = {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'إنجازات المدرسة',
+        alt: 'إنجازات المدرسة - منصة عرض إنجازات الطلاب',
       },
     ],
   },
@@ -80,6 +80,9 @@ export default function RootLayout({
   return (
     <html lang="ar" dir="rtl">
       <body className={tajawal.className}>
+        <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:right-4 focus:z-[999] focus:bg-white focus:text-[#46178f] focus:px-4 focus:py-2 focus:rounded-xl focus:font-black focus:shadow-lg">
+          انتقال إلى المحتوى الرئيسي
+        </a>
         {/* Main Wrapper with original gradient */}
         <div className="flex h-screen overflow-hidden bg-[#46178f] bg-gradient-to-br from-[#46178f] via-[#380e6e] to-[#2a0a54] relative">
           
@@ -93,7 +96,7 @@ export default function RootLayout({
           <Sidebar />
           
           {/* Main Content Area - Added z-10 to stay above pattern, and scroll-smooth */}
-          <main className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4 md:p-6 lg:p-8 print:p-0 print:overflow-visible w-full max-w-full min-w-0 z-10 scroll-smooth">
+          <main id="main-content" className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4 md:p-6 lg:p-8 print:p-0 print:overflow-visible w-full max-w-full min-w-0 z-10 scroll-smooth">
             {children}
           </main>
           

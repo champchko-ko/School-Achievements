@@ -171,7 +171,7 @@ export default function Sidebar() {
         onClick={() => setMobileOpen(true)}
         className="fixed top-3 right-3 z-30 bg-[#380e6e] text-white p-2.5 rounded-xl shadow-lg print:hidden"
       >
-        <Menu size={22} />
+        <Menu aria-label="فتح القائمة" size={22} />
       </button>
 
       {/* Overlay sidebar (desktop + mobile) */}

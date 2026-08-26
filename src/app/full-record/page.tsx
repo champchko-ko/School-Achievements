@@ -503,24 +503,27 @@ export default function FullRecordPage() {
                       <div className="flex items-center justify-center gap-2">
                         <Link 
                           href={`/achievement/${row.id}`} 
-                          className={icon.blue} 
+                          className={icon.blue}
                           title="عرض التفاصيل"
+                          aria-label="عرض تفاصيل الإنجاز"
                         >
                           <Eye size={18} />
                         </Link>
                         
                         <button 
                           onClick={() => { setSelectedDoc(row); setShowEditModal(true); }} 
-                          className={icon.green} 
+                          className={icon.green}
                           title="تعديل"
+                          aria-label="تعديل الإنجاز"
                         >
                           <Pencil size={18} />
                         </button>
                         
                         <button 
                           onClick={() => handleDeleteClick(row.id)} 
-                          className={icon.red} 
+                          className={icon.red}
                           title="حذف"
+                          aria-label="حذف الإنجاز"
                         >
                           <Trash2 size={18} />
                         </button>
@@ -529,8 +532,9 @@ export default function FullRecordPage() {
                       <div className="flex items-center justify-center gap-2">
                         <Link 
                           href={`/achievement/${row.id}`} 
-                          className={icon.blue} 
+                          className={icon.blue}
                           title="عرض التفاصيل"
+                          aria-label="عرض تفاصيل الإنجاز"
                         >
                           <Eye size={18} />
                         </Link>
@@ -545,8 +549,9 @@ export default function FullRecordPage() {
                         
                         <button 
                           onClick={() => handleActionClick(row, 'delete')} 
-                          className={icon.red} 
+                          className={icon.red}
                           title="حذف"
+                          aria-label="حذف الإنجاز"
                         >
                           <Trash2 size={18} />
                         </button>
