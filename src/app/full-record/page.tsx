@@ -52,6 +52,7 @@ export default function FullRecordPage() {
   const [pinInput, setPinInput] = useState('');
   const [pinError, setPinError] = useState('');
   const [verifiedPin, setVerifiedPin] = useState('');
+  const [deletePinMode, setDeletePinMode] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
@@ -249,8 +250,9 @@ export default function FullRecordPage() {
     }
   };
 
-  const handleActionClick = (doc: any) => {
+  const handleActionClick = (doc: any, mode: 'edit' | 'delete' = 'edit') => {
     setSelectedDoc(doc);
+    setDeletePinMode(mode === 'delete');
     setShowPinPrompt(true);
   };
 
@@ -266,7 +268,16 @@ export default function FullRecordPage() {
       if (result.valid) {
         setVerifiedPin(pinInput);
         setShowPinPrompt(false);
-        setShowEditModal(true);
+        
+        if (deletePinMode) {
+          // Delete mode: confirm then delete with PIN
+          setDeletePinMode(false);
+          setPendingDeleteId(selectedDoc.id);
+          setShowConfirm(true);
+        } else {
+          // Edit mode: open edit modal
+          setShowEditModal(true);
+        }
         setPinInput('');
         setPinError('');
       } else {
@@ -287,7 +298,11 @@ export default function FullRecordPage() {
     if (!pendingDeleteId) return;
     setShowConfirm(false);
     try {
-      const res = await fetch(`/api/achievements/${pendingDeleteId}`, { method: 'DELETE' });
+      const deleteBody = !isAdmin && verifiedPin ? JSON.stringify({ pin: verifiedPin }) : undefined;
+      const res = await fetch(`/api/achievements/${pendingDeleteId}`, {
+        method: 'DELETE',
+        ...(deleteBody ? { headers: { 'Content-Type': 'application/json' }, body: deleteBody } : {}),
+      });
       if (!res.ok) {
         const errData = await res.json();
         throw new Error(errData.error || 'فشل الحذف');
@@ -507,11 +522,19 @@ export default function FullRecordPage() {
                         </Link>
                         
                         <button 
-                          onClick={() => handleActionClick(row)} 
+                          onClick={() => handleActionClick(row, 'edit')} 
                           className={icon.purple} 
                           title="تعديل الإنجاز (يتطلب رمز الحماية)"
                         >
                           <Pencil size={18} />
+                        </button>
+                        
+                        <button 
+                          onClick={() => handleActionClick(row, 'delete')} 
+                          className={icon.red} 
+                          title="حذف"
+                        >
+                          <Trash2 size={18} />
                         </button>
                       </div>
                     )}
@@ -534,8 +557,8 @@ export default function FullRecordPage() {
           {showPinPrompt && !isAdmin && (
             <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60] animate-in fade-in duration-200 p-4">
               <div className="bg-white p-8 rounded-3xl shadow-2xl max-w-sm w-full text-center animate-in zoom-in-95 duration-300" onClick={e => e.stopPropagation()}>
-                <h3 className="text-xl font-black text-[#46178f] mb-2">تعديل الإنجاز ✏️</h3>
-                <p className="text-sm text-gray-500 mb-6">الرجاء إدخال رمز الحماية (PIN) الخاص بهذا الإنجاز لتتمكن من تعديله.</p>
+                <h3 className="text-xl font-black text-[#46178f] mb-2">{deletePinMode ? 'حذف الإنجاز 🗑️' : 'تعديل الإنجاز ✏️'}</h3>
+                <p className="text-sm text-gray-500 mb-6">{deletePinMode ? 'الرجاء إدخال رمز الحماية (PIN) الخاص بهذا الإنجاز لتتمكن من حذفه.' : 'الرجاء إدخال رمز الحماية (PIN) الخاص بهذا الإنجاز لتتمكن من تعديله.'}</p>
                 
                 <input 
                   type="password" 
@@ -549,7 +572,7 @@ export default function FullRecordPage() {
                 {pinError && <p className="text-red-500 font-bold text-sm mt-3 animate-in slide-in-from-top-1">{pinError}</p>}
                 
                 <div className="flex gap-3 mt-6">
-                  <button onClick={() => { setShowPinPrompt(false); setPinError(''); setPinInput(''); }} className="flex-1 py-3 rounded-2xl font-black text-gray-600 bg-gray-100 hover:bg-gray-200 transition-all">
+                  <button onClick={() => { setShowPinPrompt(false); setPinError(''); setPinInput(''); setDeletePinMode(false); }} className="flex-1 py-3 rounded-2xl font-black text-gray-600 bg-gray-100 hover:bg-gray-200 transition-all">
                     إلغاء
                   </button>
                   <button onClick={handlePinSubmit} className="flex-1 py-3 rounded-2xl font-black text-white bg-[#0087ed] hover:bg-[#0073cc] border-b-4 border-[#005fa3] active:border-b-0 active:translate-y-1 transition-all shadow-lg">
