@@ -213,13 +213,7 @@ export default function AchievementDetailsPage() {
         if (cancelled) return;
 
         if (docSnap.exists()) {
-          const data: any = { id: docSnap.id, ...docSnap.data() };
-          // Non-admins cannot view non-approved achievements
-          if (data.status && data.status !== 'approved') {
-            setError("هذا الإنجاز بانتظار المراجعة ولا يمكن عرضه حالياً.");
-          } else {
-            setAchievement(data);
-          }
+          setAchievement({ id: docSnap.id, ...docSnap.data() });
         } else {
           setError("لم يتم العثور على هذا الإنجاز.");
         }
@@ -240,6 +234,20 @@ export default function AchievementDetailsPage() {
 
     return () => { cancelled = true; };
   }, [id]);
+
+  // Non-admins cannot view non-approved achievements
+  if (achievement && !adminLoading && !isAdmin && achievement.status && achievement.status !== 'approved') {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+        <div className="bg-yellow-50 border-2 border-yellow-200 rounded-3xl p-10 max-w-md">
+          <Clock size={48} className="mx-auto mb-4 text-yellow-500" />
+          <h2 className="text-xl font-black text-gray-800 mb-2">هذا الإنجاز بانتظار المراجعة</h2>
+          <p className="text-gray-500 font-bold mb-4">لم تتم الموافقة على هذا الإنجاز بعد. يمكن للأدمن فقط مشاهدته.</p>
+          <button onClick={() => router.back()} className="bg-[#46178f] text-white px-6 py-2 rounded-2xl font-black">العودة</button>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
