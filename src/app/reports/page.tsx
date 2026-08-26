@@ -14,7 +14,8 @@ export default function ReportsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
   const [selectedTeacher, setSelectedTeacher] = useState('all');
-  const [schoolSettings, setSchoolSettings] = useState<{ schoolName?: string, logoUrl?: string } | null>(null);
+  const [selectedDept, setSelectedDept] = useState('all');
+  const [schoolSettings, setSchoolSettings] = useState<{ schoolName?: string, logoUrl?: string, departments?: string[], teachers?: (string | { name: string; department: string })[] } | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [notification, setNotification] = useState<{ type: string, message: string } | null>(null);
   const { isAdmin, loading: adminLoading } = useAdmin();
@@ -310,21 +311,45 @@ export default function ReportsPage() {
   };
 
   const renderIndividualReport = () => {
-    const teachers = Array.from(new Set(achievements.map(a => a.teacherName).filter(Boolean))) as string[];
+    // Get departments from settings or from achievements
+    const departments = schoolSettings?.departments?.length
+      ? schoolSettings.departments
+      : Array.from(new Set(achievements.map(a => a.department).filter(Boolean))) as string[];
+
+    // Get teachers for selected department
+    const allTeachers = achievements.map(a => ({ name: a.teacherName, department: a.department || '' })).filter(t => t.name);
+    const teachersForDept = selectedDept === 'all'
+      ? Array.from(new Set(allTeachers.map(t => t.name))) as string[]
+      : Array.from(new Set(allTeachers.filter(t => t.department === selectedDept).map(t => t.name))) as string[];
+
     const filteredData = selectedTeacher === "all" ? [] : achievements.filter(a => a.teacherName === selectedTeacher).sort((a,b) => b.date.localeCompare(a.date));
 
     return (
       <div className={`${panel} p-8 print:shadow-none print:border-none print:p-0`}>
-        <div className="print:hidden mb-8 bg-purple-50 p-6 rounded-2xl border-2 border-purple-100">
-           <label className="block text-sm font-bold text-gray-700 mb-2">اختر المعلمة لعرض وطباعة السجل الفردي:</label>
-           <select 
-             value={selectedTeacher} 
-             onChange={(e) => setSelectedTeacher(e.target.value)}
-             className={`${inputSmall} w-full md:w-1/2 cursor-pointer`}
-           >
-             <option value="all">-- يرجى اختيار المعلمة --</option>
-             {teachers.map(t => <option key={t} value={t}>{t}</option>)}
-           </select>
+        <div className="print:hidden mb-8 bg-purple-50 p-6 rounded-2xl border-2 border-purple-100 space-y-4">
+           <div>
+             <label className="block text-sm font-bold text-gray-700 mb-2">اختر القسم أولاً:</label>
+             <select 
+               value={selectedDept} 
+               onChange={(e) => { setSelectedDept(e.target.value); setSelectedTeacher('all'); }}
+               className={`${inputSmall} w-full md:w-1/2 cursor-pointer`}
+             >
+               <option value="all">-- جميع الأقسام --</option>
+               {departments.map(d => <option key={d} value={d}>{d}</option>)}
+             </select>
+           </div>
+           <div>
+             <label className="block text-sm font-bold text-gray-700 mb-2">اختر المعلمة لعرض وطباعة السجل الفردي:</label>
+             <select 
+               value={selectedTeacher} 
+               onChange={(e) => setSelectedTeacher(e.target.value)}
+               disabled={teachersForDept.length === 0}
+               className={`${inputSmall} w-full md:w-1/2 cursor-pointer`}
+             >
+               <option value="all">{teachersForDept.length === 0 ? 'لا توجد معلمات في هذا القسم' : '-- يرجى اختيار المعلمة --'}</option>
+               {teachersForDept.map(t => <option key={t} value={t}>{t}</option>)}
+             </select>
+           </div>
         </div>
 
         {selectedTeacher !== "all" ? (
