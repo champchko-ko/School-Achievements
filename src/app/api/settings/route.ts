@@ -3,6 +3,7 @@
 // PUT: Update settings (admin session required)
 
 import { NextResponse } from 'next/server';
+import { logInfo, logError } from '../../../lib/logger';
 import { isAdminSession } from '../../../lib/admin-session';
 import { sanitizeSettingsPayload } from '../../../lib/sanitize';
 import { getAdminDb, doc, getDoc, setDoc } from '../../../lib/firebase-admin';
@@ -29,7 +30,7 @@ export async function GET() {
 
     return NextResponse.json(data);
   } catch (error: any) {
-    console.error('Settings GET error:', error?.message || error);
+    logError('api', 'Settings GET error:', error?.message || error);
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
 }
@@ -75,9 +76,10 @@ export async function PUT(request: Request) {
     // Save settings (merge to preserve fields)
     await setDoc(doc(db, "settings", "global_info"), settingsData);
 
+    logInfo('data', 'Settings updated', undefined, request);
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    console.error('Settings PUT error:', error?.message || error);
+    logError('api', 'Settings PUT error:', error?.message || error);
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
 }

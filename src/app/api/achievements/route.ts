@@ -3,6 +3,7 @@
 // Stores achievement data + handles PIN hashing server-side
 
 import { NextResponse } from 'next/server';
+import { logAchievementCreated, logCsrfBlock, logError } from '../../../lib/logger';
 import { sanitizeAchievementPayload } from '../../../lib/sanitize';
 import { pbkdf2Sync } from 'crypto';
 import { getAdminDb, addDoc, collection, doc, serverTimestamp, updateDoc } from '../../../lib/firebase-admin';
@@ -27,9 +28,11 @@ export async function POST(request: Request) {
     const referer = request.headers.get('referer');
     const host = request.headers.get('host');
     if (origin && host && !origin.includes(host)) {
+      logCsrfBlock(request);
       return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
     }
     if (!origin && referer && host && !referer.includes(host)) {
+      logCsrfBlock(request);
       return NextResponse.json({ error: 'Invalid referer' }, { status: 403 });
     }
 
@@ -76,9 +79,10 @@ export async function POST(request: Request) {
       await updateDoc(doc(db, 'achievements', docRef.id), { pinHash: hash });
     }
 
+    logAchievementCreated(docRef.id, sTeacherName, request);
     return NextResponse.json({ success: true, id: docRef.id });
   } catch (error: any) {
-    console.error('Create achievement error:', error?.message || error);
+    logError('api', 'Create achievement failed', { error: error?.message }, request);
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
 }

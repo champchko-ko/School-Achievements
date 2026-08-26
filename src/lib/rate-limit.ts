@@ -35,6 +35,7 @@ export function checkRateLimit(
 
   entry.count++;
   if (entry.count > options.maxRequests) {
+    /* Rate limit hit — caller should log via logRateLimitHit */
     return { allowed: false, remaining: 0, resetAt: entry.resetAt };
   }
 
