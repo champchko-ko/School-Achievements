@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { db } from '../../lib/firebase';
 import { collection, query, onSnapshot, doc, getDoc } from 'firebase/firestore';
-import { ShieldCheck, Trophy, Medal, Award, ExternalLink, Loader2, CheckCircle2, XCircle, TrendingUp, Files, UserX, Clock, ThumbsUp, ThumbsDown, ShieldAlert, RefreshCw } from 'lucide-react';
+import { ShieldCheck, Trophy, Medal, Award, ExternalLink, Loader2, CheckCircle2, XCircle, TrendingUp, Files, UserX, Clock, ThumbsUp, ThumbsDown, ShieldAlert, RefreshCw, Download } from 'lucide-react';
 import { useAdmin } from '../../lib/useAdmin';
 import { useRouter } from 'next/navigation';
 import { header, panel, toast } from '../../lib/ui';
@@ -18,6 +18,7 @@ export default function AdminDashboard() {
   const [logs, setLogs] = useState<any[]>([]);
   const [logsLoading, setLogsLoading] = useState(true);
   const [showLogs, setShowLogs] = useState(false);
+  const [backupLoading, setBackupLoading] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -132,6 +133,31 @@ export default function AdminDashboard() {
       setNotification({ type: "error", message: error.message || "حدث خطأ أثناء تقييم الإنجاز." });
     } finally {
       setProcessingId(null);
+    }
+  };
+
+  // Download database backup
+  const handleBackup = async () => {
+    setBackupLoading(true);
+    try {
+      const res = await fetch('/api/backup', { method: 'POST' });
+      if (!res.ok) throw new Error('Backup failed');
+      const data = await res.json();
+      // Trigger download as JSON file
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `school-achievements-backup-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      setNotification({ type: 'success', message: `تم التحميل بنجاح! ${data.totalDocuments} مستند` });
+    } catch (error: any) {
+      setNotification({ type: 'error', message: error.message || 'فشل في إنشاء النسخة الاحتياطية' });
+    } finally {
+      setBackupLoading(false);
     }
   };
 
@@ -414,6 +440,29 @@ export default function AdminDashboard() {
             )}
           </div>
         )}
+      </div>
+
+      {/* ── Database Backup ── */}
+      <div className="${panel} p-5 md:p-6">
+        <div className="flex items-center gap-3 mb-3">
+          <span className="p-3 bg-blue-50 text-blue-600 rounded-2xl"><Download size={22} /></span>
+          <div className="flex-1">
+            <h3 className="text-lg font-black text-white">نسخة احتياطية</h3>
+            <p className="text-xs text-gray-400 font-bold">تحميل جميع البيانات كملف JSON</p>
+          </div>
+          <button
+            onClick={handleBackup}
+            disabled={backupLoading}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl font-black text-sm transition-all ${
+              backupLoading
+                ? 'bg-gray-600 cursor-not-allowed'
+                : 'bg-blue-600 hover:bg-blue-700 text-white border-b-4 border-blue-800 active:border-b-0 active:translate-y-1'
+            }`}
+          >
+            {backupLoading ? <Loader2 className="animate-spin" size={16} /> : <Download size={16} />}
+            {backupLoading ? 'جاري التحميل...' : 'تحميل النسخة الاحتياطية'}
+          </button>
+        </div>
       </div>
 
     </div>
