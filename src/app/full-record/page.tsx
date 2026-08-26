@@ -63,13 +63,7 @@ export default function FullRecordPage() {
     setMounted(true);
     const q = query(collection(db, 'achievements'), orderBy('timestamp', 'desc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const achievementsData = snapshot.docs
-        .map(d => ({ id: d.id, ...d.data() }))
-        .filter((a: any) => {
-          // Non-admins only see approved achievements
-          if (!isAdmin && a.status !== 'approved' && a.status !== undefined) return false;
-          return true;
-        });
+      const achievementsData = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
       setAchievements(achievementsData);
       setIsLoading(false);
     });
@@ -99,7 +93,12 @@ export default function FullRecordPage() {
   ])) as string[];
 
   // Basic and Advanced filter logic
-  const filteredData = achievements.filter(item => {
+  // Non-admins only see approved achievements
+  const visibleAchievements = isAdmin
+    ? achievements
+    : achievements.filter((a: any) => a.status === 'approved' || !a.status);
+
+  const filteredData = visibleAchievements.filter(item => {
     const matchesSearch = (item.teacherName || "").includes(searchTerm) || 
                           (item.title || "").includes(searchTerm) || 
                           (item.department || "").includes(searchTerm);
@@ -482,7 +481,13 @@ export default function FullRecordPage() {
                     </Link>
                   </td>
                   <td className="p-4 text-sm text-gray-500 whitespace-nowrap hidden sm:table-cell">{row.date}</td>
-                  <td className="p-4 whitespace-nowrap">{getStatusBadge(row.status)}</td>
+                  <td className="p-4 whitespace-nowrap">
+                    {row.status === 'pending' ? (
+                      <a href="/admin" className="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 w-fit hover:bg-yellow-200 transition-colors cursor-pointer" title="انتقل للوحة التحكم للموافقة">
+                        ⏳ يحتاج موافقة
+                      </a>
+                    ) : getStatusBadge(row.status)}
+                  </td>
                   
                   {/* إخفاء محتوى التقييم على الشاشات الصغيرة */}
                   <td className="p-4 whitespace-nowrap hidden lg:table-cell">{getScoreBadge(row.score)}</td>

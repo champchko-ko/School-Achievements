@@ -58,7 +58,8 @@ export default function AdminDashboard() {
 
   // --- Derived Data ---
   const pendingAchievements = allAchievements.filter(a => a.status === 'pending');
-  const approvedAchievements = allAchievements.filter(a => a.status === 'approved' || (!a.status && a.score !== null));
+  const totalApproved = allAchievements.filter(a => a.status === 'approved' || (!a.status && a.status !== 'pending'));
+  const approvedAchievements = totalApproved.filter(a => a.score === null);
 
   const now = new Date();
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -278,7 +279,7 @@ export default function AdminDashboard() {
         <div>
           <div className="flex items-center gap-3 mb-4">
             <span className="p-3 bg-green-50 text-[#26890c] rounded-2xl"><CheckCircle2 size={22} /></span>
-            <h3 className="text-xl md:text-2xl font-black text-white">إنجازات معتمدة (تقييم)</h3>
+            <h3 className="text-xl md:text-2xl font-black text-white">إنجازات معتمدة بانتظار التقييم</h3>
             <span className="bg-[#26890c] text-white px-3 py-1 rounded-full text-sm font-black">{approvedAchievements.length}</span>
           </div>
           <div className="grid grid-cols-1 gap-4">
