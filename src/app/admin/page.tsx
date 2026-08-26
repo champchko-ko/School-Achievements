@@ -350,6 +350,72 @@ export default function AdminDashboard() {
         </div>
       )}
 
+      {/* ── Security Logs ── */}
+      <div>
+        <button
+          onClick={() => { setShowLogs(!showLogs); if (!showLogs) fetchLogs(); }}
+          className="flex items-center gap-3 mb-4 w-full text-left group"
+        >
+          <span className="p-3 bg-orange-50 text-orange-600 rounded-2xl group-hover:bg-orange-100 transition-colors"><ShieldAlert size={22} /></span>
+          <h3 className="text-xl md:text-2xl font-black text-white flex-1">سجل الأحداث الأمنية</h3>
+          <RefreshCw size={18} className={`text-white/60 transition-transform ${logsLoading ? 'animate-spin' : ''}`} />
+          <span className="text-white/40 text-sm font-bold">{showLogs ? '▲' : '▼'}</span>
+        </button>
+
+        {showLogs && (
+          <div className={`${panel} p-4 md:p-6`}>
+            {logsLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="animate-spin text-yellow-400" size={24} />
+                <span className="mr-3 font-bold text-gray-400">جاري تحميل السجلات...</span>
+              </div>
+            ) : logs.length === 0 ? (
+              <div className="text-center py-8 text-gray-400 font-bold">لا توجد أحداث مسجلة بعد.</div>
+            ) : (
+              <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                {logs.map((log: any) => (
+                  <div key={log.id} className={`flex items-start gap-3 p-3 rounded-xl text-sm ${
+                    log.level === 'security' ? 'bg-red-50 border border-red-100' :
+                    log.level === 'error' ? 'bg-red-50/50 border border-red-50' :
+                    log.level === 'warn' ? 'bg-yellow-50 border border-yellow-100' :
+                    'bg-gray-50 border border-gray-100'
+                  }`}>
+                    <span className={`shrink-0 w-2 h-2 rounded-full mt-1.5 ${
+                      log.level === 'security' ? 'bg-red-500' :
+                      log.level === 'error' ? 'bg-red-400' :
+                      log.level === 'warn' ? 'bg-yellow-400' :
+                      'bg-green-400'
+                    }`}></span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`font-black text-xs px-2 py-0.5 rounded-full ${
+                          log.level === 'security' ? 'bg-red-100 text-red-700' :
+                          log.level === 'error' ? 'bg-red-100 text-red-600' :
+                          log.level === 'warn' ? 'bg-yellow-100 text-yellow-700' :
+                          'bg-green-100 text-green-700'
+                        }`}>{log.level?.toUpperCase()}</span>
+                        <span className="font-bold text-xs text-gray-400">{log.category}</span>
+                        {log.ip && <span className="text-xs text-gray-400">🌐 {log.ip}</span>}
+                        {log.method && log.endpoint && (
+                          <span className="text-xs text-gray-400">{log.method} {String(log.endpoint).replace(/^https?:\/\/[^/]+/, '')}</span>
+                        )}
+                      </div>
+                      <p className="font-bold text-gray-700 mt-1">{log.message}</p>
+                      {log.details && (
+                        <pre className="text-xs text-gray-400 mt-1 whitespace-pre-wrap break-all">{JSON.stringify(log.details, null, 2)}</pre>
+                      )}
+                    </div>
+                    <span className="text-[10px] text-gray-300 shrink-0">
+                      {log.timestamp ? new Date(log.timestamp).toLocaleString('ar-SA') : ''}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
     </div>
   );
 }
