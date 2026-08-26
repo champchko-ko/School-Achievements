@@ -5,6 +5,7 @@
 import { NextResponse } from 'next/server';
 import { checkRateLimit } from '../../../lib/rate-limit';
 import { pbkdf2Sync } from 'crypto';
+import { getAdminDb, doc, getDoc, updateDoc } from '../../../lib/firebase-admin';
 
 function getPepper(): string {
   const pepper = process.env.PIN_PEPPER;
@@ -50,22 +51,7 @@ export async function POST(request: Request) {
 
     const hash = hashPin(pin, achievementId);
 
-    // Use Firebase Web SDK (works in Node.js server runtime)
-    const { initializeApp, getApps, getApp } = await import('firebase/app');
-    const { getFirestore, doc, updateDoc } = await import('firebase/firestore');
-    
-    const firebaseConfig = {
-      apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-      authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-      messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-      appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-    };
-
-    const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-    const db = getFirestore(app);
-    
+    const db = getAdminDb();
     await updateDoc(doc(db, 'achievements', achievementId), {
       pinHash: hash,
     });
@@ -93,22 +79,7 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: 'achievementId and pin required' }, { status: 400 });
     }
 
-    // Use Firebase Web SDK
-    const { initializeApp, getApps, getApp } = await import('firebase/app');
-    const { getFirestore, doc, getDoc } = await import('firebase/firestore');
-    
-    const firebaseConfig = {
-      apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-      authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-      messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-      appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-    };
-
-    const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-    const db = getFirestore(app);
-    
+    const db = getAdminDb();
     const docSnap = await getDoc(doc(db, 'achievements', achievementId));
     
     if (!docSnap.exists()) {

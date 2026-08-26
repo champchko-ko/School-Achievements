@@ -6,6 +6,7 @@
 
 import { NextResponse } from 'next/server';
 import { isAdminSession } from '../../../lib/admin-session';
+import { getAdminDb, collection, deleteField, doc, getDocs, updateDoc } from '../../../lib/firebase-admin';
 import {
   cloudinaryConfig,
   collectAttachmentUrls,
@@ -29,20 +30,7 @@ function fileNameFromUrl(url: string): string {
   }
 }
 
-async function getAppDb() {
-  const { initializeApp, getApps, getApp } = await import('firebase/app');
-  const { getFirestore } = await import('firebase/firestore');
-  const firebaseConfig = {
-    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  };
-  const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-  return getFirestore(app);
-}
+// Uses Admin SDK via shared config
 
 export async function POST(request: Request) {
   try {
@@ -77,11 +65,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ assets: results });
     }
 
-    const db = await getAppDb();
-    const { collection, getDocs, doc, updateDoc, deleteField } = await import('firebase/firestore');
+    const db = getAdminDb();
 
     const snapshot = await getDocs(collection(db, 'achievements'));
-    const achievementDocs = snapshot.docs.map((d) => ({ id: d.id, data: d.data() }));
+    const achievementDocs = snapshot.docs.map((d: any) => ({ id: d.id, data: d.data() }));
     const cloudAssets = await listCloudinaryAssets();
 
     // Build reference map: `${resourceType}:${publicId}` -> first achievement referencing it
@@ -137,7 +124,7 @@ export async function POST(request: Request) {
       let fixedReferences = 0;
       const achievementsFixed = brokenByAchievement.size;
       for (const [achievementId, brokenUrls] of brokenByAchievement) {
-        const data = achievementDocs.find((d) => d.id === achievementId)?.data || {};
+        const data = achievementDocs.find((d: any) => d.id === achievementId)?.data || {};
         const nextUrls = collectAttachmentUrls(data).filter((u) => !brokenUrls.includes(u));
         const update: any = { attachmentUrls: nextUrls };
         if (typeof data?.fileUrl === 'string' && brokenUrls.includes(data.fileUrl)) update.fileUrl = deleteField();

@@ -7,6 +7,7 @@ import { isAdminSession } from '../../../../lib/admin-session';
 import { sanitizeAchievementPayload } from '../../../../lib/sanitize';
 import { pbkdf2Sync } from 'crypto';
 import { collectAttachmentUrls, destroyCloudinaryAsset } from '../../../../lib/cloudinary';
+import { getAdminDb, deleteDoc, deleteField, doc, getDoc, updateDoc } from '../../../../lib/firebase-admin';
 
 function getPepper(): string {
   return process.env.PIN_PEPPER || 'school-achievements-default-pepper-change-in-production';
@@ -28,20 +29,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     const body = sanitizeAchievementPayload(rawBody);
     const isAdmin = await isAdminSession();
 
-    const { initializeApp, getApps, getApp } = await import('firebase/app');
-    const { getFirestore, doc, getDoc, updateDoc, deleteField } = await import('firebase/firestore');
-
-    const firebaseConfig = {
-      apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-      authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-      messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-      appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-    };
-
-    const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-    const db = getFirestore(app);
+    const db = getAdminDb();
 
     const docSnap = await getDoc(doc(db, 'achievements', id));
     if (!docSnap.exists()) {
@@ -106,20 +94,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
       return NextResponse.json({ error: 'غير مصرح بهذا الإجراء. تسجيل الدخول كمدير مطلوب.' }, { status: 401 });
     }
 
-    const { initializeApp, getApps, getApp } = await import('firebase/app');
-    const { getFirestore, doc, getDoc, deleteDoc } = await import('firebase/firestore');
-
-    const firebaseConfig = {
-      apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-      authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-      messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-      appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-    };
-
-    const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-    const db = getFirestore(app);
+    const db = getAdminDb();
 
     const docSnap = await getDoc(doc(db, 'achievements', id));
     if (!docSnap.exists()) {

@@ -3,6 +3,7 @@
 
 import { NextResponse } from 'next/server';
 import { isAdminSession } from '../../../../../lib/admin-session';
+import { getAdminDb, doc, updateDoc } from '../../../../../lib/firebase-admin';
 
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -21,20 +22,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       return NextResponse.json({ error: 'Invalid score value. Must be 75, 85, or 95.' }, { status: 400 });
     }
 
-    const { initializeApp, getApps, getApp } = await import('firebase/app');
-    const { getFirestore, doc, updateDoc } = await import('firebase/firestore');
-
-    const firebaseConfig = {
-      apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-      authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-      messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-      appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-    };
-
-    const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-    const db = getFirestore(app);
+    const db = getAdminDb();
 
     await updateDoc(doc(db, 'achievements', id), { score });
 
