@@ -5,6 +5,7 @@
 import { NextResponse } from 'next/server';
 import { sanitizeAchievementPayload } from '../../../lib/sanitize';
 import { pbkdf2Sync } from 'crypto';
+import { getAdminDb, addDoc, collection, doc, serverTimestamp, updateDoc } from '../../../lib/firebase-admin';
 
 function getPepper(): string {
   const pepper = process.env.PIN_PEPPER;
@@ -50,20 +51,7 @@ export async function POST(request: Request) {
         ? date
         : new Date().toISOString().split('T')[0];
 
-    const { initializeApp, getApps, getApp } = await import('firebase/app');
-    const { getFirestore, doc, collection, addDoc, serverTimestamp } = await import('firebase/firestore');
-
-    const firebaseConfig = {
-      apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-      authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-      messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-      appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-    };
-
-    const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-    const db = getFirestore(app);
+    const db = getAdminDb();
 
     // Create the achievement document
     const docRef = await addDoc(collection(db, "achievements"), {

@@ -5,24 +5,12 @@
 import { NextResponse } from 'next/server';
 import { isAdminSession } from '../../../lib/admin-session';
 import { sanitizeSettingsPayload } from '../../../lib/sanitize';
+import { getAdminDb, doc, getDoc, setDoc } from '../../../lib/firebase-admin';
 
 
 export async function GET() {
   try {
-    const { initializeApp, getApps, getApp } = await import('firebase/app');
-    const { getFirestore, doc, getDoc } = await import('firebase/firestore');
-
-    const firebaseConfig = {
-      apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-      authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-      messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-      appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-    };
-
-    const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-    const db = getFirestore(app);
+    const db = getAdminDb();
 
     const docSnap = await getDoc(doc(db, "settings", "global_info"));
     
@@ -58,21 +46,8 @@ export async function PUT(request: Request) {
     // Sanitize all user-supplied text fields
     const body = sanitizeSettingsPayload(rawBody);
 
-    const { initializeApp, getApps, getApp } = await import('firebase/app');
-    const { getFirestore, doc, setDoc } = await import('firebase/firestore');
+    const db = getAdminDb();
     const { pbkdf2Sync } = await import('crypto');
-
-    const firebaseConfig = {
-      apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-      authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-      messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-      appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-    };
-
-    const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-    const db = getFirestore(app);
 
     // If admin PIN is provided, hash it and store in protected admin/pinConfig doc
     if (body.adminPin) {
@@ -86,7 +61,7 @@ export async function PUT(request: Request) {
     const { adminPin, ...settingsData } = body;
 
     // Save settings (merge to preserve fields)
-    await setDoc(doc(db, "settings", "global_info"), settingsData, { merge: true });
+    await setDoc(doc(db, "settings", "global_info"), settingsData);
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
