@@ -6,7 +6,8 @@ import { pbkdf2Sync } from 'crypto';
 import { getAdminDb, doc, getDoc, setDoc, updateDoc } from '../../../lib/firebase-admin';
 
 function hashAdminPin(pin: string): string {
-  const pepper = process.env.PIN_PEPPER || 'school-achievements-default-pepper-change-in-production';
+  const pepper = process.env.PIN_PEPPER;
+  if (!pepper) throw new Error('PIN_PEPPER env var is not set');
   const salt = `admin-pin-${pepper}`;
   const hash = pbkdf2Sync(pin, salt, 10000, 64, 'sha512');
   return hash.toString('hex');

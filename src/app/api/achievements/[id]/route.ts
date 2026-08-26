@@ -10,7 +10,9 @@ import { collectAttachmentUrls, destroyCloudinaryAsset } from '../../../../lib/c
 import { getAdminDb, deleteDoc, deleteField, doc, getDoc, updateDoc } from '../../../../lib/firebase-admin';
 
 function getPepper(): string {
-  return process.env.PIN_PEPPER || 'school-achievements-default-pepper-change-in-production';
+  const pepper = process.env.PIN_PEPPER;
+  if (!pepper) throw new Error('PIN_PEPPER env var is not set');
+  return pepper;
 }
 
 function hashPin(pin: string, achievementId: string): string {

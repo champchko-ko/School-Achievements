@@ -11,7 +11,6 @@ function getPepper(): string {
   const pepper = process.env.PIN_PEPPER;
   if (!pepper) throw new Error('PIN_PEPPER env var is not set');
   return pepper;
-  if (!pepper) throw new Error('PIN_PEPPER env var is not set'); 
 }
 
 function hashPin(pin: string, achievementId: string): string {
@@ -26,6 +25,17 @@ function hashPin(pin: string, achievementId: string): string {
 // This endpoint is kept for admin use only.
 export async function POST(request: Request) {
   try {
+    // CSRF protection
+    const origin = request.headers.get('origin');
+    const referer = request.headers.get('referer');
+    const host = request.headers.get('host');
+    if (origin && host && !origin.includes(host)) {
+      return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
+    }
+    if (!origin && referer && host && !referer.includes(host)) {
+      return NextResponse.json({ error: 'Invalid referer' }, { status: 403 });
+    }
+
     // Require admin session
     const { isAdminSession } = await import('../../../lib/admin-session');
     const isAdmin = await isAdminSession();
