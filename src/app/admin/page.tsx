@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { db } from '../../lib/firebase';
 import { collection, query, onSnapshot, doc, getDoc } from 'firebase/firestore';
-import { ShieldCheck, Trophy, Medal, Award, ExternalLink, Loader2, CheckCircle2, XCircle, TrendingUp, Files, UserX, Clock, ThumbsUp, ThumbsDown, ShieldAlert, RefreshCw, Download } from 'lucide-react';
+import { ShieldCheck, Trophy, Medal, Award, ExternalLink, Loader2, CheckCircle2, XCircle, TrendingUp, Files, UserX, Clock, ThumbsUp, ThumbsDown, ShieldAlert, RefreshCw, Download, Eye } from 'lucide-react';
+import Link from 'next/link';
 import { useAdmin } from '../../lib/useAdmin';
 import { useRouter } from 'next/navigation';
 import { header, panel, toast } from '../../lib/ui';
@@ -279,41 +280,49 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                {/* Approve / Reject Buttons */}
-                <div className="w-full md:w-auto flex md:flex-col gap-2 shrink-0">
+                {/* View / Approve / Reject / Score — Vertical layout */}
+                <div className="w-full md:w-auto flex flex-col gap-2 shrink-0">
+                  <Link 
+                    href={`/achievement/${item.id}`}
+                    target="_blank"
+                    className="flex items-center justify-center gap-2 bg-[#0087ed] hover:bg-[#0073cc] text-white px-4 py-2.5 rounded-2xl font-black border-b-4 border-[#005fa3] active:border-b-0 active:translate-y-1 transition-all text-sm"
+                  >
+                    <Eye size={18} /> عرض الإنجاز
+                  </Link>
+                  <div className="border-t border-gray-100 my-1"></div>
                   <button 
                     onClick={() => handleStatusChange(item.id, 'approved')}
                     disabled={processingId === item.id}
-                    className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-[#26890c] hover:bg-[#20730a] text-white px-4 py-2 rounded-2xl font-black border-b-4 border-[#1c5e08] active:border-b-0 active:translate-y-1 transition-all"
+                    className="flex items-center justify-center gap-2 bg-[#26890c] hover:bg-[#20730a] text-white px-4 py-2.5 rounded-2xl font-black border-b-4 border-[#1c5e08] active:border-b-0 active:translate-y-1 transition-all text-sm"
                   >
                     {processingId === item.id ? <Loader2 className="animate-spin" size={18} /> : <><ThumbsUp size={18} /> موافقة</>}
                   </button>
                   <button 
                     onClick={() => handleStatusChange(item.id, 'rejected')}
                     disabled={processingId === item.id}
-                    className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white hover:bg-red-50 text-[#eb1f36] border-2 border-red-200 px-4 py-2 rounded-2xl font-black transition-all"
+                    className="flex items-center justify-center gap-2 bg-white hover:bg-red-50 text-[#eb1f36] border-2 border-red-200 px-4 py-2.5 rounded-2xl font-black transition-all text-sm"
                   >
                     {processingId === item.id ? <Loader2 className="animate-spin" size={18} /> : <><ThumbsDown size={18} /> رفض</>}
                   </button>
-                  <div className="hidden md:block border-t border-gray-100 my-1"></div>
+                  <div className="border-t border-gray-100 my-1"></div>
                   <button 
                     onClick={() => handleScore(item.id, 95)}
                     disabled={processingId === item.id}
-                    className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-[#ffb000] hover:bg-[#e69f00] text-yellow-900 px-4 py-2 rounded-2xl font-black border-b-4 border-[#cc8d00] active:border-b-0 active:translate-y-1 transition-all"
+                    className="flex items-center justify-center gap-2 bg-[#ffb000] hover:bg-[#e69f00] text-yellow-900 px-4 py-2.5 rounded-2xl font-black border-b-4 border-[#cc8d00] active:border-b-0 active:translate-y-1 transition-all text-sm"
                   >
                     {processingId === item.id ? <Loader2 className="animate-spin" size={18} /> : <><Trophy size={18} /> ذهبي</>}
                   </button>
                   <button 
                     onClick={() => handleScore(item.id, 85)}
                     disabled={processingId === item.id}
-                    className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-[#e5e7eb] hover:bg-[#d1d5db] text-gray-800 px-4 py-2 rounded-2xl font-black border-b-4 border-[#9ca3af] active:border-b-0 active:translate-y-1 transition-all"
+                    className="flex items-center justify-center gap-2 bg-[#e5e7eb] hover:bg-[#d1d5db] text-gray-800 px-4 py-2.5 rounded-2xl font-black border-b-4 border-[#9ca3af] active:border-b-0 active:translate-y-1 transition-all text-sm"
                   >
                     {processingId === item.id ? <Loader2 className="animate-spin" size={18} /> : <><Medal size={18} /> فضي</>}
                   </button>
                   <button 
                     onClick={() => handleScore(item.id, 75)}
                     disabled={processingId === item.id}
-                    className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-[#f97316] hover:bg-[#ea580c] text-white px-4 py-2 rounded-2xl font-black border-b-4 border-[#c2410c] active:border-b-0 active:translate-y-1 transition-all"
+                    className="flex items-center justify-center gap-2 bg-[#f97316] hover:bg-[#ea580c] text-white px-4 py-2.5 rounded-2xl font-black border-b-4 border-[#c2410c] active:border-b-0 active:translate-y-1 transition-all text-sm"
                   >
                     {processingId === item.id ? <Loader2 className="animate-spin" size={18} /> : <><Award size={18} /> برونزي</>}
                   </button>
