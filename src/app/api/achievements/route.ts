@@ -33,12 +33,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid referer' }, { status: 403 });
     }
 
-    const { isAdminSession } = await import('../../../lib/admin-session');
-    const isAdmin = await isAdminSession();
-    if (!isAdmin) {
-      return NextResponse.json({ error: 'غير مصرح بهذا الإجراء. تسجيل الدخول كمدير مطلوب.' }, { status: 401 });
-    }
-
     const body = await request.json();
     const { teacherName, department, title, desc, attachmentUrls, pin, date } = body;
 
