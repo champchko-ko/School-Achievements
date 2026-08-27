@@ -274,16 +274,15 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                {/* View / Approve / Reject / Score — Vertical layout */}
-                <div className="w-full md:w-auto flex flex-col gap-2 shrink-0">
+                {/* View / Approve / Reject / Score — Compact layout */}
+                <div className="w-full md:w-[300px] grid grid-cols-2 gap-2 shrink-0">
                   <Link 
                     href={`/achievement/${item.id}`}
                     target="_blank"
-                    className="flex items-center justify-center gap-2 bg-[#0087ed] hover:bg-[#0073cc] text-white px-4 py-2.5 rounded-2xl font-black border-b-4 border-[#005fa3] active:border-b-0 active:translate-y-1 transition-all text-sm"
+                    className="col-span-2 flex items-center justify-center gap-2 bg-[#0087ed] hover:bg-[#0073cc] text-white px-4 py-2.5 rounded-2xl font-black border-b-4 border-[#005fa3] active:border-b-0 active:translate-y-1 transition-all text-sm"
                   >
                     <Eye size={18} /> عرض الإنجاز
                   </Link>
-                  <div className="border-t border-gray-100 my-1"></div>
                   <button 
                     onClick={() => handleStatusChange(item.id, 'approved')}
                     disabled={processingId === item.id}
@@ -298,28 +297,23 @@ export default function AdminDashboard() {
                   >
                     {processingId === item.id ? <Loader2 className="animate-spin" size={18} /> : <><ThumbsDown size={18} /> رفض</>}
                   </button>
-                  <div className="border-t border-gray-100 my-1"></div>
-                  <button 
-                    onClick={() => handleScore(item.id, 95)}
+                  <select
+                    defaultValue=""
                     disabled={processingId === item.id}
-                    className="flex items-center justify-center gap-2 bg-[#ffb000] hover:bg-[#e69f00] text-yellow-900 px-4 py-2.5 rounded-2xl font-black border-b-4 border-[#cc8d00] active:border-b-0 active:translate-y-1 transition-all text-sm"
+                    onChange={(e) => {
+                      const score = Number(e.target.value);
+                      if (score) {
+                        handleScore(item.id, score);
+                        e.target.value = '';
+                      }
+                    }}
+                    className="col-span-2 w-full bg-white text-gray-700 border-2 border-amber-200 px-4 py-2.5 rounded-2xl font-black transition-all text-sm cursor-pointer disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-amber-300"
                   >
-                    {processingId === item.id ? <Loader2 className="animate-spin" size={18} /> : <><Trophy size={18} /> ذهبي</>}
-                  </button>
-                  <button 
-                    onClick={() => handleScore(item.id, 85)}
-                    disabled={processingId === item.id}
-                    className="flex items-center justify-center gap-2 bg-[#e5e7eb] hover:bg-[#d1d5db] text-gray-800 px-4 py-2.5 rounded-2xl font-black border-b-4 border-[#9ca3af] active:border-b-0 active:translate-y-1 transition-all text-sm"
-                  >
-                    {processingId === item.id ? <Loader2 className="animate-spin" size={18} /> : <><Medal size={18} /> فضي</>}
-                  </button>
-                  <button 
-                    onClick={() => handleScore(item.id, 75)}
-                    disabled={processingId === item.id}
-                    className="flex items-center justify-center gap-2 bg-[#f97316] hover:bg-[#ea580c] text-white px-4 py-2.5 rounded-2xl font-black border-b-4 border-[#c2410c] active:border-b-0 active:translate-y-1 transition-all text-sm"
-                  >
-                    {processingId === item.id ? <Loader2 className="animate-spin" size={18} /> : <><Award size={18} /> برونزي</>}
-                  </button>
+                    <option value="" disabled>🎖 تقييم: ذهبي / فضي / برونزي</option>
+                    <option value={95}>🏆 ذهبي (95)</option>
+                    <option value={85}>🥈 فضي (85)</option>
+                    <option value={75}>🥉 برونزي (75)</option>
+                  </select>
                 </div>
               </div>
             ))}
