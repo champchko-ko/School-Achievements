@@ -3,11 +3,32 @@
 import { useState, useEffect } from 'react';
 import { db } from '../../lib/firebase';
 import { collection, query, onSnapshot, doc, getDoc } from 'firebase/firestore';
-import { ShieldCheck, Trophy, Medal, Award, ExternalLink, Loader2, CheckCircle2, XCircle, TrendingUp, Files, UserX, Clock, ThumbsUp, ThumbsDown, ShieldAlert, RefreshCw, Download, Eye } from 'lucide-react';
+import { ShieldCheck, Trophy, Medal, Award, Loader2, CheckCircle2, TrendingUp, Files, UserX, Clock, ThumbsUp, ThumbsDown, ShieldAlert, RefreshCw, ChevronLeft, X, Paperclip, Calendar, User, Download } from 'lucide-react';
 import Link from 'next/link';
 import { useAdmin } from '../../lib/useAdmin';
 import { useRouter } from 'next/navigation';
 import { header, panel, toast } from '../../lib/ui';
+
+const isImageField = (url: string) => {
+  if (!url) return false;
+  if (url.match(/\.(jpeg|jpg|gif|png|webp|svg|bmp)/i)) return true;
+  if (url.includes('/image/upload/') && !url.toLowerCase().endsWith('.pdf')) return true;
+  return false;
+};
+
+const isVideoField = (url: string) => {
+  if (!url) return false;
+  if (url.match(/\.(mp4|webm|mov|ogg|avi|flv|mkv|m3u8)/i)) return true;
+  return url.includes('/video/upload/');
+};
+
+const getAllAttachments = (item: any): string[] => {
+  const urls: string[] = [];
+  if (Array.isArray(item?.attachmentUrls)) urls.push(...item.attachmentUrls);
+  if (item?.fileUrl && !urls.includes(item.fileUrl)) urls.push(item.fileUrl);
+  if (item?.attachmentUrl && !urls.includes(item.attachmentUrl)) urls.push(item.attachmentUrl);
+  return urls.filter(Boolean);
+};
 
 export default function AdminDashboard() {
   const [allAchievements, setAllAchievements] = useState<any[]>([]);
@@ -20,6 +41,8 @@ export default function AdminDashboard() {
   const [logsLoading, setLogsLoading] = useState(true);
   const [showLogs, setShowLogs] = useState(false);
   const [backupLoading, setBackupLoading] = useState(false);
+  const [reviewItem, setReviewItem] = useState<any | null>(null);
+  const [reviewScoring, setReviewScoring] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -137,6 +160,89 @@ export default function AdminDashboard() {
     }
   };
 
+  // Review flow — approve, then optional scoring
+  const openReview = (item: any) => {
+    setReviewItem(item);
+    setReviewScoring(false);
+  };
+
+  const closeReview = () => {
+    setReviewItem(null);
+    setReviewScoring(false);
+  };
+
+  const handleReviewApprove = async () => {
+    if (!reviewItem) return;
+    const id = reviewItem.id;
+    setProcessingId(id);
+    try {
+      const res = await fetch(`/api/achievements/${id}/status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'approved' }),
+      });
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || 'فشل التحديث');
+      }
+      setReviewScoring(true);
+      setNotification({ type: 'success', message: 'تمت الموافقة على الإنجاز ✓' });
+    } catch (error: any) {
+      console.error('Error approving:', error);
+      setNotification({ type: 'error', message: error.message || 'حدث خطأ أثناء الموافقة.' });
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const handleReviewReject = async () => {
+    if (!reviewItem) return;
+    const id = reviewItem.id;
+    setProcessingId(id);
+    try {
+      const res = await fetch(`/api/achievements/${id}/status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'rejected' }),
+      });
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || 'فشل التحديث');
+      }
+      setNotification({ type: 'success', message: 'تم رفض الإنجاز' });
+      closeReview();
+    } catch (error: any) {
+      console.error('Error rejecting:', error);
+      setNotification({ type: 'error', message: error.message || 'حدث خطأ أثناء الرفض.' });
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const handleReviewScore = async (score: number) => {
+    if (!reviewItem) return;
+    const id = reviewItem.id;
+    setProcessingId(id);
+    try {
+      const res = await fetch(`/api/achievements/${id}/score`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ score }),
+      });
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || 'فشل التقييم');
+      }
+      setNotification({ type: 'success', message: 'تم التقييم بنجاح ✓' });
+      closeReview();
+    } catch (error: any) {
+      console.error('Error scoring:', error);
+      setNotification({ type: 'error', message: error.message || 'حدث خطأ أثناء تقييم الإنجاز.' });
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
   // Download database backup
   const handleBackup = async () => {
     setBackupLoading(true);
@@ -235,7 +341,7 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Pending Queue — Approve / Reject / Score */}
+      {/* Pending Queue — review flow */}
       <div>
         <div className="flex items-center gap-3 mb-4">
           <span className="p-3 bg-red-50 text-[#eb1f36] rounded-2xl"><Clock size={22} /></span>
@@ -257,71 +363,34 @@ export default function AdminDashboard() {
         ) : (
           <div className="grid grid-cols-1 gap-4">
             {pendingAchievements.map((item) => (
-              <div key={item.id} className={`${panel} p-5 md:p-6 flex flex-col md:flex-row gap-6 items-start md:items-center`}>
-                <div className="flex-1 space-y-2">
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <h4 className="text-lg font-black text-[#46178f]">{item.title}</h4>
-                    <span className="bg-purple-50 text-[#46178f] px-3 py-1 rounded-full text-xs font-bold">{item.department}</span>
-                    <span className="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-xs font-bold">⏳ بانتظار المراجعة</span>
+              <button
+                key={item.id}
+                onClick={() => openReview(item)}
+                className={`${panel} p-4 md:p-5 w-full text-right flex items-center gap-4 hover:shadow-2xl hover:border-purple-300 transition-all cursor-pointer group`}
+              >
+                <div className="flex-1 min-w-0 space-y-1.5">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h4 className="text-base md:text-lg font-black text-[#46178f] truncate">{item.title}</h4>
+                    <span className="bg-purple-50 text-[#46178f] px-2.5 py-0.5 rounded-full text-xs font-bold">{item.department}</span>
+                    <span className="bg-yellow-100 text-yellow-700 px-2.5 py-0.5 rounded-full text-xs font-bold">⏳ بانتظار المراجعة</span>
                   </div>
-                  <p className="text-gray-600 text-sm font-medium leading-relaxed">{item.desc}</p>
-                  <div className="flex items-center gap-4 text-xs font-bold pt-2 flex-wrap">
-                    <span className="text-gray-500 flex items-center gap-1">👤 {item.teacherName}</span>
-                    <span className="text-gray-500 flex items-center gap-1">📅 {item.date}</span>
-                    {item.attachmentUrls && item.attachmentUrls.length > 0 && (
-                      <span className="text-gray-500 flex items-center gap-1">📎 {item.attachmentUrls.length} مرفق</span>
+                  <p className="text-gray-600 text-sm font-medium leading-relaxed line-clamp-2">{item.desc}</p>
+                  <div className="flex items-center gap-4 text-xs font-bold pt-1 flex-wrap">
+                    <span className="text-gray-500 flex items-center gap-1"><User size={13} /> {item.teacherName}</span>
+                    <span className="text-gray-500 flex items-center gap-1"><Calendar size={13} /> {item.date}</span>
+                    {getAllAttachments(item).length > 0 && (
+                      <span className="text-gray-500 flex items-center gap-1"><Paperclip size={13} /> {getAllAttachments(item).length} مرفق</span>
                     )}
                   </div>
                 </div>
-
-                {/* View / Approve / Reject / Score — Compact layout */}
-                <div className="w-full md:w-[300px] grid grid-cols-2 gap-2 shrink-0">
-                  <Link 
-                    href={`/achievement/${item.id}`}
-                    target="_blank"
-                    className="col-span-2 flex items-center justify-center gap-2 bg-[#0087ed] hover:bg-[#0073cc] text-white px-4 py-2.5 rounded-2xl font-black border-b-4 border-[#005fa3] active:border-b-0 active:translate-y-1 transition-all text-sm"
-                  >
-                    <Eye size={18} /> عرض الإنجاز
-                  </Link>
-                  <button 
-                    onClick={() => handleStatusChange(item.id, 'approved')}
-                    disabled={processingId === item.id}
-                    className="flex items-center justify-center gap-2 bg-[#26890c] hover:bg-[#20730a] text-white px-4 py-2.5 rounded-2xl font-black border-b-4 border-[#1c5e08] active:border-b-0 active:translate-y-1 transition-all text-sm"
-                  >
-                    {processingId === item.id ? <Loader2 className="animate-spin" size={18} /> : <><ThumbsUp size={18} /> موافقة</>}
-                  </button>
-                  <button 
-                    onClick={() => handleStatusChange(item.id, 'rejected')}
-                    disabled={processingId === item.id}
-                    className="flex items-center justify-center gap-2 bg-white hover:bg-red-50 text-[#eb1f36] border-2 border-red-200 px-4 py-2.5 rounded-2xl font-black transition-all text-sm"
-                  >
-                    {processingId === item.id ? <Loader2 className="animate-spin" size={18} /> : <><ThumbsDown size={18} /> رفض</>}
-                  </button>
-                  <select
-                    defaultValue=""
-                    disabled={processingId === item.id}
-                    onChange={(e) => {
-                      const score = Number(e.target.value);
-                      if (score) {
-                        handleScore(item.id, score);
-                        e.target.value = '';
-                      }
-                    }}
-                    className="col-span-2 w-full bg-white text-gray-700 border-2 border-amber-200 px-4 py-2.5 rounded-2xl font-black transition-all text-sm cursor-pointer disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-amber-300"
-                  >
-                    <option value="" disabled>🎖 تقييم: ذهبي / فضي / برونزي</option>
-                    <option value={95}>🏆 ذهبي (95)</option>
-                    <option value={85}>🥈 فضي (85)</option>
-                    <option value={75}>🥉 برونزي (75)</option>
-                  </select>
-                </div>
-              </div>
+                <span className="shrink-0 text-[#46178f]/50 group-hover:text-[#46178f] transition-colors"><ChevronLeft size={22} /></span>
+              </button>
             ))}
           </div>
         )}
       </div>
 
-      {/* Approved Achievements — Re-score */}
+{/* Approved Achievements — score later */}
       {approvedAchievements.length > 0 && (
         <div>
           <div className="flex items-center gap-3 mb-4">
@@ -331,55 +400,37 @@ export default function AdminDashboard() {
           </div>
           <div className="grid grid-cols-1 gap-4">
             {approvedAchievements.map((item) => (
-              <div key={item.id} className={`${panel} p-5 md:p-6 flex flex-col md:flex-row gap-6 items-start md:items-center`}>
-                <div className="flex-1 space-y-2">
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <h4 className="text-lg font-black text-[#46178f]">{item.title}</h4>
-                    <span className="bg-purple-50 text-[#46178f] px-3 py-1 rounded-full text-xs font-bold">{item.department}</span>
-                    {item.score ? (
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${item.score >= 90 ? 'bg-yellow-100 text-yellow-700' : item.score >= 80 ? 'bg-gray-200 text-gray-700' : 'bg-orange-100 text-orange-700'}`}>
-                        {item.score >= 90 ? '🏆 ذهبي' : item.score >= 80 ? '🥈 فضي' : '🥉 برونزي'} {item.score}
-                      </span>
-                    ) : (
-                      <span className="bg-gray-100 text-gray-500 px-3 py-1 rounded-full text-xs font-bold">بدون تقييم</span>
-                    )}
+              <button
+                key={item.id}
+                onClick={() => { setReviewItem(item); setReviewScoring(true); }}
+                className={`${panel} p-4 md:p-5 w-full text-right flex items-center gap-4 hover:shadow-2xl hover:border-purple-300 transition-all cursor-pointer group`}
+              >
+                <div className="flex-1 min-w-0 space-y-1.5">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h4 className="text-base md:text-lg font-black text-[#46178f] truncate">{item.title}</h4>
+                    <span className="bg-purple-50 text-[#46178f] px-2.5 py-0.5 rounded-full text-xs font-bold">{item.department}</span>
+                    <span className="bg-green-100 text-[#26890c] px-2.5 py-0.5 rounded-full text-xs font-bold">✓ معتمد بانتظار التقييم</span>
                   </div>
                   <p className="text-gray-600 text-sm font-medium leading-relaxed line-clamp-2">{item.desc}</p>
-                  <div className="flex items-center gap-4 text-xs font-bold pt-2 flex-wrap">
-                    <span className="text-gray-500 flex items-center gap-1">👤 {item.teacherName}</span>
-                    <span className="text-gray-500 flex items-center gap-1">📅 {item.date}</span>
+                  <div className="flex items-center gap-4 text-xs font-bold pt-1 flex-wrap">
+                    <span className="text-gray-500 flex items-center gap-1"><User size={13} /> {item.teacherName}</span>
+                    <span className="text-gray-500 flex items-center gap-1"><Calendar size={13} /> {item.date}</span>
+                    {getAllAttachments(item).length > 0 && (
+                      <span className="text-gray-500 flex items-center gap-1"><Paperclip size={13} /> {getAllAttachments(item).length} مرفق</span>
+                    )}
                   </div>
                 </div>
-                <div className="w-full md:w-auto flex md:flex-col gap-2 shrink-0">
-                  <button 
-                    onClick={() => handleScore(item.id, 95)}
-                    disabled={processingId === item.id}
-                    className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-[#ffb000] hover:bg-[#e69f00] text-yellow-900 px-4 py-2 rounded-2xl font-black border-b-4 border-[#cc8d00] active:border-b-0 active:translate-y-1 transition-all"
-                  >
-                    {processingId === item.id ? <Loader2 className="animate-spin" size={18} /> : <><Trophy size={18} /> ذهبي</>}
-                  </button>
-                  <button 
-                    onClick={() => handleScore(item.id, 85)}
-                    disabled={processingId === item.id}
-                    className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-[#e5e7eb] hover:bg-[#d1d5db] text-gray-800 px-4 py-2 rounded-2xl font-black border-b-4 border-[#9ca3af] active:border-b-0 active:translate-y-1 transition-all"
-                  >
-                    {processingId === item.id ? <Loader2 className="animate-spin" size={18} /> : <><Medal size={18} /> فضي</>}
-                  </button>
-                  <button 
-                    onClick={() => handleScore(item.id, 75)}
-                    disabled={processingId === item.id}
-                    className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-[#f97316] hover:bg-[#ea580c] text-white px-4 py-2 rounded-2xl font-black border-b-4 border-[#c2410c] active:border-b-0 active:translate-y-1 transition-all"
-                  >
-                    {processingId === item.id ? <Loader2 className="animate-spin" size={18} /> : <><Award size={18} /> برونزي</>}
-                  </button>
+                <div className="shrink-0 flex items-center gap-1.5">
+                  <Medal size={18} className="text-gray-400" />
+                  <span className="text-[#46178f]/50 group-hover:text-[#46178f] transition-colors"><ChevronLeft size={22} /></span>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         </div>
       )}
 
-      {/* ── Security Logs ── */}
+{/* ── Security Logs ── */}
       <div>
         <button
           onClick={() => { setShowLogs(!showLogs); if (!showLogs) fetchLogs(); }}
@@ -467,6 +518,152 @@ export default function AdminDashboard() {
           </button>
         </div>
       </div>
+
+      {/* ── Review Sheet (bottom sheet / modal) ── */}
+      {reviewItem && (
+        <div className="fixed inset-0 z-[150] flex items-end md:items-center justify-center" role="dialog" aria-modal="true" aria-label={reviewItem.title || 'مراجعة الإنجاز'}>
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+            onClick={closeReview}
+          ></div>
+
+          {/* Sheet */}
+          <div className="relative w-full md:max-w-2xl max-h-[92vh] md:max-h-[80vh] bg-white rounded-t-3xl md:rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in slide-in-from-bottom duration-300">
+            {/* Header */}
+            <div className="shrink-0 px-5 md:px-7 py-4 md:py-5 bg-gradient-to-l from-[#46178f] to-[#7b2cbf] text-white flex items-start gap-3">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap mb-1.5">
+                  <h3 className="text-lg md:text-xl font-black truncate">{reviewItem.title}</h3>
+                  <span className="bg-white/20 px-2.5 py-0.5 rounded-full text-[11px] font-bold">{reviewItem.department}</span>
+                </div>
+                <div className="flex items-center gap-4 text-xs font-bold text-purple-100 flex-wrap">
+                  <span className="flex items-center gap-1"><User size={13} /> {reviewItem.teacherName || 'غير محدد'}</span>
+                  <span className="flex items-center gap-1"><Calendar size={13} /> {reviewItem.date || '—'}</span>
+                  {getAllAttachments(reviewItem).length > 0 && (
+                    <span className="flex items-center gap-1"><Paperclip size={13} /> {getAllAttachments(reviewItem).length} مرفق</span>
+                  )}
+                </div>
+              </div>
+              <button
+                onClick={closeReview}
+                aria-label="إغلاق"
+                className="shrink-0 p-2 rounded-full bg-white/15 hover:bg-white/30 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Scrollable body */}
+            <div className="flex-1 overflow-y-auto p-5 md:p-7 space-y-5">
+              {(() => {
+                const attachments = getAllAttachments(reviewItem);
+                const images = attachments.filter(isImageField);
+                const docs = attachments.filter(url => !isImageField(url) && !isVideoField(url));
+                const videos = attachments.filter(isVideoField);
+                return (
+                  <>
+                    {images.length > 0 && (
+                      <div className={`grid gap-3 ${images.length === 1 ? 'grid-cols-1' : 'grid-cols-2 md:grid-cols-3'}`}>
+                        {images.slice(0, 4).map((url, i) => (
+                          <a key={i} href={url} target="_blank" rel="noopener noreferrer">
+                            <img
+                              src={url}
+                              alt={`${reviewItem.title} ${i + 1}`}
+                              className={`w-full object-cover rounded-2xl border-2 border-purple-100 shadow-sm ${images.length === 1 ? 'max-h-72 md:max-h-96' : 'aspect-square'}`}
+                            />
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-black text-[#46178f]">الوصف</h4>
+                      <p className="text-gray-700 text-sm md:text-base font-medium leading-relaxed whitespace-pre-wrap">
+                        {reviewItem.desc || reviewItem.description || 'لا يوجد وصف'}
+                      </p>
+                    </div>
+                    {(videos.length > 0 || docs.length > 0) && (
+                      <div className="space-y-2">
+                        <h4 className="text-sm font-black text-[#46178f]">المرفقات</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {videos.map((url, i) => (
+                            <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="px-3 py-2 rounded-xl bg-purple-50 text-[#46178f] text-xs font-black hover:bg-purple-100 transition-colors flex items-center gap-1.5">
+                              🎬 فيديو {i + 1}
+                            </a>
+                          ))}
+                          {docs.map((url, i) => (
+                            <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="px-3 py-2 rounded-xl bg-gray-100 text-gray-600 text-xs font-black hover:bg-gray-200 transition-colors flex items-center gap-1.5">
+                              📄 مستند {i + 1}
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
+            </div>
+
+            {/* Sticky footer — action hub */}
+            <div className="shrink-0 border-t border-gray-100 p-4 md:p-5 bg-white">
+              {reviewScoring ? (
+                <div className="text-center">
+                  <p className="text-xs font-black text-gray-400 mb-3">🎖 اختر التقييم</p>
+                  <div className="flex items-center justify-center gap-4 md:gap-6">
+                    <button
+                      onClick={() => handleReviewScore(95)}
+                      disabled={processingId === reviewItem.id}
+                      className="flex flex-col items-center gap-1.5 group"
+                    >
+                      <span className="w-16 md:w-20 h-16 md:h-20 rounded-full bg-[#ffb000] border-b-4 border-[#cc8d00] text-white flex items-center justify-center shadow-lg group-hover:scale-105 active:scale-95 transition-all group-hover:shadow-xl">
+                        {processingId === reviewItem.id ? <Loader2 className="animate-spin" size={24} /> : <Trophy size={28} />}
+                      </span>
+                      <span className="text-xs font-black text-gray-600">ذهبي</span>
+                    </button>
+                    <button
+                      onClick={() => handleReviewScore(85)}
+                      disabled={processingId === reviewItem.id}
+                      className="flex flex-col items-center gap-1.5 group"
+                    >
+                      <span className="w-16 md:w-20 h-16 md:h-20 rounded-full bg-[#e5e7eb] border-b-4 border-[#9ca3af] text-gray-700 flex items-center justify-center shadow-lg group-hover:scale-105 active:scale-95 transition-all group-hover:shadow-xl">
+                        {processingId === reviewItem.id ? <Loader2 className="animate-spin" size={24} /> : <Medal size={28} />}
+                      </span>
+                      <span className="text-xs font-black text-gray-600">فضي</span>
+                    </button>
+                    <button
+                      onClick={() => handleReviewScore(75)}
+                      disabled={processingId === reviewItem.id}
+                      className="flex flex-col items-center gap-1.5 group"
+                    >
+                      <span className="w-16 md:w-20 h-16 md:h-20 rounded-full bg-[#f97316] border-b-4 border-[#c2410c] text-white flex items-center justify-center shadow-lg group-hover:scale-105 active:scale-95 transition-all group-hover:shadow-xl">
+                        {processingId === reviewItem.id ? <Loader2 className="animate-spin" size={24} /> : <Award size={28} />}
+                      </span>
+                      <span className="text-xs font-black text-gray-600">برونزي</span>
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleReviewApprove}
+                    disabled={processingId === reviewItem.id}
+                    className="flex-1 flex items-center justify-center gap-2 bg-[#26890c] hover:bg-[#20730a] text-white px-4 py-3.5 rounded-2xl font-black border-b-4 border-[#1c5e08] active:border-b-0 active:translate-y-1 transition-all text-sm md:text-base"
+                  >
+                    {processingId === reviewItem.id ? <Loader2 className="animate-spin" size={20} /> : <ThumbsUp size={20} />} موافقة
+                  </button>
+                  <button
+                    onClick={handleReviewReject}
+                    disabled={processingId === reviewItem.id}
+                    className="flex-1 flex items-center justify-center gap-2 bg-white hover:bg-red-50 text-[#eb1f36] border-2 border-red-200 px-4 py-3.5 rounded-2xl font-black transition-all text-sm md:text-base"
+                  >
+                    {processingId === reviewItem.id ? <Loader2 className="animate-spin" size={20} /> : <ThumbsDown size={20} />} رفض
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
