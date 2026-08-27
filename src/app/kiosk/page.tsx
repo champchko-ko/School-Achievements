@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { collection, onSnapshot, query, orderBy, doc, getDoc } from "firebase/firestore";
 import { db } from "../../lib/firebase";
-import { Trophy, Medal, Sparkles, User, Building, Loader2, Star, Maximize } from "lucide-react";
+import { Trophy, Medal, Sparkles, User, Building, Loader2, Star, Maximize, PlayCircle, Image as ImageIcon } from "lucide-react";
 
 const isImageField = (url: string) => {
   if (!url) return false;
@@ -12,16 +12,50 @@ const isImageField = (url: string) => {
   return false;
 };
 
+const isVideoField = (url: string) => {
+  if (!url) return false;
+  if (url.match(/\.(mp4|webm|mov|ogg|avi|flv|mkv|m3u8)/i)) return true;
+  return url.includes('/video/upload/');
+};
+
+const collectAttachments = (a: any): string[] => {
+  const urls: string[] = [];
+  if (Array.isArray(a?.attachmentUrls)) urls.push(...a.attachmentUrls);
+  if (a?.fileUrl && !urls.includes(a.fileUrl)) urls.push(a.fileUrl);
+  if (a?.attachmentUrl && !urls.includes(a.attachmentUrl)) urls.push(a.attachmentUrl);
+  return urls.filter(Boolean);
+};
+
+type Slide = {
+  id: string;
+  type: 'image' | 'video' | 'cover';
+  url?: string;
+  achievement: any;
+};
+
 export default function KioskModePage() {
   const [achievements, setAchievements] = useState<any[]>([]);
   const [schoolName, setSchoolName] = useState("");
   const [logoUrl, setLogoUrl] = useState("");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const slides: Slide[] = [];
+  achievements.forEach((a) => {
+    const attachments = collectAttachments(a);
+    const images = attachments.filter(isImageField);
+    const videos = attachments.filter(isVideoField);
+    images.forEach((url, i) => slides.push({ id: `${a.id}-img-${i}`, type: 'image', url, achievement: a }));
+    videos.forEach((url, i) => slides.push({ id: `${a.id}-vid-${i}`, type: 'video', url, achievement: a }));
+    if (images.length === 0 && videos.length === 0) {
+      slides.push({ id: `${a.id}-cover`, type: 'cover', achievement: a });
+    }
+  });
 
   // 1. Fetch Data
   useEffect(() => {
-    // Fetch Global Settings
     const fetchSettings = async () => {
       try {
         const docRef = doc(db, "settings", "global_info");
@@ -37,60 +71,69 @@ export default function KioskModePage() {
     };
     fetchSettings();
 
-    // Fetch live achievements
+    // Fetch live achievements — all approved, score is irrelevant
     const q = query(collection(db, "achievements"), orderBy("timestamp", "desc"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Record<string, any>));
-      // Filter only Gold/Silver (score >= 80)
-      const topAchievements = data.filter(a => a.score !== null && a.score >= 80);
-      setAchievements(topAchievements);
+      const approved = data.filter(a => a.status === 'approved' || !a.status);
+      setAchievements(approved);
       setIsLoading(false);
     });
 
     return () => unsubscribe();
   }, []);
 
-  // 2. Auto-Scrolling Carousel Logic
+  // Reset index when the slides list changes (e.g. new uploads)
   useEffect(() => {
-    if (achievements.length <= 1) return; // No need to scroll if 0 or 1 item
-    
-    const interval = setInterval(() => {
-      setCurrentIndex((prevIndex) => (prevIndex + 1) % achievements.length);
-    }, 8000); // 8 seconds per slide
+    if (currentIndex >= slides.length) setCurrentIndex(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slides.length]);
 
-    return () => clearInterval(interval);
-  }, [achievements.length]);
+  const next = useCallback(() => {
+    setCurrentIndex((prev) => (slides.length <= 1 ? 0 : (prev + 1) % slides.length));
+  }, [slides.length]);
+
+  // Auto-advance for IMAGE/COVER slides (videos advance via onEnded)
+  useEffect(() => {
+    const current = slides[currentIndex];
+    if (!current || current.type === 'video') return;
+
+    timerRef.current = setInterval(next, 8000);
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [currentIndex, slides.length, slides, next]);
+
+  // Always ensure the video element replays from start on slide change
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.currentTime = 0;
+    }
+  }, [currentIndex]);
 
   // Loading State
   if (isLoading) {
     return (
       <div className="fixed inset-0 z-[100] h-screen w-screen m-0 p-4 overflow-y-auto bg-gradient-to-br from-[#46178f] via-[#380e6e] to-[#2a0a54] flex flex-col items-center justify-center text-white">
         <Loader2 className="animate-spin mb-4 text-[#ffb800]" size={40} />
-        <p className="text-lg md:text-2xl font-bold animate-pulse text-center px-4">جاري تحميل الإنجازات المتميزة...</p>
+        <p className="text-lg md:text-2xl font-bold animate-pulse text-center px-4">جاري تحميل الإنجازات...</p>
       </div>
     );
   }
 
   // Empty State
-  if (achievements.length === 0) {
+  if (slides.length === 0) {
     return (
       <div className="fixed inset-0 z-[100] h-screen w-screen m-0 p-4 overflow-y-auto bg-gradient-to-br from-[#46178f] via-[#380e6e] to-[#2a0a54] flex flex-col items-center justify-center text-white">
         <Star className="mb-4 text-yellow-400 opacity-50" size={40} />
-        <p className="text-xl md:text-3xl font-black text-gray-400 text-center px-4">لا توجد إنجازات متميزة للعرض حالياً</p>
+        <p className="text-xl md:text-3xl font-black text-gray-400 text-center px-4">لا توجد إنجازات معتمدة للعرض حالياً</p>
       </div>
     );
   }
 
-  const current = achievements[currentIndex];
-
-  // Safely extract the first image attachment
-  const attachmentUrls: string[] = [];
-  if (current.attachmentUrls && Array.isArray(current.attachmentUrls)) attachmentUrls.push(...current.attachmentUrls);
-  if (current.fileUrl) attachmentUrls.push(current.fileUrl);
-  if (current.attachmentUrl) attachmentUrls.push(current.attachmentUrl);
-  
-  const imageUrl = attachmentUrls.find(isImageField);
-  const isGold = current.score >= 90;
+  const current = slides[Math.min(currentIndex, slides.length - 1)];
+  const ach = current.achievement;
+  const score = typeof ach.score === 'number' ? ach.score : null;
+  const isGold = score !== null && score >= 90;
+  const isSilver = score !== null && score >= 80 && score < 90;
 
   const toggleFullScreen = () => {
     if (!document.fullscreenElement) {
@@ -102,84 +145,102 @@ export default function KioskModePage() {
 
   return (
     <div className="fixed inset-0 z-[100] h-screen w-screen m-0 p-0 overflow-y-auto bg-gradient-to-br from-[#46178f] via-[#380e6e] to-[#2a0a54] text-white flex flex-col">
-      
       {/* Decorative background glows */}
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-purple-600/20 blur-[120px] rounded-full pointer-events-none" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/20 blur-[120px] rounded-full pointer-events-none" />
 
-      {/* Kiosk Header */}
-      <header className="px-4 md:px-12 py-3 md:py-8 flex items-center justify-between z-10 border-b border-white/20 bg-white/10 backdrop-blur-md shadow-lg">
-        <div className="flex items-center gap-6">
-          {logoUrl && <img src={logoUrl} alt="School Logo" className="w-10 h-10 md:w-24 md:h-24 object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]" />}
+      {/* Kiosk Header (fixed school identity) */}
+      <header className="px-4 md:px-12 py-2 md:py-5 flex items-center justify-between z-10 border-b border-white/20 bg-white/10 backdrop-blur-md shadow-lg shrink-0">
+        <div className="flex items-center gap-4 md:gap-6">
+          {logoUrl && <img src={logoUrl} alt="School Logo" className="w-10 h-10 md:w-16 md:h-16 object-contain drop-shadow-lg" />}
           <div>
             {schoolName && (
-              <h1 className="text-base md:text-4xl font-black tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-200 drop-shadow-sm">
+              <h1 className="text-lg md:text-3xl font-black tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-200 drop-shadow-sm">
                 {schoolName}
               </h1>
             )}
-            <p className="text-purple-200 font-bold text-xs md:text-xl mt-0 md:mt-2 flex items-center gap-2">
-              <Sparkles size={24} className="text-yellow-400 animate-pulse" />
-              لوحة الشرف والإنجازات المتميزة
+            <p className="text-purple-200 font-bold text-xs md:text-lg mt-0 md:mt-1 flex items-center gap-2">
+              <Sparkles size={18} className="text-yellow-400 animate-pulse" />
+              إنجازات مدرستنا
             </p>
           </div>
         </div>
       </header>
 
-      {/* Carousel Body */}
-      <main className="flex-1 flex items-center justify-center p-4 md:p-8 lg:p-12 relative z-10 w-full">
-        {/* The key prop forces React to re-mount the div, triggering the animate-in classes automatically */}
-        <div key={current.id + currentIndex} className="w-full max-w-[98vw] md:max-w-[95vw] animate-in fade-in zoom-in-95 slide-in-from-bottom-8 duration-1000 flex flex-col lg:flex-row gap-4 md:gap-12 items-center justify-center relative">
-          
-          {/* Content Left (Info Card Alone) */}
-          <div className="flex-1 w-full max-w-4xl bg-white rounded-3xl border-2 border-purple-100 p-4 md:p-12 shadow-[0_0_50px_rgba(0,0,0,0.5)] space-y-3 md:space-y-8 z-10 relative overflow-hidden">
-            {/* Subtle shine effect on the card */}
-            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-white/40 to-transparent"></div>
-
-            <div className={`inline-flex items-center gap-2 md:gap-3 px-4 md:px-8 py-2 md:py-4 rounded-full text-sm md:text-2xl font-black shadow-xl border border-white/20 ${isGold ? 'bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 text-yellow-950' : 'bg-gradient-to-r from-slate-200 via-slate-300 to-slate-400 text-slate-900'}`}>
-              {isGold ? <Trophy size={18} className="md:size-[32px]" /> : <Medal size={18} className="md:size-[32px]" />}
-              {isGold ? "إنجاز ذهبي متميز" : "إنجاز فضي متميز"}
-            </div>
-
-            <h2 className="text-xl md:text-5xl lg:text-7xl font-black leading-tight text-transparent bg-clip-text bg-gradient-to-br from-yellow-500 to-yellow-700 drop-shadow-sm pb-0 md:pb-2">
-              {current.title}
-            </h2>
-            
-            <p className="text-sm md:text-3xl text-yellow-900 leading-relaxed font-bold line-clamp-4 md:line-clamp-6">
-              {current.desc || current.description}
-            </p>
-
-            <div className="flex flex-wrap items-center gap-2 md:gap-6 pt-3 md:pt-8 border-t-2 border-purple-100 text-sm md:text-2xl font-bold text-slate-800">
-              <div className="flex items-center gap-1 md:gap-3 bg-purple-50 backdrop-blur-sm px-3 md:px-8 py-2 md:py-4 rounded-2xl border-2 border-purple-100 shadow-inner">
-                <User size={16} className="md:size-[28px] text-pink-600" /> 
-                {current.teacherName}
-              </div>
-              <div className="flex items-center gap-1 md:gap-3 bg-purple-50 backdrop-blur-sm px-3 md:px-8 py-2 md:py-4 rounded-2xl border-2 border-purple-100 shadow-inner">
-                <Building size={16} className="md:size-[28px] text-blue-600" /> 
-                {current.department}
-              </div>
-            </div>
-          </div>
-
-          {/* Image Right (if exists) */}
-          {imageUrl && (
-            <div className="flex-1 w-full flex justify-center items-center z-10">
-              <div className="relative group flex justify-center items-center w-full">
-                <div className="absolute inset-0 bg-white/10 blur-3xl rounded-full scale-110"></div>
-                <img src={imageUrl} alt="Achievement" className="relative max-h-[70vh] max-w-full object-contain rounded-3xl shadow-2xl border-4 border-white/20 rotate-2 hover:rotate-0 transition-transform duration-700" />
-              </div>
+      {/* Mother stage — media dominant, info panel beside it */}
+      <main className="flex-1 flex items-stretch gap-0 p-0 md:p-4 lg:p-6 relative z-10 w-full min-h-0">
+        {/* Media stage (right, dominant) */}
+        <div key={current.id} className="flex-1 relative flex items-center justify-center overflow-hidden bg-black/30 rounded-none md:rounded-3xl border-0 md:border-2 md:border-white/10 min-h-0">
+          {current.type === 'image' && (
+            <img
+              src={current.url}
+              alt={ach.title}
+              className="max-h-[85vh] max-w-full object-contain rounded-2xl shadow-2xl animate-in fade-in duration-700"
+            />
+          )}
+          {current.type === 'video' && (
+            <video
+              ref={videoRef}
+              key={current.id}
+              src={current.url}
+              className="max-h-[85vh] max-w-full object-contain rounded-2xl shadow-2xl animate-in fade-in duration-700"
+              controls
+              autoPlay
+              muted
+              playsInline
+              onEnded={next}
+            />
+          )}
+          {current.type === 'cover' && (
+            <div className="flex flex-col items-center justify-center text-center px-8 animate-in fade-in duration-700">
+              {logoUrl && <img src={logoUrl} alt="School Logo" className="w-40 md:w-72 object-contain mb-4 opacity-90" />}
+              <ImageIcon size={64} className="text-white/40 mb-2" />
+              <p className="text-white/40 font-bold text-xl">إنجاز بدون مرفقات</p>
             </div>
           )}
-
         </div>
+
+        {/* Info panel (left, compact) */}
+        <aside className="hidden md:flex w-[30%] lg:w-[26%] shrink-0 flex-col justify-center gap-2 lg:gap-3 bg-white/5 backdrop-blur-sm border-r border-white/10 p-4 lg:p-8 rounded-none md:rounded-3xl overflow-hidden">
+          <div className={`inline-flex items-center gap-2 w-fit px-4 py-1.5 rounded-full text-sm lg:text-lg font-black shadow-xl border border-white/20 ${isGold ? 'bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 text-yellow-950' : isSilver ? 'bg-gradient-to-r from-slate-200 via-slate-300 to-slate-400 text-slate-900' : 'bg-gradient-to-r from-purple-400 to-purple-600 text-white'}`}>
+            {isGold ? <Trophy size={16} /> : isSilver ? <Medal size={16} /> : <Star size={16} />}
+            {isGold ? 'ذهب' : isSilver ? 'فضة' : score !== null ? 'مشاركة مميزة' : 'إنجاز'}
+            {score !== null && <span className="opacity-80">· {score}</span>}
+          </div>
+
+          <h2 className="text-3xl lg:text-5xl font-black leading-tight text-transparent bg-clip-text bg-gradient-to-br from-yellow-300 to-orange-400 py-1">
+            {ach.title}
+          </h2>
+
+          <p className="text-white/85 text-sm lg:text-lg leading-relaxed font-medium line-clamp-3">
+            {ach.desc || ach.description || ''}
+          </p>
+
+          <div className="flex flex-wrap items-center gap-2 lg:gap-3 pt-2 mt-1 border-t border-white/15 text-sm lg:text-lg font-bold text-white/90">
+            <div className="flex items-center gap-1.5 bg-white/10 px-3 py-1.5 rounded-xl">
+              <User size={16} className="text-pink-400" /> {ach.teacherName}
+            </div>
+            <div className="flex items-center gap-1.5 bg-white/10 px-3 py-1.5 rounded-xl">
+              <Building size={16} className="text-blue-400" /> {ach.department}
+            </div>
+          </div>
+        </aside>
       </main>
-      
-      {/* Progress Bar indicator at the bottom */}
-      <div className="h-2 w-full bg-black/50 relative overflow-hidden z-10">
-        <div key={`progress-${currentIndex}`} className="absolute top-0 bottom-0 left-0 bg-gradient-to-r from-yellow-400 via-pink-500 to-purple-500 animate-[progress_8s_linear]" />
+
+      {/* Bottom bar: progress + slide counter */}
+      <div className="shrink-0 flex items-center gap-4 px-4 md:px-8 py-2 bg-black/40 border-t border-white/10 z-10">
+        <div className="h-1.5 w-full bg-white/15 relative overflow-hidden rounded-full">
+          {current.type !== 'video' ? (
+            <div key={`progress-${currentIndex}`} className="absolute top-0 bottom-0 left-0 bg-gradient-to-r from-yellow-400 via-pink-500 to-purple-500 animate-[progress_8s_linear] rounded-full" />
+          ) : (
+            <div className="absolute top-0 bottom-0 left-0 w-full bg-gradient-to-r from-yellow-400 via-pink-500 to-purple-500 rounded-full" />
+          )}
+        </div>
+        <span className="text-white/70 font-black text-xs md:text-sm shrink-0 whitespace-nowrap">{currentIndex + 1} / {slides.length}</span>
       </div>
 
       {/* Full Screen Toggle Button */}
-      <button onClick={toggleFullScreen} className="absolute bottom-6 right-6 z-50 text-white/60 hover:text-white transition-colors p-3 bg-white/10 hover:bg-white/20 rounded-full backdrop-blur-md border-2 border-white/20" title="ملء الشاشة">
+      <button onClick={toggleFullScreen} className="absolute bottom-10 right-4 md:right-8 z-50 text-white/60 hover:text-white transition-colors p-3 bg-white/10 hover:bg-white/20 rounded-full backdrop-blur-md border-2 border-white/20" title="ملء الشاشة">
         <Maximize size={28} />
       </button>
 
