@@ -8,6 +8,7 @@ import { isAdminSession } from '../../../../lib/admin-session';
 import { sanitizeAchievementPayload } from '../../../../lib/sanitize';
 import { pbkdf2Sync } from 'crypto';
 import { collectAttachmentUrls, destroyCloudinaryAsset } from '../../../../lib/cloudinary';
+import { validateDepartmentAndTeacher } from '../../../../lib/validate-lists';
 import { getAdminDb, deleteDoc, deleteField, doc, getDoc, updateDoc } from '../../../../lib/firebase-admin';
 
 function getPepper(): string {
@@ -53,6 +54,19 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       if (inputHash !== storedHash) {
         return NextResponse.json({ error: 'رمز الحماية غير صحيح!' }, { status: 401 });
       }
+    }
+
+    // Server-side enforcement: department and teacher must be from settings lists
+    if ('department' in body || 'teacherName' in body) {
+      const listCheck = await validateDepartmentAndTeacher(
+        body.department || docSnap.data()?.department || '',
+        body.teacherName || docSnap.data()?.teacherName || ''
+      );
+      if (!listCheck.ok) {
+        return NextResponse.json({ error: listCheck.error }, { status: 400 });
+      }
+      if ('department' in body) body.department = listCheck.department;
+      if ('teacherName' in body) body.teacherName = listCheck.teacherName;
     }
 
     // Build update payload (strip pin from the data)
