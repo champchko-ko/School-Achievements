@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { collection, onSnapshot, query, orderBy, doc, getDoc } from "firebase/firestore";
 import { db } from "../../lib/firebase";
-import { Trophy, Medal, Sparkles, User, Building, Loader2, Star, Maximize, PlayCircle, Image as ImageIcon } from "lucide-react";
+import { Trophy, Medal, Sparkles, User, Building, Loader2, Star, Maximize, Calendar, Paperclip, Image as ImageIcon } from "lucide-react";
 
 const isImageField = (url: string) => {
   if (!url) return false;
@@ -168,7 +168,7 @@ export default function KioskModePage() {
       </header>
 
       {/* Mother stage — media dominant, info panel beside it */}
-      <main className="flex-1 flex items-stretch gap-0 p-0 md:p-4 lg:p-6 relative z-10 w-full min-h-0">
+      <main className="flex-1 flex flex-col md:flex-row items-stretch gap-4 p-3 md:p-4 lg:p-6 relative z-10 w-full min-h-0 overflow-y-auto">
         {/* Media stage (right, dominant) */}
         <div key={current.id} className="flex-1 relative flex items-center justify-center overflow-hidden bg-black/30 rounded-none md:rounded-3xl border-0 md:border-2 md:border-white/10 min-h-0">
           {current.type === 'image' && (
@@ -201,7 +201,7 @@ export default function KioskModePage() {
         </div>
 
         {/* Info panel (left, compact) */}
-        <aside className="hidden md:flex w-[30%] lg:w-[26%] shrink-0 flex-col justify-center gap-2 lg:gap-3 bg-white/5 backdrop-blur-sm border-r border-white/10 p-4 lg:p-8 rounded-none md:rounded-3xl overflow-hidden">
+        <aside className="flex w-full md:w-[32%] lg:w-[26%] shrink-0 flex-col justify-center gap-2 lg:gap-4 bg-white/5 backdrop-blur-sm border border-white/15 p-4 lg:p-8 rounded-3xl overflow-hidden">
           <div className={`inline-flex items-center gap-2 w-fit px-4 py-1.5 rounded-full text-sm lg:text-lg font-black shadow-xl border border-white/20 ${isGold ? 'bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 text-yellow-950' : isSilver ? 'bg-gradient-to-r from-slate-200 via-slate-300 to-slate-400 text-slate-900' : 'bg-gradient-to-r from-purple-400 to-purple-600 text-white'}`}>
             {isGold ? <Trophy size={16} /> : isSilver ? <Medal size={16} /> : <Star size={16} />}
             {isGold ? 'ذهب' : isSilver ? 'فضة' : score !== null ? 'مشاركة مميزة' : 'إنجاز'}
@@ -218,11 +218,21 @@ export default function KioskModePage() {
 
           <div className="flex flex-wrap items-center gap-2 lg:gap-3 pt-2 mt-1 border-t border-white/15 text-sm lg:text-lg font-bold text-white/90">
             <div className="flex items-center gap-1.5 bg-white/10 px-3 py-1.5 rounded-xl">
-              <User size={16} className="text-pink-400" /> {ach.teacherName}
+              <User size={16} className="text-pink-400" /> {ach.teacherName || 'غير محدد'}
             </div>
             <div className="flex items-center gap-1.5 bg-white/10 px-3 py-1.5 rounded-xl">
-              <Building size={16} className="text-blue-400" /> {ach.department}
+              <Building size={16} className="text-blue-400" /> {ach.department || 'غير محدد'}
             </div>
+            {ach.date && (
+              <div className="flex items-center gap-1.5 bg-white/10 px-3 py-1.5 rounded-xl">
+                <Calendar size={16} className="text-emerald-400" /> {ach.date}
+              </div>
+            )}
+            {(() => { const n = collectAttachments(ach).length; return n > 0 ? (
+              <div className="flex items-center gap-1.5 bg-white/10 px-3 py-1.5 rounded-xl">
+                <Paperclip size={16} className="text-amber-400" /> {n} مرفق
+              </div>
+            ) : null; })()}
           </div>
         </aside>
       </main>
