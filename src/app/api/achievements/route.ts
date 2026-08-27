@@ -7,6 +7,7 @@ import { logAchievementCreated, logCsrfBlock, logError } from '../../../lib/logg
 import { checkRateLimit } from '../../../lib/rate-limit';
 import { logRateLimitHit } from '../../../lib/logger';
 import { sanitizeAchievementPayload } from '../../../lib/sanitize';
+import { validateDepartmentAndTeacher } from '../../../lib/validate-lists';
 import { pbkdf2Sync } from 'crypto';
 import { getAdminDb, addDoc, collection, doc, serverTimestamp, updateDoc } from '../../../lib/firebase-admin';
 
@@ -61,6 +62,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'teacherName, title, and desc are required' }, { status: 400 });
     }
 
+    // Server-side enforcement: department and teacher must be from settings lists
+    const listCheck = await validateDepartmentAndTeacher(sDepartment, sTeacherName);
+    if (!listCheck.ok) {
+      logError('api', 'Create achievement rejected - invalid department/teacher', { error: listCheck.error }, request);
+      return NextResponse.json({ error: listCheck.error }, { status: 400 });
+    }
+    const vTeacherName = listCheck.teacherName;
+    const vDepartment = listCheck.department;
+
     // Trust a well-formed date sent by the client (device-local timezone);
     // otherwise fall back to the server's UTC date.
     const sDate =
@@ -72,8 +82,8 @@ export async function POST(request: Request) {
 
     // Create the achievement document
     const docRef = await addDoc(collection(db, "achievements"), {
-      teacherName,
-      department: sDepartment || '',
+      teacherName: vTeacherName,
+      department: vDepartment,
       title,
       desc,
       attachmentUrls: sAttachmentUrls || [],
