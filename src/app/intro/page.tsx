@@ -55,6 +55,8 @@ export default function IntroPage() {
   const managerName = settings?.managerName;
   const viceManager = settings?.viceManagerName;
   const assistant2 = settings?.assistantManager2;
+  const computerDeptTeacher = settings?.computerDeptTeacher;
+  const computerDeptHead = settings?.computerDeptHead;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#46178f] via-[#380e6e] to-[#2a0a54] flex flex-col relative overflow-hidden">
@@ -157,6 +159,29 @@ export default function IntroPage() {
                 </div>
                 <p className="text-purple-300 font-bold text-sm">المديرة المساعدة ٢</p>
                 <p className="text-white font-bold">{assistant2}</p>
+              </div>
+            )}
+          </div>
+          )}
+          {/* Computer Department */}
+          {(computerDeptTeacher || computerDeptHead) && (
+          <div className="flex flex-wrap justify-center gap-6 md:gap-10">
+            {computerDeptTeacher && (
+              <div className="text-center">
+                <div className="w-16 h-16 md:w-20 md:h-20 bg-blue-400/20 rounded-full flex items-center justify-center mx-auto mb-2 border-2 border-blue-400/50">
+                  <Eye size={28} className="text-blue-300" />
+                </div>
+                <p className="text-blue-300 font-bold text-sm">معلمة الحاسب الآلي</p>
+                <p className="text-white font-bold">{computerDeptTeacher}</p>
+              </div>
+            )}
+            {computerDeptHead && (
+              <div className="text-center">
+                <div className="w-16 h-16 md:w-20 md:h-20 bg-blue-400/20 rounded-full flex items-center justify-center mx-auto mb-2 border-2 border-blue-400/50">
+                  <Eye size={28} className="text-blue-300" />
+                </div>
+                <p className="text-blue-300 font-bold text-sm">رئيس قسم الحاسب الآلي</p>
+                <p className="text-white font-bold">{computerDeptHead}</p>
               </div>
             )}
           </div>

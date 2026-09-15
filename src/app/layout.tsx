@@ -4,6 +4,7 @@ import { Tajawal } from "next/font/google";
 import "./globals.css";
 import Sidebar from '../components/Sidebar';
 import PwaInstallPrompt from '../components/PwaInstallPrompt';
+import Footer from '../components/Footer';
 
 const tajawal = Tajawal({ subsets: ["arabic"], weight: ['400', '500', '700', '900'] });
 
@@ -98,6 +99,7 @@ export default function RootLayout({
           {/* Main Content Area - Added z-10 to stay above pattern, and scroll-smooth */}
           <main id="main-content" className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4 md:p-6 lg:p-8 print:p-0 print:overflow-visible w-full max-w-full min-w-0 z-10 scroll-smooth">
             {children}
+            <Footer />
           </main>
           
         </div>

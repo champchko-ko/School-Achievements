@@ -11,6 +11,8 @@ export default function SettingsPage() {
     managerName: string;
     viceManagerName: string;
     assistantManager2: string;
+    computerDeptTeacher: string;
+    computerDeptHead: string;
     vision: string;
     message: string;
     address: string;
@@ -24,6 +26,8 @@ export default function SettingsPage() {
     managerName: '',
     viceManagerName: '',
     assistantManager2: '',
+    computerDeptTeacher: '',
+    computerDeptHead: '',
     vision: '',
     message: '',
     address: '',
@@ -419,6 +423,30 @@ export default function SettingsPage() {
                   value={formData.assistantManager2}
                   onChange={(e) => setFormData({...formData, assistantManager2: e.target.value})}
                   placeholder="اسم المديرة المساعدة ٢" 
+                  className="w-full bg-gray-50 border-2 border-purple-100 rounded-2xl p-4 font-bold focus:ring-4 focus:ring-purple-200 focus:border-[#46178f] outline-none transition-all" 
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-sm font-black text-gray-700">معلمة الحاسب الآلي</label>
+                <input 
+                  type="text" 
+                  value={formData.computerDeptTeacher}
+                  onChange={(e) => setFormData({...formData, computerDeptTeacher: e.target.value})}
+                  placeholder="اسم معلمة الحاسب الآلي" 
+                  className="w-full bg-gray-50 border-2 border-purple-100 rounded-2xl p-4 font-bold focus:ring-4 focus:ring-purple-200 focus:border-[#46178f] outline-none transition-all" 
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-black text-gray-700">رئيس قسم الحاسب الآلي</label>
+                <input 
+                  type="text" 
+                  value={formData.computerDeptHead}
+                  onChange={(e) => setFormData({...formData, computerDeptHead: e.target.value})}
+                  placeholder="اسم رئيس قسم الحاسب الآلي" 
                   className="w-full bg-gray-50 border-2 border-purple-100 rounded-2xl p-4 font-bold focus:ring-4 focus:ring-purple-200 focus:border-[#46178f] outline-none transition-all" 
                 />
               </div>
