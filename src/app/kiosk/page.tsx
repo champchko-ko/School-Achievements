@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { collection, onSnapshot, query, orderBy, doc, getDoc } from "firebase/firestore";
 import { db } from "../../lib/firebase";
-import { Trophy, Medal, Sparkles, User, Building, Loader2, Star, Maximize, Calendar, Paperclip, Image as ImageIcon } from "lucide-react";
+import { Trophy, Medal, Sparkles, User, Building, Loader2, Star, Maximize, Calendar, Paperclip, Image as ImageIcon, Play, Pause, SkipBack, SkipForward, MonitorPlay, Hand } from "lucide-react";
 
 const isImageField = (url: string) => {
   if (!url) return false;
@@ -33,12 +33,17 @@ type Slide = {
   achievement: any;
 };
 
+type DisplayMode = 'automatic' | 'manual';
+const AUTO_ADVANCE_MS = 8000;
+
 export default function KioskModePage() {
   const [achievements, setAchievements] = useState<any[]>([]);
   const [schoolName, setSchoolName] = useState("");
   const [logoUrl, setLogoUrl] = useState("");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [mode, setMode] = useState<DisplayMode>('automatic');
+  const [isPlaying, setIsPlaying] = useState(true);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -93,14 +98,55 @@ export default function KioskModePage() {
     setCurrentIndex((prev) => (slides.length <= 1 ? 0 : (prev + 1) % slides.length));
   }, [slides.length]);
 
-  // Auto-advance for IMAGE/COVER slides (videos advance via onEnded)
-  useEffect(() => {
-    const current = slides[currentIndex];
-    if (!current || current.type === 'video') return;
+  const prev = useCallback(() => {
+    setCurrentIndex((prev) => (slides.length <= 1 ? 0 : (prev - 1 + slides.length) % slides.length));
+  }, [slides.length]);
 
-    timerRef.current = setInterval(next, 8000);
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [currentIndex, slides.length, slides, next]);
+  const startAutoPlay = useCallback(() => {
+    setIsPlaying(true);
+  }, []);
+
+  const stopAutoPlay = useCallback(() => {
+    setIsPlaying(false);
+  }, []);
+
+  const toggleMode = useCallback(() => {
+    setMode((prev) => (prev === 'automatic' ? 'manual' : 'automatic'));
+  }, []);
+
+  // Auto-advance timer — only active in automatic mode AND isPlaying
+  useEffect(() => {
+    // Clear any existing timer first
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+
+    const current = slides[currentIndex];
+    if (!current) return;
+
+    // Only auto-advance for IMAGE/COVER slides in automatic mode when playing
+    if (mode === 'automatic' && isPlaying && current.type !== 'video') {
+      timerRef.current = setInterval(next, AUTO_ADVANCE_MS);
+    }
+
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, [currentIndex, slides.length, slides, next, mode, isPlaying]);
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, []);
 
   // Always ensure the video element replays from start on slide change
   useEffect(() => {
@@ -108,6 +154,13 @@ export default function KioskModePage() {
       videoRef.current.currentTime = 0;
     }
   }, [currentIndex]);
+
+  // Video onEnded: only advance in automatic mode
+  const handleVideoEnded = useCallback(() => {
+    if (mode === 'automatic' && isPlaying) {
+      next();
+    }
+  }, [mode, isPlaying, next]);
 
   // Loading State
   if (isLoading) {
@@ -168,11 +221,12 @@ export default function KioskModePage() {
       </header>
 
       {/* Mother stage — media dominant, info panel beside it */}
-      <main className="flex-1 flex flex-col md:flex-row items-stretch gap-4 p-3 md:p-4 lg:p-6 relative z-10 w-full min-h-0 overflow-y-auto">
-        {/* Media stage (right, dominant) */}
-        <div key={current.id} className="flex-1 relative flex items-center justify-center overflow-hidden bg-black/30 rounded-none md:rounded-3xl border-0 md:border-2 md:border-white/10 min-h-0">
+      <main className="flex-1 flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8 px-4 md:px-12 py-4 min-h-0">
+        {/* Media stage */}
+        <div className="flex-1 flex items-center justify-center w-full min-h-[30vh] md:min-h-0 relative">
           {current.type === 'image' && (
             <img
+              key={current.id}
               src={current.url}
               alt={ach.title}
               className="max-h-[85vh] max-w-full object-contain rounded-2xl shadow-2xl animate-in fade-in duration-700"
@@ -188,7 +242,7 @@ export default function KioskModePage() {
               autoPlay
               muted
               playsInline
-              onEnded={next}
+              onEnded={handleVideoEnded}
             />
           )}
           {current.type === 'cover' && (
@@ -237,16 +291,80 @@ export default function KioskModePage() {
         </aside>
       </main>
 
-      {/* Bottom bar: progress + slide counter */}
-      <div className="shrink-0 flex items-center gap-4 px-4 md:px-8 py-2 bg-black/40 border-t border-white/10 z-10">
+      {/* Bottom bar: controls + progress + slide counter */}
+      <div className="shrink-0 flex flex-col gap-1 px-4 md:px-8 py-2 bg-black/40 border-t border-white/10 z-10">
+        {/* Controls row */}
+        <div className="flex items-center justify-between gap-2">
+          {/* Mode switcher */}
+          <button
+            onClick={toggleMode}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs md:text-sm font-black transition-all border-2 shrink-0"
+            style={{
+              borderColor: mode === 'automatic' ? '#ffb800' : 'rgba(255,255,255,0.3)',
+              background: mode === 'automatic' ? 'rgba(255,184,0,0.15)' : 'rgba(255,255,255,0.05)',
+              color: mode === 'automatic' ? '#ffb800' : 'rgba(255,255,255,0.7)',
+            }}
+          >
+            {mode === 'automatic' ? <MonitorPlay size={16} /> : <Hand size={16} />}
+            {mode === 'automatic' ? 'تلقائي' : 'يدوي'}
+          </button>
+
+          {/* Playback controls */}
+          <div className="flex items-center gap-1 md:gap-2">
+            {/* Previous */}
+            <button
+              onClick={prev}
+              className="p-2 md:p-2.5 rounded-xl bg-white/10 hover:bg-white/20 transition-all text-white/70 hover:text-white border border-white/15"
+              title="السابق"
+            >
+              <SkipBack size={18} />
+            </button>
+
+            {/* Stop / Start */}
+            {mode === 'automatic' && (
+              isPlaying ? (
+                <button
+                  onClick={stopAutoPlay}
+                  className="p-2 md:p-2.5 rounded-xl bg-red-500/20 hover:bg-red-500/30 transition-all text-red-400 hover:text-red-300 border border-red-500/30"
+                  title="إيقاف"
+                >
+                  <Pause size={18} />
+                </button>
+              ) : (
+                <button
+                  onClick={startAutoPlay}
+                  className="p-2 md:p-2.5 rounded-xl bg-green-500/20 hover:bg-green-500/30 transition-all text-green-400 hover:text-green-300 border border-green-500/30"
+                  title="تشغيل"
+                >
+                  <Play size={18} />
+                </button>
+              )
+            )}
+
+            {/* Next */}
+            <button
+              onClick={next}
+              className="p-2 md:p-2.5 rounded-xl bg-white/10 hover:bg-white/20 transition-all text-white/70 hover:text-white border border-white/15"
+              title="التالي"
+            >
+              <SkipForward size={18} />
+            </button>
+          </div>
+
+          {/* Slide counter */}
+          <span className="text-white/70 font-black text-xs md:text-sm shrink-0 whitespace-nowrap">{currentIndex + 1} / {slides.length}</span>
+        </div>
+
+        {/* Progress bar — only animates in automatic mode when playing */}
         <div className="h-1.5 w-full bg-white/15 relative overflow-hidden rounded-full">
-          {current.type !== 'video' ? (
-            <div key={`progress-${currentIndex}`} className="absolute top-0 bottom-0 left-0 bg-gradient-to-r from-yellow-400 via-pink-500 to-purple-500 animate-[progress_8s_linear] rounded-full" />
-          ) : (
+          {current.type !== 'video' && mode === 'automatic' && isPlaying ? (
+            <div key={`progress-${currentIndex}-${mode}-${isPlaying}`} className="absolute top-0 bottom-0 left-0 bg-gradient-to-r from-yellow-400 via-pink-500 to-purple-500 animate-[progress_8s_linear] rounded-full" />
+          ) : current.type === 'video' && mode === 'automatic' && isPlaying ? (
             <div className="absolute top-0 bottom-0 left-0 w-full bg-gradient-to-r from-yellow-400 via-pink-500 to-purple-500 rounded-full" />
+          ) : (
+            <div className="absolute top-0 bottom-0 left-0 bg-white/20 rounded-full" style={{ width: `${((currentIndex + 1) / slides.length) * 100}%` }} />
           )}
         </div>
-        <span className="text-white/70 font-black text-xs md:text-sm shrink-0 whitespace-nowrap">{currentIndex + 1} / {slides.length}</span>
       </div>
 
       {/* Full Screen Toggle Button */}

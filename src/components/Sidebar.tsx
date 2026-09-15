@@ -33,6 +33,10 @@ function SidebarLinks({ isAdmin, onClose }: { isAdmin: boolean; onClose?: () => 
         <Trophy size={20} />
         <span className="font-bold">لوحة الشرف</span>
       </Link>
+      <Link href="/kiosk" target="_blank" onClick={onClose} className="flex items-center gap-3 p-3 rounded-xl transition-all hover:bg-white/10">
+        <MonitorPlay size={20} className="text-indigo-300" />
+        <span className="font-bold">وضع العرض (Kiosk)</span>
+      </Link>
       {isAdmin && (
         <>
           <Link href="/reports" onClick={onClose} className={linkClass('/reports')}>
@@ -42,10 +46,6 @@ function SidebarLinks({ isAdmin, onClose }: { isAdmin: boolean; onClose?: () => 
           <Link href="/settings" onClick={onClose} className={linkClass('/settings')}>
             <Settings size={20} className="text-slate-300" />
             <span className="font-bold">إعدادات المدرسة</span>
-          </Link>
-          <Link href="/kiosk" target="_blank" onClick={onClose} className="flex items-center gap-3 p-3 rounded-xl transition-all hover:bg-white/10">
-            <MonitorPlay size={20} className="text-indigo-300" />
-            <span className="font-bold">وضع العرض (Kiosk)</span>
           </Link>
         </>
       )}
