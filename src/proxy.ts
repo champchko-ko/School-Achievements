@@ -56,7 +56,7 @@ export function proxy(request: NextRequest) {
   }
 
   // Admin-only routes - redirect to home if not authenticated
-  const adminRoutes = ['/admin', '/settings', '/reports'];
+  const adminRoutes = ['/admin', '/settings', '/reports', '/admin/monthly-awards'];
   if (adminRoutes.includes(pathname) && !isAdmin) {
     return NextResponse.redirect(new URL('/', request.url));
   }
