@@ -63,6 +63,11 @@ export default function Sidebar() {
   const [showAdminPrompt, setShowAdminPrompt] = useState(false);
   const [pinInput, setPinInput] = useState('');
   const [pinError, setPinError] = useState('');
+  const [showForgot, setShowForgot] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetSent, setResetSent] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetError, setResetError] = useState('');
   const { isAdmin, loading: adminLoading, checkAdmin } = useAdmin();
   const [mounted, setMounted] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -115,6 +120,32 @@ export default function Sidebar() {
     await fetch('/api/auth', { method: 'DELETE' });
     checkAdmin();
     router.push('/');
+  };
+
+  const handleForgotSubmit = async () => {
+    if (!resetEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(resetEmail)) {
+      setResetError('أدخل بريد إلكتروني صالح');
+      return;
+    }
+    setResetLoading(true);
+    setResetError('');
+    try {
+      const res = await fetch('/api/pin/reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: resetEmail.trim().toLowerCase() }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setResetSent(true);
+      } else {
+        setResetError(data.error || 'حدث خطأ');
+      }
+    } catch {
+      setResetError('حدث خطأ في الاتصال بالخادم');
+    } finally {
+      setResetLoading(false);
+    }
   };
 
   const closeMobile = () => setMobileOpen(false);
@@ -193,6 +224,8 @@ export default function Sidebar() {
       {mounted && showAdminPrompt && createPortal(
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60] animate-in fade-in duration-200">
           <div className="bg-white p-8 rounded-3xl shadow-2xl max-w-sm w-full mx-4 text-center animate-in zoom-in-95 duration-300" onClick={e => e.stopPropagation()}>
+            {!showForgot ? (
+              <>
             <h3 className="text-xl font-black text-[#46178f] mb-2">دخول الإدارة 🔐</h3>
             <p className="text-sm text-gray-500 mb-6">الرجاء إدخال رمز الدخول المكون من 4 أرقام</p>
             
@@ -207,10 +240,44 @@ export default function Sidebar() {
             />
             {pinError && <p className="text-red-500 font-bold text-sm mt-3 animate-in slide-in-from-top-1">{pinError}</p>}
             
+            <button onClick={() => setShowForgot(true)} className="text-xs font-bold text-[#0087ed] hover:underline mt-3 transition-colors">نسيت الرمز؟</button>
+            
             <div className="flex gap-3 mt-6">
               <button onClick={() => { setShowAdminPrompt(false); setPinError(""); setPinInput(""); }} className="flex-1 py-3 rounded-xl font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 transition-colors">إلغاء</button>
               <button onClick={handleAdminSubmit} className="flex-1 py-3 rounded-xl font-bold text-white bg-orange-500 hover:bg-orange-600 border-b-4 border-orange-700 active:border-b-0 active:translate-y-1 transition-all">تأكيد</button>
             </div>
+              </>
+            ) : (
+              <>
+            <h3 className="text-xl font-black text-[#46178f] mb-2">نسيت الرمز 🔑</h3>
+            {!resetSent ? (
+              <>
+              <p className="text-sm text-gray-500 mb-4">أدخل البريد الإلكتروني المسجل في صفحة الإعدادات لإرسال رابط إعادة التعيين.</p>
+              <input 
+                type="email"
+                value={resetEmail} 
+                onChange={e => setResetEmail(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && handleForgotSubmit()} 
+                placeholder="admin@school.com" 
+                className="w-full text-center font-bold text-sm bg-gray-50 border-2 border-purple-100 rounded-xl p-3 outline-none focus:border-[#46178f] focus:ring-4 focus:ring-purple-200 transition-all mb-3"
+              />
+              {resetError && <p className="text-red-500 font-bold text-xs mb-2">{resetError}</p>}
+              <div className="flex gap-3">
+                <button onClick={() => { setShowForgot(false); setResetEmail(''); setResetError(''); }} className="flex-1 py-3 rounded-xl font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 transition-colors">رجوع</button>
+                <button onClick={handleForgotSubmit} disabled={resetLoading || !resetEmail} className="flex-1 py-3 rounded-xl font-bold text-white bg-[#46178f] hover:bg-[#380e6e] disabled:opacity-50 transition-all">
+                  {resetLoading ? "جارٍ الإرسال..." : "إرسال الرابط"}
+                </button>
+              </div>
+              </>
+            ) : (
+              <>
+              <p className="text-sm text-gray-600 font-bold mb-2">تم الإرسال بنجاح!</p>
+              <p className="text-xs text-gray-500 mb-6">تحقق من بريدك الإلكتروني (حتى مجلد الرسائل غير المرغوب فيها) واضغط على الرابط لإعادة تعيين الرمز.</p>
+              <button onClick={() => { setShowAdminPrompt(false); setShowForgot(false); setResetSent(false); setResetEmail(''); }} className="w-full py-3 rounded-xl font-bold text-white bg-[#26890c] hover:bg-[#20730a] transition-all">إغلاق</button>
+              </>
+            )}
+              </>
+            )}
           </div>
         </div>,
         document.body
