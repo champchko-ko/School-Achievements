@@ -1,7 +1,7 @@
 // src/app/settings/page.tsx
 "use client";
 import { useState, useEffect, useRef } from 'react';
-import { Settings, Building, Phone, User, UploadCloud, Save, Loader2, Image as ImageIcon, Trash2, Users, BookOpen, ShieldCheck, Sparkles, Award, Database, RefreshCw } from 'lucide-react';
+import { Settings, Building, Phone, User, UploadCloud, Save, Loader2, Image as ImageIcon, Trash2, Users, BookOpen, ShieldCheck, Sparkles, Award, Database, RefreshCw, HelpCircle, X, Mail } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAdmin } from '../../lib/useAdmin';
 
@@ -18,6 +18,7 @@ export default function SettingsPage() {
     address: string;
     phone: string;
     logoUrl: string;
+    adminEmail: string;
     departments: string[];
     teachers: { name: string; department: string }[];
     adminPin: string;
@@ -33,6 +34,7 @@ export default function SettingsPage() {
     address: '',
     phone: '',
     logoUrl: '',
+    adminEmail: '',
     departments: ['الرياضيات', 'العلوم', 'اللغة العربية', 'الحاسب الآلي', 'التربية البدنية'],
     teachers: [] as { name: string; department: string }[],
     adminPin: ""
@@ -54,6 +56,7 @@ export default function SettingsPage() {
     cleanResult: any | null;
   }>({ scanning: false, cleaning: false, report: null, showCleanConfirm: false, cleanResult: null });
   const maintenanceScannedRef = useRef(false);
+  const [showSmtpHelp, setShowSmtpHelp] = useState(false);
   
   const { isAdmin, loading: adminLoading } = useAdmin();
   const router = useRouter();
@@ -368,6 +371,18 @@ export default function SettingsPage() {
                 />
               </div>
 
+              <div className="space-y-2">
+                <label className="text-sm font-black text-gray-700 flex items-center gap-2">البريد الإلكتروني لإعادة تعيين الرمز</label>
+                <input 
+                  type="email" 
+                  value={formData.adminEmail}
+                  onChange={(e) => setFormData({...formData, adminEmail: e.target.value})}
+                  placeholder="admin@school.com" 
+                  className="w-full bg-gray-50 border-2 border-purple-100 rounded-2xl p-4 font-bold focus:ring-4 focus:ring-purple-200 focus:border-[#46178f] outline-none transition-all" 
+                />
+                <p className="text-xs text-gray-400 font-bold">يُستخدم هذا البريد لاستقبال رابط إعادة تعيين رمز الدخول عند نسيانه.</p>
+              </div>
+
               <div className="space-y-2 md:col-span-2">
                 <label className="text-sm font-black text-gray-700 flex items-center gap-2">العنوان بالتفصيل</label>
                 <input 
@@ -585,7 +600,12 @@ export default function SettingsPage() {
             </div>
 
             <div className="bg-red-50/40 p-6 rounded-3xl border-2 border-red-100 space-y-4">
-              <label className="text-sm font-black text-gray-700">رمز PIN المكون من 4 أرقام</label>
+              <div className="flex items-center justify-between gap-2">
+                <label className="text-sm font-black text-gray-700">رمز PIN المكون من 4 أرقام</label>
+                <button type="button" onClick={() => setShowSmtpHelp(true)} className="flex items-center gap-1.5 text-xs font-black text-[#0087ed] hover:text-[#0073cc] transition-colors">
+                  <HelpCircle size={16} /> شرح إعداد البريد لإعادة التعيين
+                </button>
+              </div>
               <input 
                 type="password" 
                 maxLength={4}
@@ -735,6 +755,63 @@ export default function SettingsPage() {
         </div>
 
       </div>
+      {/* SMTP / App Password Setup Instructions Popup */}
+      {showSmtpHelp && (
+        <div
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[80] p-4"
+          onClick={() => setShowSmtpHelp(false)}
+        >
+          <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full max-h-[85vh] overflow-y-auto text-right" onClick={e => e.stopPropagation()}>
+            <div className="bg-[#46178f] text-white p-6 rounded-t-3xl flex items-center justify-between">
+              <h2 className="text-xl font-black flex items-center gap-3"><Mail size={24} className="text-yellow-300" /> إعداد البريد لإعادة تعيين الرمز</h2>
+              <button onClick={() => setShowSmtpHelp(false)} className="p-1 hover:bg-white/10 rounded-lg transition-colors"><X size={22} /></button>
+            </div>
+            <div className="p-6 space-y-5 text-sm font-bold text-gray-700 leading-relaxed">
+              <div className="bg-yellow-50 border-2 border-yellow-200 rounded-2xl p-4">
+                <p className="font-black text-gray-800 mb-2">💡 يجب إعداد كلمة مرور تطبيق واحدة فقط (لمرة واحدة)</p>
+                <p>هذه الخطوة ضرورية لتتمكن المنصة من إرسال رسائل البريد من خلال حساب Gmail الخاص بك.</p>
+              </div>
+              
+              <div>
+                <h3 className="font-black text-gray-800 mb-2 text-base">الخطوة 1:تفعيل التحقق بخطوتين</h3>
+                <ol className="list-decimal list-inside space-y-1">
+                  <li>اذهب إلى <a href="https://myaccount.google.com/security" target="_blank" className="text-[#0087ed] underline">حساب Google → الأمان</a></li>
+                  <li>فعّل خيار <strong>"التحقق بخطوتين"</strong> إذا لم يكن مفعلاً بالفعل.</li>
+                </ol>
+              </div>
+              
+              <div>
+                <h3 className="font-black text-gray-800 mb-2 text-base">الخطوة 2: إنشاء كلمة مرور تطبيق</h3>
+                <ol className="list-decimal list-inside space-y-1">
+                  <li>اذهب إلى <a href="https://myaccount.google.com/apppasswords" target="_blank" className="text-[#0087ed] underline">حساب Google → كلمات مرور التطبيقات</a></li>
+                  <li>اختر نوع الجهاز وانقر <strong>"إنشاء"</strong></li>
+                  <li>ستظهر كلمة مرور من 16 حرفاً (مثل <code className="bg-gray-100 px-1.5 py-0.5 rounded">abcd efgh ijkl mnop</code>) — انسخها فوراً</li>
+                </ol>
+              </div>
+              
+              <div>
+                <h3 className="font-black text-gray-800 mb-2 text-base">الخطوة 3: إضافة متغيرات البيئة على Vercel</h3>
+                <p className="mb-2">اذهب إلى مشروع Vercel → Settings → Environment Variables وأضف:</p>
+                <div className="bg-gray-900 text-green-400 rounded-2xl p-4 font-mono text-xs space-y-1 overflow-x-auto">
+                  <div><span className="text-gray-500">SMTP_HOST</span>=smtp.gmail.com</div>
+                  <div><span className="text-gray-500">SMTP_PORT</span>=465</div>
+                  <div><span className="text-gray-500">SMTP_USER</span>=bayanschool2026@gmail.com</div>
+                  <div><span className="text-gray-500">SMTP_PASS</span>=كلمة المرور من الخطوة 2</div>
+                </div>
+              </div>
+              
+              <div>
+                <h3 className="font-black text-gray-800 mb-2 text-base">الخطوة 4: إعادة البناء</h3>
+                <p>بعد إضافة المتغيرات، اضغط <strong>"Redeploy"</strong> في Vercel لتفعيل التغييرات.</p>
+              </div>
+
+              <div className="bg-green-50 border-2 border-green-200 rounded-2xl p-4">
+                <p className="font-black text-green-700">✅ تم! الآن يمكنك استخدام خيار "نسيت الرمز" عند تسجيل الدخول.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
