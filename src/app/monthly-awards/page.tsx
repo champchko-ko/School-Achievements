@@ -7,13 +7,14 @@ import { header, card } from '../../lib/ui';
 import Link from 'next/link';
 
 const LEVELS = ["gold", "silver", "bronze"] as const;
-const LEVEL_META: Record<string, { label: string; icon: typeof Trophy; badge: string; border: string; section: string }> = {
+const LEVEL_META: Record<string, { label: string; icon: typeof Trophy; badge: string; border: string; section: string; titleColor: string }> = {
   gold: {
     label: "ذهبي",
     icon: Trophy,
     badge: "bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 text-yellow-950",
     border: "border-yellow-400",
     section: "from-yellow-500/20 to-yellow-500/5 border-yellow-400/40",
+    titleColor: "text-yellow-300",
   },
   silver: {
     label: "فضي",
@@ -21,6 +22,7 @@ const LEVEL_META: Record<string, { label: string; icon: typeof Trophy; badge: st
     badge: "bg-gradient-to-r from-slate-200 via-slate-300 to-slate-400 text-slate-900",
     border: "border-slate-300",
     section: "from-slate-300/20 to-slate-300/5 border-slate-300/40",
+    titleColor: "text-slate-100",
   },
   bronze: {
     label: "برونزي",
@@ -28,6 +30,7 @@ const LEVEL_META: Record<string, { label: string; icon: typeof Trophy; badge: st
     badge: "bg-gradient-to-r from-amber-600 to-amber-800 text-white",
     border: "border-amber-600",
     section: "from-amber-600/20 to-amber-600/5 border-amber-600/40",
+    titleColor: "text-amber-300",
   },
 };
 
@@ -142,7 +145,7 @@ export default function MonthlyAwardsPage() {
                           {items.length}
                         </span>
                       </div>
-                      <h3 className="text-2xl md:text-3xl font-black mt-3 text-center">{meta.label}</h3>
+                      <h3 className={`text-2xl md:text-3xl font-black mt-3 text-center ${meta.titleColor}`}>{meta.label}</h3>
                       <p className="text-sm font-bold text-gray-500 mt-1">{items.length} {items.length === 1 ? "إنجاز" : "إنجازات"}</p>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
