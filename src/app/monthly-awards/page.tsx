@@ -134,10 +134,16 @@ export default function MonthlyAwardsPage() {
                 if (items.length === 0) return null;
                 return (
                   <div key={lv} className={`rounded-3xl border-2 bg-gradient-to-br p-6 md:p-8 ${meta.section}`}>
-                    <div className="flex items-center gap-3 mb-5">
-                      <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-white font-black shadow-lg border border-white/20 ${meta.badge}`}>
-                        <Icon size={20} /> {meta.label} <span className="opacity-80">({items.length})</span>
-                      </span>
+                    {/* Large cup medallion */}
+                    <div className="flex flex-col items-center mb-6">
+                      <div className={`relative w-24 h-24 md:w-32 md:h-32 rounded-full flex items-center justify-center shadow-2xl ${meta.badge}`}>
+                        <Icon size={48} className="md:w-16 md:h-16" />
+                        <span className="absolute -top-2 -right-2 bg-white text-sm font-black px-3 py-1 rounded-full shadow-lg border border-gray-100 text-gray-800">
+                          {items.length}
+                        </span>
+                      </div>
+                      <h3 className="text-2xl md:text-3xl font-black mt-3 text-center">{meta.label}</h3>
+                      <p className="text-sm font-bold text-gray-500 mt-1">{items.length} {items.length === 1 ? "إنجاز" : "إنجازات"}</p>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       {items.map(a => (
