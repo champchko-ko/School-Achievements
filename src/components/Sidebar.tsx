@@ -4,7 +4,7 @@ import { Suspense, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Home, PlusCircle, BookOpen, Printer, Trophy, ShieldCheck, LogOut, Settings, MonitorPlay, Menu, X } from 'lucide-react';
+import { Home, PlusCircle, BookOpen, Printer, Trophy, ShieldCheck, LogOut, Settings, MonitorPlay, Menu, X, Award } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAdmin } from '../lib/useAdmin';
@@ -37,11 +37,19 @@ function SidebarLinks({ isAdmin, onClose }: { isAdmin: boolean; onClose?: () => 
         <MonitorPlay size={20} className="text-indigo-300" />
         <span className="font-bold">وضع العرض (Kiosk)</span>
       </Link>
+      <Link href="/monthly-awards" onClick={onClose} className={linkClass('/monthly-awards')}>
+        <Award size={20} className="text-yellow-300" />
+        <span className="font-bold">إنجازات الشهر</span>
+      </Link>
       {isAdmin && (
         <>
           <Link href="/reports" onClick={onClose} className={linkClass('/reports')}>
             <Printer size={20} className="text-pink-300" />
             <span className="font-bold">طباعة التقارير</span>
+          </Link>
+          <Link href="/admin/monthly-awards" onClick={onClose} className={linkClass('/admin/monthly-awards')}>
+            <Award size={20} className="text-yellow-300" />
+            <span className="font-bold">تقييم الشهر</span>
           </Link>
           <Link href="/settings" onClick={onClose} className={linkClass('/settings')}>
             <Settings size={20} className="text-slate-300" />
