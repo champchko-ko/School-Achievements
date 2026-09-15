@@ -62,6 +62,8 @@ export default function ReportsPage() {
   const computeDepartmentStats = () => {
     const deptStats: Record<string, { count: number; totalScore: number; scoredCount: number }> = {};
     achievements.forEach(ach => {
+      const isApproved = ach.status === 'approved' || (!ach.status && ach.status !== 'pending');
+      if (!isApproved) return;
       const dept = ach.department || 'غير محدد';
       if (!deptStats[dept]) {
         deptStats[dept] = { count: 0, totalScore: 0, scoredCount: 0 };
@@ -84,6 +86,8 @@ export default function ReportsPage() {
   const computeHonorList = () => {
     const teacherStats: Record<string, { dept: string, count: number; totalScore: number; scoredCount: number }> = {};
     achievements.forEach(ach => {
+      const isApproved = ach.status === 'approved' || (!ach.status && ach.status !== 'pending');
+      if (!isApproved) return;
       const name = ach.teacherName;
       if (!name) return;
       if (!teacherStats[name]) {
@@ -322,7 +326,10 @@ export default function ReportsPage() {
       ? Array.from(new Set(allTeachers.map(t => t.name))) as string[]
       : Array.from(new Set(allTeachers.filter(t => t.department === selectedDept).map(t => t.name))) as string[];
 
-    const filteredData = selectedTeacher === "all" ? [] : achievements.filter(a => a.teacherName === selectedTeacher).sort((a,b) => b.date.localeCompare(a.date));
+    const filteredData = selectedTeacher === "all" ? [] : achievements.filter(a => {
+      const isApproved = a.status === 'approved' || (!a.status && a.status !== 'pending');
+      return a.teacherName === selectedTeacher && isApproved;
+    }).sort((a,b) => b.date.localeCompare(a.date));
 
     return (
       <div className={`${panel} p-8 print:shadow-none print:border-none print:p-0`}>
