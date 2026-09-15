@@ -117,66 +117,69 @@ export default function MonthlyAwardsPage() {
           <Loader2 className="animate-spin mb-4 text-[#ffb800]" size={40} />
           <p className="font-bold">جاري التحميل...</p>
         </div>
-      ) : !hasAnyAwards ? (
-        <div className="bg-white rounded-3xl p-10 border-2 border-dashed border-purple-200 text-center text-gray-400 mt-10 shadow-xl">
-          <Star size={40} className="mx-auto mb-3 text-purple-200" />
-          <p className="font-bold">لا توجد تقييمات بعد لأشهر <ActiveMonthLabel monthKey={selectedMonth} /></p>
-          <p className="text-sm mt-1">ستظهر إنجازات ذهبية وفضية وبرونزية عند تقييمها من الإدارة</p>
-        </div>
       ) : (
         <div className="space-y-8">
           {/* Award sections */}
-          {LEVELS.map(lv => {
-            const meta = LEVEL_META[lv];
-            const Icon = meta.icon;
-            const items = awarded[lv];
-            if (items.length === 0) return null;
-            return (
-              <div key={lv} className={`rounded-3xl border-2 bg-gradient-to-br p-6 md:p-8 ${meta.section}`}>
-                <div className="flex items-center gap-3 mb-5">
-                  <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-white font-black shadow-lg border border-white/20 ${meta.badge}`}>
-                    <Icon size={20} /> {meta.label} <span className="opacity-80">({items.length})</span>
-                  </span>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {items.map(a => (
-                    <Link key={a.id} href={`/achievement/${a.id}`} className={`${card} p-4 rounded-2xl border-2 ${meta.border} hover:shadow-xl hover:-translate-y-1 transition-all group`}>
-                      <div className="font-black text-[#46178f] text-sm leading-tight mb-1 line-clamp-2 group-hover:text-[#7b2cbf]">{a.title}</div>
-                      <div className="text-xs text-gray-500 font-bold">{a.teacherName || "غير محدد"}</div>
-                      <div className="flex items-center justify-between mt-2 text-xs font-bold text-gray-400">
-                        <span>{a.department || "غير محدد"}</span>
-                        <span>{a.date}</span>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-
-          {/* Top 10 */}
-          <div className="bg-white rounded-3xl border-2 border-purple-100 shadow-xl overflow-hidden">
-            <div className="bg-gradient-to-l from-[#46178f] to-[#7b2cbf] text-white p-6 flex items-center gap-3">
-              <Users size={24} className="text-yellow-300" />
-              <h3 className="font-black text-lg">أكثر المعلمات إنجازاً — <ActiveMonthLabel monthKey={selectedMonth} /></h3>
+          {!hasAnyAwards && top10.length === 0 ? (
+            <div className="bg-white rounded-3xl p-10 border-2 border-dashed border-purple-200 text-center text-gray-400 shadow-xl">
+              <Star size={40} className="mx-auto mb-3 text-purple-200" />
+              <p className="font-bold">لا توجد إنجازات منشورة في هذا الشهر بعد</p>
             </div>
-            {top10.length === 0 ? (
-              <div className="p-8 text-center text-gray-400 font-bold">لا توجد إنجازات منشورة في هذا الشهر</div>
-            ) : (
-              <ol className="divide-y divide-purple-50">
-                {top10.map((t, i) => (
-                  <li key={t.name} className="flex items-center gap-4 p-4 hover:bg-purple-50/50 transition-colors">
-                    <span className={`w-8 h-8 shrink-0 flex items-center justify-center rounded-full font-black text-sm ${i < 3 ? "bg-yellow-400 text-yellow-900" : "bg-purple-100 text-[#46178f]"}`}>{i + 1}</span>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-black text-gray-800 truncate">{t.name}</div>
-                      <div className="text-xs font-bold text-gray-400">{t.dept}</div>
+          ) : (
+            <>
+              {LEVELS.map(lv => {
+                const meta = LEVEL_META[lv];
+                const Icon = meta.icon;
+                const items = awarded[lv];
+                if (items.length === 0) return null;
+                return (
+                  <div key={lv} className={`rounded-3xl border-2 bg-gradient-to-br p-6 md:p-8 ${meta.section}`}>
+                    <div className="flex items-center gap-3 mb-5">
+                      <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-white font-black shadow-lg border border-white/20 ${meta.badge}`}>
+                        <Icon size={20} /> {meta.label} <span className="opacity-80">({items.length})</span>
+                      </span>
                     </div>
-                    <span className="shrink-0 bg-[#eb1f36] text-white text-xs font-black px-3 py-1 rounded-full shadow">{t.count} إنجاز</span>
-                  </li>
-                ))}
-              </ol>
-            )}
-          </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {items.map(a => (
+                        <Link key={a.id} href={`/achievement/${a.id}`} className={`${card} p-4 rounded-2xl border-2 ${meta.border} hover:shadow-xl hover:-translate-y-1 transition-all group`}>
+                          <div className="font-black text-[#46178f] text-sm leading-tight mb-1 line-clamp-2 group-hover:text-[#7b2cbf]">{a.title}</div>
+                          <div className="text-xs text-gray-500 font-bold">{a.teacherName || "غير محدد"}</div>
+                          <div className="flex items-center justify-between mt-2 text-xs font-bold text-gray-400">
+                            <span>{a.department || "غير محدد"}</span>
+                            <span>{a.date}</span>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Top 10 — always visible */}
+              <div className="bg-white rounded-3xl border-2 border-purple-100 shadow-xl overflow-hidden">
+                <div className="bg-gradient-to-l from-[#46178f] to-[#7b2cbf] text-white p-6 flex items-center gap-3">
+                  <Users size={24} className="text-yellow-300" />
+                  <h3 className="font-black text-lg">أكثر المعلمات إنجازاً — <ActiveMonthLabel monthKey={selectedMonth} /></h3>
+                </div>
+                {top10.length === 0 ? (
+                  <div className="p-8 text-center text-gray-400 font-bold">لا توجد إنجازات منشورة في هذا الشهر</div>
+                ) : (
+                  <ol className="divide-y divide-purple-50">
+                    {top10.map((t, i) => (
+                      <li key={t.name} className="flex items-center gap-4 p-4 hover:bg-purple-50/50 transition-colors">
+                        <span className={`w-8 h-8 shrink-0 flex items-center justify-center rounded-full font-black text-sm ${i < 3 ? "bg-yellow-400 text-yellow-900" : "bg-purple-100 text-[#46178f]"}`}>{i + 1}</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-black text-gray-800 truncate">{t.name}</div>
+                          <div className="text-xs font-bold text-gray-400">{t.dept}</div>
+                        </div>
+                        <span className="shrink-0 bg-[#eb1f36] text-white text-xs font-black px-3 py-1 rounded-full shadow">{t.count} إنجاز</span>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>
