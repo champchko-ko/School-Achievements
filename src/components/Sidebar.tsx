@@ -4,7 +4,7 @@ import { Suspense, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Home, PlusCircle, BookOpen, Printer, Trophy, ShieldCheck, LogOut, Settings, MonitorPlay, Menu, X, Award } from 'lucide-react';
+import { Home, PlusCircle, BookOpen, Printer, ShieldCheck, LogOut, Settings, MonitorPlay, Menu, X, Award } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAdmin } from '../lib/useAdmin';
@@ -28,10 +28,6 @@ function SidebarLinks({ isAdmin, onClose }: { isAdmin: boolean; onClose?: () => 
       <Link href="/full-record" onClick={onClose} className={linkClass('/full-record')}>
         <BookOpen size={20} className="text-orange-300" />
         <span className="font-bold">السجل الكامل</span>
-      </Link>
-      <Link href="/honor-roll" onClick={onClose} className={linkClass('/honor-roll')}>
-        <Trophy size={20} />
-        <span className="font-bold">لوحة الشرف</span>
       </Link>
       <Link href="/kiosk" target="_blank" onClick={onClose} className="flex items-center gap-3 p-3 rounded-xl transition-all hover:bg-white/10">
         <MonitorPlay size={20} className="text-indigo-300" />
