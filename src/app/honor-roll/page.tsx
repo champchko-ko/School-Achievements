@@ -16,11 +16,13 @@ export default function HonorRoll() {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const teacherStats: Record<string, any> = {};
 
-      // 1. Group achievements by teacherName
+      // 1. Group achievements by teacherName (only count approved)
       snapshot.docs.forEach((doc) => {
         const data = doc.data();
         const name = data.teacherName;
         if (!name) return;
+        const approved = data.status === 'approved' || (!data.status && data.status !== 'pending');
+        if (!approved) return;
 
         if (!teacherStats[name]) {
           teacherStats[name] = { name, dept: data.department || 'غير محدد', points: 0 };
