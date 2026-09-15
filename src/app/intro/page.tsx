@@ -210,7 +210,3 @@ export default function IntroPage() {
     </div>
   );
 }
-style>
-    </div>
-  );
-}
