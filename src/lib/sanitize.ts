@@ -29,7 +29,7 @@ export function preventExcelFormula(value: string): string {
  * Use this for all user-supplied text before storing to Firestore.
  */
 const MAX_TEXT_LENGTH = 10000;
-const MAX_ARRAY_LENGTH = 100;
+const MAX_ARRAY_LENGTH = 300;
 
 export function sanitizeText(value: string): string {
   if (!value) return '';
