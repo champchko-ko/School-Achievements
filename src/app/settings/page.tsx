@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Settings, Building, Phone, User, UploadCloud, Save, Loader2, Image as ImageIcon, Trash2, Users, BookOpen, ShieldCheck, Sparkles, Award, Database, RefreshCw, HelpCircle, X, Mail } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAdmin } from '../../lib/useAdmin';
+import TeacherListByDept from '../../components/TeacherListByDept';
 
 export default function SettingsPage() {
   const [formData, setFormData] = useState<{
@@ -573,16 +574,11 @@ export default function SettingsPage() {
                   </div>
                   {!newTeacherDept && newTeacher.trim() && <p className="text-xs text-amber-600 font-bold">⚠️ يجب اختيار القسم أولاً</p>}
                 </div>
-                <div className="flex flex-wrap gap-2 max-h-52 overflow-y-auto p-2 border-2 border-dashed border-purple-200 rounded-2xl bg-white">
-                  {formData.teachers.map((teacher, idx) => (
-                    <span key={`${teacher.name}-${teacher.department}-${idx}`} className="bg-emerald-50 border-2 border-emerald-200 text-gray-700 text-sm font-black px-3 py-2 rounded-xl flex items-center gap-2 shadow-sm">
-                      {teacher.name}
-                      {teacher.department && <span className="text-[10px] bg-purple-100 text-[#46178f] px-1.5 py-0.5 rounded-lg font-bold">{teacher.department}</span>}
-                      <button type="button" onClick={() => setFormData({...formData, teachers: formData.teachers.filter((_, i) => i !== idx)})} className="text-red-400 hover:text-red-600 transition-colors"><Trash2 size={16} /></button>
-                    </span>
-                  ))}
-                  {formData.teachers.length === 0 && <p className="text-xs text-gray-400 p-3 font-bold">لا يوجد معلمون مضافون حالياً.</p>}
-                </div>
+                <TeacherListByDept
+                  teachers={formData.teachers}
+                  departments={formData.departments}
+                  onRemove={(idx) => setFormData({...formData, teachers: formData.teachers.filter((_, i) => i !== idx)})}
+                />
               </div>
             </div>
           </div>
