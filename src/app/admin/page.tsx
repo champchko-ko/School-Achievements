@@ -41,6 +41,9 @@ export default function AdminDashboard() {
   const [logsLoading, setLogsLoading] = useState(true);
   const [showLogs, setShowLogs] = useState(false);
   const [backupLoading, setBackupLoading] = useState(false);
+  const [storedBackups, setStoredBackups] = useState<any[]>([]);
+  const [storedBackupsLoading, setStoredBackupsLoading] = useState(false);
+  const [backupRestoreLoading, setBackupRestoreLoading] = useState<string | null>(null);
   const [reviewItem, setReviewItem] = useState<any | null>(null);
   const [reviewScoring, setReviewScoring] = useState(false);
   const router = useRouter();
@@ -283,6 +286,49 @@ export default function AdminDashboard() {
     }
   };
 
+  // Fetch stored backups list
+  const fetchStoredBackups = async () => {
+    setStoredBackupsLoading(true);
+    try {
+      const res = await fetch('/api/backup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'list' }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setStoredBackups(data.backups || []);
+      }
+    } catch (e) {
+      console.error('Failed to fetch backups:', e);
+    } finally {
+      setStoredBackupsLoading(false);
+    }
+  };
+
+  // Restore from a stored backup
+  const handleRestoreBackup = async (backupId: string) => {
+    if (!confirm('هل أنت متأكد من استعادة هذه النسخة الاحتياطية؟ سيتم دمج البيانات الحالية مع النسخة الاحتياطية.')) return;
+    setBackupRestoreLoading(backupId);
+    try {
+      const res = await fetch('/api/backup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'restore', backupId }),
+      });
+      if (!res.ok) throw new Error('Restore failed');
+      const data = await res.json();
+      setNotification({ type: 'success', message: `تمت الاستعادة بنجاح! تم استعادة ${data.restored} مستند.` });
+    } catch (e) {
+      setNotification({ type: 'error', message: 'فشلت عملية الاستعادة.' });
+    } finally {
+      setBackupRestoreLoading(null);
+    }
+  };
+
+  // Load stored backups on mount
+  useEffect(() => { fetchStoredBackups(); }, []);
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-10">
       
@@ -516,6 +562,42 @@ export default function AdminDashboard() {
             {backupLoading ? <Loader2 className="animate-spin" size={16} /> : <Download size={16} />}
             {backupLoading ? 'جاري التحميل...' : 'تحميل النسخة الاحتياطية'}
           </button>
+        </div>
+
+        {/* Stored Backups History */}
+        <div className="mt-4 pt-4 border-t border-gray-700">
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="text-sm font-black text-gray-300">النسخ الاحتياطية المحفوظة (أوتوماتيكياً أسبوعياً)</h4>
+            <button onClick={fetchStoredBackups} className="text-xs text-blue-400 hover:text-blue-300 font-bold flex items-center gap-1">
+              <RefreshCw size={12} /> تحديث
+            </button>
+          </div>
+          {storedBackupsLoading ? (
+            <div className="flex items-center gap-2 text-gray-400 text-sm py-2"><Loader2 className="animate-spin" size={14} /> جاري التحميل...</div>
+          ) : storedBackups.length === 0 ? (
+            <p className="text-xs text-gray-500 font-bold py-2">لا توجد نسخ احتياطية محفوظة بعد.</p>
+          ) : (
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {storedBackups.map((b: any) => (
+                <div key={b.id} className="flex items-center justify-between bg-gray-800/50 rounded-xl px-3 py-2">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Calendar size={14} className="text-gray-400 shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-gray-300 truncate">{new Date(b.createdAt).toLocaleString('ar-SA')}</p>
+                      <p className="text-[10px] text-gray-500">{b.totalDocuments} مستند · {b.source === 'cron' ? 'أوتوماتيكي' : 'يدوي'}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleRestoreBackup(b.id)}
+                    disabled={backupRestoreLoading === b.id}
+                    className="text-xs text-green-400 hover:text-green-300 font-bold px-2 py-1 rounded-lg hover:bg-green-900/30 transition-all shrink-0"
+                  >
+                    {backupRestoreLoading === b.id ? <Loader2 className="animate-spin" size={12} /> : 'استعادة'}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
