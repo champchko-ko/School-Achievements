@@ -320,11 +320,13 @@ export default function ReportsPage() {
       ? schoolSettings.departments
       : Array.from(new Set(achievements.map(a => a.department).filter(Boolean))) as string[];
 
-    // Get teachers for selected department
-    const allTeachers = achievements.map(a => ({ name: a.teacherName, department: a.department || '' })).filter(t => t.name);
+    // Get teachers from school settings (source of truth), not from achievements
+    const allTeachers = (schoolSettings?.teachers || [])
+      .map((t: any) => typeof t === 'string' ? { name: t, department: '' } : { name: t.name || '', department: t.department || '' })
+      .filter((t: any) => t.name);
     const teachersForDept = selectedDept === 'all'
-      ? Array.from(new Set(allTeachers.map(t => t.name))) as string[]
-      : Array.from(new Set(allTeachers.filter(t => t.department === selectedDept).map(t => t.name))) as string[];
+      ? Array.from(new Set(allTeachers.map((t: any) => t.name))) as string[]
+      : Array.from(new Set(allTeachers.filter((t: any) => t.department === selectedDept).map((t: any) => t.name))) as string[];
 
     const filteredData = selectedTeacher === "all" ? [] : achievements.filter(a => {
       const isApproved = a.status === 'approved' || (!a.status && a.status !== 'pending');
