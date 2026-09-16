@@ -28,7 +28,7 @@ export default function TeacherListByDept({ teachers, departments, onRemove }: P
   }
 
   const totalCount = teachers.length;
-  const deptCount = sortedDepts.filter(d => grouped[d].length > 0).length;
+  const deptCount = sortedDepts.length;
 
   return (
     <div className="space-y-2">
@@ -53,7 +53,6 @@ export default function TeacherListByDept({ teachers, departments, onRemove }: P
       <div className="max-h-[420px] overflow-y-auto space-y-1 pr-1 scrollbar-thin">
         {sortedDepts.map(dept => {
           const deptTeachers = grouped[dept];
-          if (deptTeachers.length === 0) return null;
           const isCollapsed = collapsed[dept];
 
           return (
@@ -76,6 +75,9 @@ export default function TeacherListByDept({ teachers, departments, onRemove }: P
               {/* Teachers List */}
               {!isCollapsed && (
                 <div className="px-3 py-2 flex flex-wrap gap-1.5">
+                  {deptTeachers.length === 0 && (
+                    <p className="text-[11px] text-gray-400 font-bold py-1">لا توجد معلمات في هذا القسم حالياً.</p>
+                  )}
                   {deptTeachers.map((teacher) => {
                     const globalIdx = teachers.findIndex(
                       t => t.name === teacher.name && t.department === teacher.department
