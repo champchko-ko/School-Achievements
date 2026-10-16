@@ -137,20 +137,24 @@ export default function MonthlyAwardsPage() {
                 const meta = LEVEL_META[lv];
                 const Icon = meta.icon;
                 const items = awarded[lv];
-                if (items.length === 0) return null;
                 return (
                   <div key={lv} className={`rounded-3xl border-2 bg-gradient-to-br p-6 md:p-8 ${meta.section}`}>
                     {/* Large cup medallion */}
                     <div className="flex flex-col items-center mb-6">
                       <div className={`relative w-24 h-24 md:w-32 md:h-32 rounded-full flex items-center justify-center shadow-2xl ${meta.badge}`}>
                         <Icon size={48} className={`md:w-16 md:h-16 ${meta.iconColor}`} />
-                        <span className="absolute -top-2 -right-2 bg-white text-sm font-black px-3 py-1 rounded-full shadow-lg border border-gray-100 text-gray-800">
-                          {items.length}
-                        </span>
+                        {items.length > 0 && (
+                          <span className="absolute -top-2 -right-2 bg-white text-sm font-black px-3 py-1 rounded-full shadow-lg border border-gray-100 text-gray-800">
+                            {items.length}
+                          </span>
+                        )}
                       </div>
                       <h3 className={`text-2xl md:text-3xl font-black mt-3 text-center ${meta.titleColor}`}>{meta.label}</h3>
                       <p className="text-sm font-bold text-gray-500 mt-1">{items.length} {items.length === 1 ? "إنجاز" : "إنجازات"}</p>
                     </div>
+                    {items.length === 0 ? (
+                      <p className="text-center text-gray-400 font-bold py-6">لا توجد إنجازات بهذا التقييم في هذا الشهر</p>
+                    ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       {items.map(a => (
                         <Link key={a.id} href={`/achievement/${a.id}`} className={`${card} p-4 rounded-2xl border-2 ${meta.border} hover:shadow-xl hover:-translate-y-1 transition-all group`}>
@@ -163,6 +167,7 @@ export default function MonthlyAwardsPage() {
                         </Link>
                       ))}
                     </div>
+                    )}
                   </div>
                 );
               })}
