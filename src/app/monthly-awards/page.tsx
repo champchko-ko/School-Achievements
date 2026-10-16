@@ -2,35 +2,38 @@
 import { useState, useEffect, useMemo } from 'react';
 import { db } from '../../lib/firebase';
 import { collection, onSnapshot, query } from 'firebase/firestore';
-import { Trophy, Medal, Award, Loader2, Star, Users, Calendar } from 'lucide-react';
+import { Trophy, Loader2, Star, Users, Calendar } from 'lucide-react';
 import { header, card } from '../../lib/ui';
 import Link from 'next/link';
 
 const LEVELS = ["gold", "silver", "bronze"] as const;
-const LEVEL_META: Record<string, { label: string; icon: typeof Trophy; badge: string; border: string; section: string; titleColor: string }> = {
+const LEVEL_META: Record<string, { label: string; icon: typeof Trophy; iconColor: string; badge: string; border: string; section: string; titleColor: string }> = {
   gold: {
     label: "ذهبي",
     icon: Trophy,
-    badge: "bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 text-yellow-950",
+    badge: "bg-transparent",
     border: "border-yellow-400",
     section: "from-yellow-500/20 to-yellow-500/5 border-yellow-400/40",
-    titleColor: "text-yellow-300",
+    iconColor: "text-yellow-400",
+    titleColor: "text-yellow-400",
   },
   silver: {
     label: "فضي",
-    icon: Medal,
-    badge: "bg-gradient-to-r from-slate-200 via-slate-300 to-slate-400 text-slate-900",
+    icon: Trophy,
+    badge: "bg-transparent",
     border: "border-slate-300",
     section: "from-slate-300/20 to-slate-300/5 border-slate-300/40",
-    titleColor: "text-slate-100",
+    iconColor: "text-slate-400",
+    titleColor: "text-slate-500",
   },
   bronze: {
     label: "برونزي",
-    icon: Award,
-    badge: "bg-gradient-to-r from-amber-600 to-amber-800 text-white",
+    icon: Trophy,
+    badge: "bg-transparent",
     border: "border-amber-600",
     section: "from-amber-600/20 to-amber-600/5 border-amber-600/40",
-    titleColor: "text-amber-300",
+    iconColor: "text-amber-700",
+    titleColor: "text-amber-700",
   },
 };
 
@@ -140,7 +143,7 @@ export default function MonthlyAwardsPage() {
                     {/* Large cup medallion */}
                     <div className="flex flex-col items-center mb-6">
                       <div className={`relative w-24 h-24 md:w-32 md:h-32 rounded-full flex items-center justify-center shadow-2xl ${meta.badge}`}>
-                        <Icon size={48} className="md:w-16 md:h-16" />
+                        <Icon size={48} className={`md:w-16 md:h-16 ${meta.iconColor}`} />
                         <span className="absolute -top-2 -right-2 bg-white text-sm font-black px-3 py-1 rounded-full shadow-lg border border-gray-100 text-gray-800">
                           {items.length}
                         </span>
