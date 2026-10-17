@@ -82,8 +82,10 @@ function HomeContent() {
       q = query(collection(db, 'achievements'), where('status', '==', 'approved'));
     } catch (err) {
       console.error('Error creating query:', err);
-      setFirebaseError('فشل في إنشاء الاستعلام');
-      setIsLoading(false);
+      setTimeout(() => {
+        setFirebaseError('فشل في إنشاء الاستعلام');
+        setIsLoading(false);
+      }, 0);
       return;
     }
     

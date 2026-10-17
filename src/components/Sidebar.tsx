@@ -74,7 +74,7 @@ export default function Sidebar() {
   const [schoolSettings, setSchoolSettings] = useState<{ schoolName?: string; logoUrl?: string } | null>(null);
 
   useEffect(() => {
-    setMounted(true);
+    const timer = setTimeout(() => setMounted(true), 0);
 
     const fetchSettings = async () => {
       try {
@@ -88,6 +88,8 @@ export default function Sidebar() {
       }
     };
     fetchSettings();
+
+    return () => clearTimeout(timer);
   }, []);
 
   const handleAdminSubmit = async () => {

@@ -10,6 +10,7 @@ import Footer from '../components/Footer';
 const tajawal = Tajawal({ subsets: ["arabic"], weight: ['400', '500', '700', '900'] });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://school-achievements-six.vercel.app'),
   title: {
     default: 'إنجازات المدرسة',
     template: '%s | إنجازات المدرسة',

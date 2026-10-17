@@ -32,6 +32,12 @@ function getDb() {
     adminDb = getFirestore(app);
   }
 
+  try {
+    adminDb.settings({ ignoreUndefinedProperties: true });
+  } catch {
+    // Settings can only be applied once per process
+  }
+
   return adminDb;
 }
 

@@ -13,14 +13,9 @@ vi.mock('./firebase-admin', () => {
   };
 });
 
-// @ts-ignore
+// @ts-expect-error __setSettings is exposed only in test mock
 import { __setSettings } from './firebase-admin';
 import { validateDepartmentAndTeacher } from './validate-lists';
-
-const run = (data: any) => {
-  __setSettings(data);
-  return validateDepartmentAndTeacher.bind(null);
-};
 
 beforeEach(() => {
   vi.clearAllMocks();

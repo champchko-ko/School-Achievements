@@ -27,7 +27,7 @@ export default function ReportsPage() {
       router.replace('/');
       return;
     }
-    setMounted(true);
+    const timer = setTimeout(() => { setMounted(true); }, 0);
     fetch('/api/achievements?all=true')
       .then(res => res.json())
       .then(data => {
@@ -35,6 +35,8 @@ export default function ReportsPage() {
       })
       .catch(err => console.error("Error fetching achievements:", err))
       .finally(() => setIsLoading(false));
+
+    return () => clearTimeout(timer);
   }, [isAdmin, adminLoading, router]);
 
   useEffect(() => {

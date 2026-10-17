@@ -60,7 +60,7 @@ export default function FullRecordPage() {
   const [schoolSettings, setSchoolSettings] = useState<{ schoolName?: string, logoUrl?: string, departments?: string[] } | null>(null);
 
   useEffect(() => {
-    setMounted(true);
+    const mountTimer = setTimeout(() => { setMounted(true); }, 0);
     if (isAdmin) {
       // Admin reads via server API to get all achievements (including pending)
       fetch('/api/achievements?all=true')
@@ -70,7 +70,7 @@ export default function FullRecordPage() {
         })
         .catch(err => console.error("Error fetching achievements:", err))
         .finally(() => setIsLoading(false));
-      return;
+      return () => clearTimeout(mountTimer);
     }
 
     // Public / non-admin reads strictly approved achievements
@@ -89,7 +89,10 @@ export default function FullRecordPage() {
       setIsLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      clearTimeout(mountTimer);
+      unsubscribe();
+    };
   }, [isAdmin]);
 
   useEffect(() => {

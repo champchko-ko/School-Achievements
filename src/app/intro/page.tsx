@@ -5,6 +5,15 @@ import { db } from '../../lib/firebase';
 import { useRouter } from 'next/navigation';
 import { Loader2, ChevronDown, Sparkles, GraduationCap, User, Users } from 'lucide-react';
 
+const PARTICLES = Array.from({ length: 20 }, (_, i) => ({
+  id: i,
+  left: `${(i * 37) % 100}%`,
+  top: `${(i * 53) % 100}%`,
+  animationDelay: `${(i * 0.25) % 5}s`,
+  animationDuration: `${3 + ((i * 0.5) % 4)}s`,
+  size: `${4 + (i % 8)}px`,
+}));
+
 export default function IntroPage() {
   const router = useRouter();
   const [settings, setSettings] = useState<any>(null);
@@ -63,17 +72,17 @@ export default function IntroPage() {
       
       {/* Animated Background Particles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(20)].map((_, i) => (
+        {PARTICLES.map((p) => (
           <div
-            key={i}
-            className="absolute w-2 h-2 bg-white/10 rounded-full animate-ping"
+            key={p.id}
+            className="absolute bg-white/10 rounded-full animate-ping"
             style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 5}s`,
-              animationDuration: `${3 + Math.random() * 4}s`,
-              width: `${4 + Math.random() * 8}px`,
-              height: `${4 + Math.random() * 8}px`,
+              left: p.left,
+              top: p.top,
+              animationDelay: p.animationDelay,
+              animationDuration: p.animationDuration,
+              width: p.size,
+              height: p.size,
             }}
           />
         ))}

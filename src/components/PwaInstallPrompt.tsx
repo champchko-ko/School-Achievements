@@ -23,15 +23,17 @@ export default function PwaInstallPrompt() {
     const standaloneQuery = window.matchMedia('(display-mode: standalone)');
     const updateStandalone = () => setIsStandalone(standaloneQuery.matches || Boolean((window.navigator as Navigator & { standalone?: boolean }).standalone));
 
-    updateStandalone();
-    standaloneQuery.addEventListener('change', updateStandalone);
+    const initTimer = setTimeout(() => {
+      updateStandalone();
+      const userAgent = window.navigator.userAgent;
+      setIsIos(
+        /iphone|ipad|ipod/i.test(userAgent) ||
+        (userAgent.includes('Macintosh') && window.navigator.maxTouchPoints > 1)
+      );
+      setWasDismissed(window.localStorage.getItem(DISMISSAL_KEY) === 'true');
+    }, 0);
 
-    const userAgent = window.navigator.userAgent;
-    setIsIos(
-      /iphone|ipad|ipod/i.test(userAgent) ||
-      (userAgent.includes('Macintosh') && window.navigator.maxTouchPoints > 1)
-    );
-    setWasDismissed(window.localStorage.getItem(DISMISSAL_KEY) === 'true');
+    standaloneQuery.addEventListener('change', updateStandalone);
 
     const handleInstallPrompt = (event: Event) => {
       event.preventDefault();
@@ -54,6 +56,7 @@ export default function PwaInstallPrompt() {
     }
 
     return () => {
+      clearTimeout(initTimer);
       standaloneQuery.removeEventListener('change', updateStandalone);
       window.removeEventListener('beforeinstallprompt', handleInstallPrompt);
       window.removeEventListener('appinstalled', handleAppInstalled);

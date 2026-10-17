@@ -1,6 +1,6 @@
 // src/app/settings/page.tsx
 "use client";
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Settings, Building, Phone, User, UploadCloud, Save, Loader2, Image as ImageIcon, Trash2, Users, BookOpen, ShieldCheck, Sparkles, Award, Database, RefreshCw, HelpCircle, X, Mail } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAdmin } from '../../lib/useAdmin';
@@ -76,15 +76,6 @@ export default function SettingsPage() {
     }
   }, [notification]);
 
-  // Auto-run a maintenance scan the first time the Security tab (maintenance section) is opened
-  useEffect(() => {
-    if (activeTab === 'security' && !maintenanceScannedRef.current) {
-      maintenanceScannedRef.current = true;
-      runMaintenanceScan();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab]);
-
   const formatBytes = (n: number) => {
     if (!n) return '0 KB';
     if (n < 1024) return `${n} B`;
@@ -92,7 +83,7 @@ export default function SettingsPage() {
     return `${(n / (1024 * 1024)).toFixed(2)} MB`;
   };
 
-  const runMaintenanceScan = async () => {
+  const runMaintenanceScan = useCallback(async () => {
     setMaintenance((m) => ({ ...m, scanning: true }));
     try {
       const res = await fetch('/api/cleanup', {
@@ -108,7 +99,15 @@ export default function SettingsPage() {
       setMaintenance((m) => ({ ...m, scanning: false }));
       setNotification({ type: 'error', message: 'فشل فحص قاعدة البيانات. حاول مرة أخرى.' });
     }
-  };
+  }, []);
+
+  // Auto-run a maintenance scan the first time the Security tab (maintenance section) is opened
+  useEffect(() => {
+    if (activeTab === 'security' && !maintenanceScannedRef.current) {
+      maintenanceScannedRef.current = true;
+      void runMaintenanceScan();
+    }
+  }, [activeTab, runMaintenanceScan]);
 
   const handleMaintenanceClean = async () => {
     setMaintenance((m) => ({ ...m, cleaning: true, showCleanConfirm: false }));

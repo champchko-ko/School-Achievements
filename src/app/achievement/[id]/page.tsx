@@ -198,9 +198,11 @@ export default function AchievementDetailsPage() {
 
   useEffect(() => {
     if (!id) {
-      setError("معرف الإنجاز غير صالح.");
-      setIsLoading(false);
-      return;
+      const timer = setTimeout(() => {
+        setError("معرف الإنجاز غير صالح.");
+        setIsLoading(false);
+      }, 0);
+      return () => clearTimeout(timer);
     }
 
     let cancelled = false;

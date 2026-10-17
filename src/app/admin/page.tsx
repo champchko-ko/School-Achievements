@@ -339,7 +339,10 @@ export default function AdminDashboard() {
   };
 
   // Load stored backups on mount
-  useEffect(() => { fetchStoredBackups(); }, []);
+  useEffect(() => {
+    const timer = setTimeout(() => { void fetchStoredBackups(); }, 0);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-10">

@@ -106,6 +106,24 @@ function validateFiles(fileList: File[], existingFiles: File[]): { accepted: Fil
   return { accepted, rejected };
 }
 
+/* ─── Reusable select wrapper ─── */
+const FieldLabel = ({ children, hint }: { children: React.ReactNode; hint?: string }) => (
+  <label className="block text-sm font-extrabold text-gray-800 mb-1.5 flex items-center gap-1.5">
+    {children}
+    {hint && <span className="text-[10px] font-bold text-purple-400 bg-purple-50 px-1.5 py-0.5 rounded-md">{hint}</span>}
+  </label>
+);
+
+const selectClass =
+  'w-full appearance-none bg-white border-2 border-purple-100 rounded-xl p-3 pr-10 font-bold text-sm text-gray-800 focus:ring-4 focus:ring-purple-200 focus:border-[#46178f] outline-none transition-all';
+
+const inputClass =
+  'w-full bg-white border-2 border-purple-100 rounded-xl p-3 font-bold text-sm text-gray-800 focus:ring-4 focus:ring-purple-200 focus:border-[#46178f] outline-none transition-all';
+
+const SelectIcon = () => (
+  <ChevronDown size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-purple-300 pointer-events-none" />
+);
+
 export default function AddAchievementModal({
   isOpen, onClose, initialData, docId, verifiedPin,
 }: {
@@ -141,7 +159,10 @@ export default function AddAchievementModal({
 
   const noTeachersForDept = formData.department && uniqueFilteredNames.length === 0;
 
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    const timer = setTimeout(() => { setMounted(true); }, 0);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     if (alertMsg) {
@@ -151,7 +172,9 @@ export default function AddAchievementModal({
   }, [alertMsg]);
 
   useEffect(() => {
-    if (isOpen) {
+    if (!isOpen) return;
+
+    const timer = setTimeout(() => {
       if (initialData) {
         setFormData({
           teacherName: initialData.teacherName || '',
@@ -172,21 +195,23 @@ export default function AddAchievementModal({
         setExistingAttachments([]);
       }
       setFiles([]);
+    }, 0);
 
-      const fetchLists = async () => {
-        try {
-          const snap = await getDoc(doc(db, 'settings', 'global_info'));
-          if (snap.exists()) {
-            const data = snap.data();
-            if (data.departments?.length > 0) setDepartmentsList(data.departments);
-            if (data.teachers?.length > 0) setTeachersRaw(data.teachers);
-          }
-        } catch (e) {
-          console.error('Error fetching lists:', e);
+    const fetchLists = async () => {
+      try {
+        const snap = await getDoc(doc(db, 'settings', 'global_info'));
+        if (snap.exists()) {
+          const data = snap.data();
+          if (data.departments?.length > 0) setDepartmentsList(data.departments);
+          if (data.teachers?.length > 0) setTeachersRaw(data.teachers);
         }
-      };
-      fetchLists();
-    }
+      } catch (e) {
+        console.error('Error fetching lists:', e);
+      }
+    };
+    fetchLists();
+
+    return () => clearTimeout(timer);
   }, [isOpen, initialData]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -364,24 +389,6 @@ export default function AddAchievementModal({
 
   if (!isOpen) return null;
 
-  /* ─── Reusable select wrapper ─── */
-  const FieldLabel = ({ children, hint }: { children: React.ReactNode; hint?: string }) => (
-    <label className="block text-sm font-extrabold text-gray-800 mb-1.5 flex items-center gap-1.5">
-      {children}
-      {hint && <span className="text-[10px] font-bold text-purple-400 bg-purple-50 px-1.5 py-0.5 rounded-md">{hint}</span>}
-    </label>
-  );
-
-  const selectClass =
-    'w-full appearance-none bg-white border-2 border-purple-100 rounded-xl p-3 pr-10 font-bold text-sm text-gray-800 focus:ring-4 focus:ring-purple-200 focus:border-[#46178f] outline-none transition-all';
-
-  const inputClass =
-    'w-full bg-white border-2 border-purple-100 rounded-xl p-3 font-bold text-sm text-gray-800 focus:ring-4 focus:ring-purple-200 focus:border-[#46178f] outline-none transition-all';
-
-  const SelectIcon = () => (
-    <ChevronDown size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-purple-300 pointer-events-none" />
-  );
-
   return createPortal(
     <div
       className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-start justify-center z-[100] p-3 sm:p-6 pt-[5vh] sm:pt-[8vh] animate-in fade-in duration-200 overflow-y-auto"
@@ -464,7 +471,7 @@ export default function AddAchievementModal({
             </div>
             {noTeachersForDept && (
               <p className="text-xs text-amber-600 font-bold mt-2 bg-amber-50 px-3 py-1.5 rounded-lg">
-                ⚠️ لا توجد معلمات مسجلين في قسم "{formData.department}". أضف المعلمات من صفحة الإعدادات أولاً.
+                ⚠️ لا توجد معلمات مسجلين في قسم &quot;{formData.department}&quot;. أضف المعلمات من صفحة الإعدادات أولاً.
               </p>
             )}
           </section>

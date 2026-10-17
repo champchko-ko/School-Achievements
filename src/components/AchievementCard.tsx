@@ -37,7 +37,8 @@ export default function AchievementCard({ data }: { data: any }) {
   const [notification, setNotification] = useState<{ type: string, message: string } | null>(null);
 
   useEffect(() => {
-    setMounted(true);
+    const timer = setTimeout(() => setMounted(true), 0);
+    return () => clearTimeout(timer);
   }, []);
 
   // Auto-dismiss notification

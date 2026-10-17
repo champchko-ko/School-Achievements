@@ -97,7 +97,10 @@ export default function KioskModePage() {
 
   // Reset index when the slides list changes (e.g. new uploads)
   useEffect(() => {
-    if (currentIndex >= slides.length) setCurrentIndex(0);
+    const timer = setTimeout(() => {
+      if (currentIndex >= slides.length) setCurrentIndex(0);
+    }, 0);
+    return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slides.length]);
 

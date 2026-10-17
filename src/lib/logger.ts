@@ -11,12 +11,12 @@ interface LogEntry {
   level: LogLevel;
   category: LogCategory;
   message: string;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
   ip?: string;
   userAgent?: string;
   endpoint?: string;
   method?: string;
-  timestamp?: any; // serverTimestamp()
+  timestamp?: unknown; // serverTimestamp()
 }
 
 // In-memory buffer to avoid flooding Firestore on errors
@@ -41,7 +41,19 @@ async function flushBuffer() {
     const db = getAdminDb();
     const logsRef = collection(db, 'logs');
     for (const entry of batch) {
-      await addDoc(logsRef, { ...entry, timestamp: serverTimestamp() });
+      const payload: Record<string, unknown> = {
+        level: entry.level,
+        category: entry.category,
+        message: entry.message,
+        timestamp: serverTimestamp(),
+      };
+      if (entry.details !== undefined) payload.details = entry.details;
+      if (entry.ip !== undefined) payload.ip = entry.ip;
+      if (entry.userAgent !== undefined) payload.userAgent = entry.userAgent;
+      if (entry.endpoint !== undefined) payload.endpoint = entry.endpoint;
+      if (entry.method !== undefined) payload.method = entry.method;
+
+      await addDoc(logsRef, payload);
     }
   } catch (err) {
     // If Firestore is down, log to console as last resort
@@ -91,25 +103,25 @@ function bufferLog(entry: LogEntry) {
 
 // ── Public API ──
 
-export function logInfo(category: LogCategory, message: string, details?: Record<string, any>, request?: Request) {
+export function logInfo(category: LogCategory, message: string, details?: Record<string, unknown>, request?: Request) {
   bufferLog({ level: 'info', category, message, details, ...extractRequestInfo(request) });
 }
 
-export function logWarn(category: LogCategory, message: string, details?: Record<string, any>, request?: Request) {
+export function logWarn(category: LogCategory, message: string, details?: Record<string, unknown>, request?: Request) {
   bufferLog({ level: 'warn', category, message, details, ...extractRequestInfo(request) });
 }
 
-export function logError(category: LogCategory, message: string, details?: Record<string, any>, request?: Request) {
+export function logError(category: LogCategory, message: string, details?: Record<string, unknown>, request?: Request) {
   bufferLog({ level: 'error', category, message, details, ...extractRequestInfo(request) });
 }
 
-export function logSecurity(event: string, details?: Record<string, any>, request?: Request) {
+export function logSecurity(event: string, details?: Record<string, unknown>, request?: Request) {
   bufferLog({ level: 'security', category: 'security', message: event, details, ...extractRequestInfo(request) });
 }
 
 // ── Convenience wrappers for common events ──
 
-export function logAuthFailure(reason: string, request?: Request, extra?: Record<string, any>) {
+export function logAuthFailure(reason: string, request?: Request, extra?: Record<string, unknown>) {
   logSecurity('auth_failure', { reason, ...extra }, request);
 }
 

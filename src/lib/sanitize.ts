@@ -48,43 +48,44 @@ export function sanitizeStringArray(arr: string[]): string[] {
  * Cleans an entire settings/achievement payload object
  * by applying sanitizeText to all known string fields.
  */
-export function sanitizeAchievementPayload(body: Record<string, any>): Record<string, any> {
+export function sanitizeAchievementPayload<T extends Record<string, any>>(body: T): T {
   const textFields = ['teacherName', 'title', 'desc', 'department'];
   for (const field of textFields) {
-    if (body[field] && typeof body[field] === 'string') {
-      body[field] = sanitizeText(body[field]);
+    const val = body[field];
+    if (typeof val === 'string') {
+      (body as Record<string, any>)[field] = sanitizeText(val);
     }
   }
   // attachmentUrls is an array of URLs — restrict strictly to Cloudinary (MUST-09)
-  if (body.attachmentUrls && Array.isArray(body.attachmentUrls)) {
-    body.attachmentUrls = body.attachmentUrls.filter((url: any) => 
+  if (Array.isArray(body.attachmentUrls)) {
+    (body as Record<string, any>).attachmentUrls = body.attachmentUrls.filter((url: any) => 
       typeof url === 'string' && url.startsWith('https://res.cloudinary.com/')
     ).slice(0, MAX_ARRAY_LENGTH);
   }
   return body;
-
 }
 
 /**
  * Sanitizes settings payload.
  */
-export function sanitizeSettingsPayload(body: Record<string, any>): Record<string, any> {
+export function sanitizeSettingsPayload<T extends Record<string, any>>(body: T): T {
   const textFields = [
     'schoolName', 'managerName', 'viceManagerName', 'assistantManager2',
     'vision', 'message', 'address', 'phone'
   ];
   for (const field of textFields) {
-    if (body[field] && typeof body[field] === 'string') {
-      body[field] = sanitizeText(body[field]);
+    const val = body[field];
+    if (typeof val === 'string') {
+      (body as Record<string, any>)[field] = sanitizeText(val);
     }
   }
   // Sanitize array fields
-  if (body.departments && Array.isArray(body.departments)) {
-    body.departments = sanitizeStringArray(body.departments).slice(0, MAX_ARRAY_LENGTH);
+  if (Array.isArray(body.departments)) {
+    (body as Record<string, any>).departments = sanitizeStringArray(body.departments).slice(0, MAX_ARRAY_LENGTH);
   }
-  if (body.teachers && Array.isArray(body.teachers)) {
-    body.teachers = body.teachers.slice(0, MAX_ARRAY_LENGTH);
-    body.teachers = body.teachers.map((t: any) =>
+  if (Array.isArray(body.teachers)) {
+    const teachersList = (body.teachers as any[]).slice(0, MAX_ARRAY_LENGTH);
+    (body as Record<string, any>).teachers = teachersList.map((t: any) =>
       typeof t === 'string'
         ? sanitizeText(t)
         : { name: sanitizeText(t.name || ''), department: sanitizeText(t.department || '') }

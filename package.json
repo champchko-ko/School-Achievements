@@ -34,6 +34,7 @@
     "xlsx": "file:./vendor/xlsx-0.20.3.tgz"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.1",
     "@tailwindcss/postcss": "^4.3.0",
     "@types/node": "^20",
     "@types/nodemailer": "^8.0.1",
