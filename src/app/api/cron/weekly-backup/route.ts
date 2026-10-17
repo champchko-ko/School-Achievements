@@ -2,22 +2,33 @@
 // Exports all Firestore collections and stores them in the backups collection
 // with a rolling window of 8 weeks. Protected by CRON_SECRET + admin session.
 import { NextResponse } from 'next/server';
+import { timingSafeEqual } from 'crypto';
 import { getAdminDb } from '../../../../lib/firebase-admin';
 import { isAdminSession } from '../../../../lib/admin-session';
 import { logInfo, logError } from '../../../../lib/logger';
+import { scrubSensitiveFields } from '../../../../lib/backup-sanitize';
 
 const COLLECTIONS = ['achievements', 'settings', 'admin', 'logs'];
 const MAX_BACKUPS = 8;
 
 export async function GET(request: Request) {
   try {
-    // Verify cron secret (set in Vercel env vars) OR admin session
+    // Verify cron secret (set in Vercel env vars) OR admin session (Finding #13).
+    // Constant-time comparison prevents timing side-channels; an empty/missing
+    // secret can never authorize (no bypass).
     const authHeader = request.headers.get('authorization') || '';
-    const isAuthorized =
-      (process.env.CRON_SECRET && authHeader === `Bearer ${process.env.CRON_SECRET}`) ||
-      (await isAdminSession());
+    const cronSecret = process.env.CRON_SECRET;
+    let isCronAuthorized = false;
+    if (cronSecret && authHeader) {
+      const expected = Buffer.from(`Bearer ${cronSecret}`);
+      const actual = Buffer.from(authHeader);
+      isCronAuthorized =
+        expected.length === actual.length && timingSafeEqual(expected, actual);
+    }
 
-    if (!isAuthorized) {
+    const isAdmin = await isAdminSession();
+
+    if (!isCronAuthorized && !isAdmin) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -39,7 +50,8 @@ export async function GET(request: Request) {
             plain[key] = val.toDate().toISOString();
           }
         }
-        return plain;
+        // Strip sensitive auth fields/PII before persisting the backup (Finding #17)
+        return scrubSensitiveFields(plain);
       });
       totalDocs += snap.size;
     }

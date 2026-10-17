@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Trophy, Medal, Award, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { collection, onSnapshot, query } from 'firebase/firestore';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { card, header } from '../../lib/ui';
 
@@ -11,7 +11,7 @@ export default function HonorRoll() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const q = query(collection(db, 'achievements'));
+    const q = query(collection(db, 'achievements'), where('status', '==', 'approved'));
     
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const teacherStats: Record<string, any> = {};

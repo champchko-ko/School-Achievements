@@ -7,14 +7,21 @@ import { logInfo, logError, logRateLimitHit } from '../../../../lib/logger';
 import { checkRateLimit } from '../../../../lib/rate-limit';
 import { getAdminDb, doc, getDoc, setDoc } from '../../../../lib/firebase-admin';
 import { sendPinResetEmail } from '../../../../lib/mailer';
+import { isValidOrigin } from '../../../../lib/csrf';
 
 const TOKEN_TTL_MS = 15 * 60 * 1000; // 15 minutes
 
 export async function POST(request: Request) {
   try {
-    // Rate limit: max 3 requests per hour per IP
-    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
-    const { allowed } = checkRateLimit(`pin-reset:${ip}`, { maxRequests: 3, windowMs: 60 * 60 * 1000 });
+    // CSRF protection (MUST-06)
+    if (!isValidOrigin(request)) {
+      return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
+    }
+
+    // Rate limit: max 3 requests per hour per IP (leftmost IP - MUST-14)
+    const rawIp = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+    const ip = rawIp.split(',')[0].trim() || 'unknown';
+    const { allowed } = await checkRateLimit(`pin-reset:${ip}`, { maxRequests: 3, windowMs: 60 * 60 * 1000 });
     if (!allowed) {
       logRateLimitHit(`pin-reset:${ip}`, request);
       return NextResponse.json({ error: 'محاولات كثيرة جداً. الرجاء الانتظار ساعة قبل المحاولة مرة أخرى.' }, { status: 429 });
@@ -27,12 +34,17 @@ export async function POST(request: Request) {
     }
 
     const db = getAdminDb();
-    const settingsRef = doc(db, "settings", "global_info");
-    const settingsSnap = await getDoc(settingsRef);
-    const adminEmail = settingsSnap.exists() ? (settingsSnap.data()?.adminEmail || '').trim().toLowerCase() : '';
+    // Retrieve admin email from protected admin/pinConfig first, with fallback to settings/global_info (MUST-03)
+    const pinConfigSnap = await getDoc(doc(db, "admin", "pinConfig"));
+    const protectedEmail = pinConfigSnap.exists() ? pinConfigSnap.data()?.adminEmail : '';
+    
+    let adminEmail = (protectedEmail || '').trim().toLowerCase();
+    if (!adminEmail) {
+      const settingsSnap = await getDoc(doc(db, "settings", "global_info"));
+      adminEmail = settingsSnap.exists() ? (settingsSnap.data()?.adminEmail || '').trim().toLowerCase() : '';
+    }
 
-    // Security: always return the same message whether or not the email matches
-    // (prevents email enumeration). Do not leak whether the email exists.
+    // Security: always return the same message whether or not the email matches (prevents enumeration)
     if (!adminEmail || adminEmail !== email.trim().toLowerCase()) {
       return NextResponse.json({ success: true });
     }
@@ -42,12 +54,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'خدمة البريد غير مهيأة بعد.' }, { status: 500 });
     }
 
-    // Generate a secure token and store ONLY its hash
+    // Strictly enforce NEXT_PUBLIC_APP_URL without trusting request headers (MUST-07)
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+    if (!appUrl) {
+      logError('auth', 'NEXT_PUBLIC_APP_URL is not set', undefined, request);
+      return NextResponse.json({ error: 'إعدادات عنوان الموقع غير مكتملة.' }, { status: 500 });
+    }
+
+    // Generate a secure token and store ONLY its hash, keyed by tokenHash for concurrency (MUST-23)
     const token = randomBytes(32).toString('hex');
     const tokenHash = createHash('sha256').update(token).digest('hex');
     const expiresAt = Date.now() + TOKEN_TTL_MS;
 
-    await setDoc(doc(db, "admin", "pinReset"), {
+    await setDoc(doc(db, "admin", "pinResets", tokenHash), {
       tokenHash,
       email: adminEmail,
       expiresAt,
@@ -55,9 +74,8 @@ export async function POST(request: Request) {
       createdAt: Date.now(),
     });
 
-    // Build the reset URL (absolute, with origin)
-    const origin = request.headers.get('origin') || request.headers.get('x-forwarded-host') || 'http://localhost:3000';
-    const resetUrl = `${origin}/reset-pin?token=${token}`;
+    const cleanAppUrl = appUrl.replace(/\/+$/, '');
+    const resetUrl = `${cleanAppUrl}/reset-pin?token=${token}`;
 
     await sendPinResetEmail(adminEmail, resetUrl);
 
@@ -68,3 +86,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
 }
+

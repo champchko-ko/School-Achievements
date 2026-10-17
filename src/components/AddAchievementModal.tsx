@@ -2,9 +2,17 @@
 // src/components/AddAchievementModal.tsx
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, CloudUpload, Lock, Loader2, ChevronDown, FileImage, Trash2 } from 'lucide-react';
+import { X, CloudUpload, Lock, Loader2, ChevronDown, FileImage, Trash2, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { db, getAppCheckToken } from '../lib/firebase';
+
+export interface SubmissionFailure {
+  stage: 'validation' | 'upload' | 'database';
+  title: string;
+  message: string;
+  details?: string;
+  howToAvoid: string[];
+}
 
 const todayLocal = () => {
   const now = new Date();
@@ -121,6 +129,7 @@ export default function AddAchievementModal({
   const [alertMsg, setAlertMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [failureModal, setFailureModal] = useState<SubmissionFailure | null>(null);
 
   const teachers = normalizeTeachers(teachersRaw);
 
@@ -200,78 +209,154 @@ export default function AddAchievementModal({
   };
 
   const handleSubmit = async () => {
-    if (!formData.teacherName || !formData.title || !formData.desc || !formData.date || (!docId && !formData.pin)) {
-      setAlertMsg('الرجاء ملء جميع الحقول المطلوبة');
+    // 1. Strict Pre-Validation (Before spending any Cloudinary bandwidth or network requests)
+    if (!formData.department || !formData.teacherName || !formData.title.trim() || !formData.desc.trim() || !formData.date || (!docId && !formData.pin)) {
+      setFailureModal({
+        stage: 'validation',
+        title: 'بيانات غير مكتملة',
+        message: 'يرجى ملء جميع الحقول الإلزامية قبل الإرسال.',
+        howToAvoid: [
+          'تأكد من اختيار القسم والمعلمة من القوائم المعتمدة.',
+          'تأكد من كتابة عنوان الإنجاز وتفاصيل الوصف.',
+          'تأكد من تحديد تاريخ الإنجاز.',
+          ...(!docId ? ['أدخل رمز الحماية المكون من 4 أرقام.'] : [])
+        ]
+      });
       return;
     }
+
+    if (!docId && (!formData.pin || !/^\d{4}$/.test(formData.pin))) {
+      setFailureModal({
+        stage: 'validation',
+        title: 'رمز الحماية غير صحيح',
+        message: 'يجب أن يتكون رمز الحماية من 4 أرقام بالضبط.',
+        howToAvoid: [
+          'أدخل 4 أرقام فقط في خانة رمز الحماية (مثال: 1234).',
+          'احفظ الرمز لتتمكن من تعديل أو حذف الإنجاز لاحقاً.'
+        ]
+      });
+      return;
+    }
+
     setIsSubmitting(true);
+    const newlyUploadedUrls: string[] = [];
+    const rollbackTokens: Record<string, string> = {};
+
     try {
-      // Step 1: Upload files to Cloudinary (if any)
-      let attachmentUrls: string[] = [];
+      // 2. Upload Files to Cloudinary (Tracking each successful URL for atomic rollback)
       if (files.length > 0) {
-        const uploadPromises = files.map(async (f) => {
+        const appCheckToken = await getAppCheckToken();
+        const uploadHeaders: Record<string, string> = appCheckToken
+          ? { 'X-Firebase-AppCheck': appCheckToken }
+          : {};
+        for (const file of files) {
           const fd = new FormData();
-          fd.append('file', f);
-          const res = await fetch('/api/upload', { method: 'POST', body: fd });
-          const data = await res.json();
-          if (!res.ok) { if (res.status === 429) throw new Error(data.error || 'تم تجاوز الحد المسموح. حاول مرة أخرى لاحقاً.'); throw new Error(data.error || 'فشل رفع الملف'); }
-          return data.secure_url;
-        });
-        attachmentUrls = await Promise.all(uploadPromises);
+          fd.append('file', file);
+          const res = await fetch('/api/upload', { method: 'POST', body: fd, headers: uploadHeaders });
+          const data = await res.json().catch(() => ({}));
+
+          if (!res.ok) {
+            throw {
+              stage: 'upload',
+              title: 'فشل في رفع الملفات',
+              message: data.error || `تعذر رفع الملف "${file.name}".`,
+              howToAvoid: [
+                'تحقق من أن حجم الملف لا يتجاوز الحدود المسموحة (الصور 10MB، الفيديوهات 100MB، المستندات 20MB).',
+                'تأكد من صيغة الملف وأن اتصالك بالإنترنت مستقر.',
+                'إذا تكرر الخطأ، جرب تقليل حجم الملف أو تحويله إلى صيغة PDF أو JPEG.'
+              ]
+            };
+          }
+          newlyUploadedUrls.push(data.secure_url);
+          if (data.rollback_token) {
+            rollbackTokens[data.secure_url] = data.rollback_token;
+          }
+        }
       }
 
-      // Step 2: Create or update achievement via JSON API
-      if (docId) {
-        const updatePayload: any = {
-          teacherName: formData.teacherName,
-          department: formData.department,
-          title: formData.title,
-          desc: formData.desc,
-          date: formData.date,
-          attachmentUrls: [...existingAttachments, ...attachmentUrls],
-        };
-        if (verifiedPin) updatePayload.pin = verifiedPin;
-        const res = await fetch(`/api/achievements/${docId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(updatePayload),
-        });
-        if (!res.ok) {
-          const errData = await res.json();
-          throw new Error(errData.error || 'فشل تحديث الإنجاز');
+
+      // 3. Save to Database (Firestore)
+      const payload: any = {
+        teacherName: formData.teacherName,
+        department: formData.department,
+        title: formData.title.trim(),
+        desc: formData.desc.trim(),
+        date: formData.date,
+        attachmentUrls: docId ? [...existingAttachments, ...newlyUploadedUrls] : newlyUploadedUrls,
+        ...(docId ? (verifiedPin ? { pin: verifiedPin } : {}) : { pin: formData.pin }),
+      };
+
+      const url = docId ? `/api/achievements/${docId}` : '/api/achievements';
+      const method = docId ? 'PUT' : 'POST';
+
+      const dbRes = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const dbData = await dbRes.json().catch(() => ({}));
+
+      if (!dbRes.ok) {
+        let howToAvoid = ['تحقق من استقرار اتصالك بالإنترنت وأعد المحاولة.'];
+        if (dbRes.status === 429) {
+          howToAvoid = [
+            'تم تجاوز الحد المسموح به لإرسال الإنجازات (10 إنجازات في الساعة لكل جهاز).',
+            'يرجى الانتظار قليلاً قبل إرسال إنجازات جديدة لتجنب الحظر التلقائي.'
+          ];
+        } else if (dbRes.status === 400 && (dbData.error?.includes('القسم') || dbData.error?.includes('department') || dbData.error?.includes('teacher'))) {
+          howToAvoid = [
+            'القسم أو اسم المعلمة غير مطابق للقائمة المعتمدة في الإعدادات.',
+            'اختر القسم ثم اسم المعلمة من القائمة المنسدلة مباشرة دون إدخال يدوي.'
+          ];
+        } else if (dbRes.status === 401 || (dbRes.status === 400 && dbData.error?.includes('رمز'))) {
+          howToAvoid = [
+            'رمز الحماية غير مطابق أو غير صحيح.',
+            'تأكد من إدخال رمز الحماية المكون من 4 أرقام بشكل سليم.'
+          ];
         }
-      } else {
-        const createPayload: any = {
-          teacherName: formData.teacherName,
-          department: formData.department,
-          title: formData.title,
-          desc: formData.desc,
-          date: formData.date,
-          attachmentUrls,
+
+        throw {
+          stage: 'database',
+          title: 'فشل حفظ الإنجاز في قاعدة البيانات',
+          message: dbData.error || 'تعذر إتمام حفظ البيانات على الخادم.',
+          howToAvoid,
         };
-        if (formData.pin) createPayload.pin = formData.pin;
-        const res = await fetch('/api/achievements', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(createPayload),
-        });
-        if (!res.ok) {
-          const errData = await res.json();
-          if (res.status === 429) {
-            throw new Error(errData.error || 'تم تجاوز الحد المسموح. حاول مرة أخرى لاحقاً.');
-          }
-          throw new Error(errData.error || 'فشل حفظ الإنجاز');
-        }
       }
-      // Show success message for new achievements
+
+      // 4. Success: Show confirmation and exit
       if (!docId) {
-        setSuccessMsg('تم إرسال إنجازك بنجاح! سيتم مراجعته من قبل الإدارة قبل ظهوره في الصفحة العامة.');
-        setTimeout(() => { setSuccessMsg(null); onClose(); }, 3000);
+        setSuccessMsg('تم إرسال إنجازك بنجاح! سيتم مراجعته من قبل الإدارة.');
+        setTimeout(() => { setSuccessMsg(null); onClose(); }, 2500);
       } else {
         onClose();
       }
-    } catch (err: any) {
-      setAlertMsg(err.message || 'حدث خطأ في الاتصال بالخادم');
+
+    } catch (error: any) {
+      // 5. ATOMIC ROLLBACK: Instantly destroy orphaned assets from Cloudinary
+      if (newlyUploadedUrls.length > 0) {
+        fetch('/api/cleanup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'rollback', urls: newlyUploadedUrls, tokens: rollbackTokens }),
+        }).catch(err => console.error('Rollback request failed:', err));
+      }
+
+
+      // 6. Present Clear Failure Message Box to the User
+      if (error?.title && error?.howToAvoid) {
+        setFailureModal(error);
+      } else {
+        setFailureModal({
+          stage: 'database',
+          title: 'حدث خطأ غير متوقع',
+          message: error?.message || 'تعذر استكمال العملية بنجاح.',
+          howToAvoid: [
+            'تم إلغاء العملية وحذف الملفات المرفوعة مؤقتاً لضمان نظافة السحابة.',
+            'تحقق من اتصالك بالإنترنت وأعد المحاولة مرة أخرى.'
+          ]
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -588,6 +673,68 @@ export default function AddAchievementModal({
               <p className="text-xs whitespace-pre-line leading-relaxed opacity-95">{alertMsg}</p>
             </div>
             <button onClick={() => setAlertMsg(null)} className="text-white/70 hover:text-white mt-0.5">✕</button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Failure Message Box (Dialog) ── */}
+      {failureModal && (
+        <div
+          className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
+          role="alertdialog"
+          aria-modal="true"
+          aria-label={failureModal.title}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl border-2 border-red-100 animate-in zoom-in-95 duration-200 text-right" dir="rtl">
+            
+            {/* Header Icon + Title */}
+            <div className="flex items-center gap-4 mb-4 pb-4 border-b border-gray-100">
+              <div className="w-14 h-14 rounded-2xl bg-red-100 flex items-center justify-center text-red-600 flex-shrink-0">
+                <AlertTriangle size={30} />
+              </div>
+              <div>
+                <h3 className="text-xl font-black text-gray-900">{failureModal.title}</h3>
+                <p className="text-xs font-bold text-red-500 mt-0.5">
+                  {failureModal.stage === 'upload' && 'تعذر إتمام رفع المرفقات'}
+                  {failureModal.stage === 'database' && 'تم إلغاء العملية وحذف الملفات المرفوعة مؤقتاً تلقائياً'}
+                  {failureModal.stage === 'validation' && 'تنبيه تدقيق البيانات قبل الإرسال'}
+                </p>
+              </div>
+            </div>
+
+            {/* What Failed */}
+            <div className="mb-4 bg-red-50/70 border border-red-200/60 rounded-2xl p-4">
+              <p className="text-sm font-extrabold text-red-900 mb-1">ما الذي حدث؟</p>
+              <p className="text-xs font-bold text-red-700 leading-relaxed">{failureModal.message}</p>
+            </div>
+
+            {/* How to Avoid It */}
+            <div className="mb-6 bg-purple-50/70 border border-purple-200/60 rounded-2xl p-4">
+              <p className="text-sm font-extrabold text-[#46178f] mb-2 flex items-center gap-1.5">
+                <CheckCircle2 size={16} /> كيف تتجنب هذا الخطأ؟
+              </p>
+              <ul className="space-y-1.5 text-right">
+                {failureModal.howToAvoid.map((tip, idx) => (
+                  <li key={idx} className="text-xs font-bold text-purple-900 flex items-start gap-2">
+                    <span className="text-[#ffb800] mt-0.5">•</span>
+                    <span>{tip}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setFailureModal(null)}
+                className="flex-1 py-3.5 bg-gradient-to-r from-[#46178f] to-[#380e6e] text-white rounded-xl font-black text-sm shadow-md hover:shadow-lg transition-all active:scale-[0.98]"
+              >
+                فهمت، سأقوم بالتعديل
+              </button>
+            </div>
+
           </div>
         </div>
       )}

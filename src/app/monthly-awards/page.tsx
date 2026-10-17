@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useMemo } from 'react';
 import { db } from '../../lib/firebase';
-import { collection, onSnapshot, query } from 'firebase/firestore';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { Trophy, Loader2, Star, Users, Calendar } from 'lucide-react';
 import { header, card } from '../../lib/ui';
 import Link from 'next/link';
@@ -60,7 +60,7 @@ export default function MonthlyAwardsPage() {
   const [selectedMonth, setSelectedMonth] = useState(() => getMonthOptions()[0].key);
 
   useEffect(() => {
-    const q = query(collection(db, "achievements"));
+    const q = query(collection(db, "achievements"), where('status', '==', 'approved'));
     const unsub = onSnapshot(q, (snap) => {
       setAchievements(snap.docs.map(d => ({ id: d.id, ...d.data() })));
       setIsLoading(false);

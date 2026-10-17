@@ -6,7 +6,7 @@ import { Search, Filter, DownloadCloud, FileText, Trophy, Clock, Medal, Award, L
 import { isImageUrl, isVideoUrl } from '../../lib/pdf';
 import { useAdmin } from '../../lib/useAdmin';
 import Link from 'next/link';
-import { collection, onSnapshot, query, orderBy, doc, getDoc } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, where, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import AddAchievementModal from '../../components/AddAchievementModal';
 import { sanitizeText } from '../../lib/sanitize';
@@ -61,15 +61,36 @@ export default function FullRecordPage() {
 
   useEffect(() => {
     setMounted(true);
-    const q = query(collection(db, 'achievements'), orderBy('timestamp', 'desc'));
+    if (isAdmin) {
+      // Admin reads via server API to get all achievements (including pending)
+      fetch('/api/achievements?all=true')
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data)) setAchievements(data);
+        })
+        .catch(err => console.error("Error fetching achievements:", err))
+        .finally(() => setIsLoading(false));
+      return;
+    }
+
+    // Public / non-admin reads strictly approved achievements
+    const q = query(collection(db, 'achievements'), where('status', '==', 'approved'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const achievementsData = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      const achievementsData = snapshot.docs.map(d => {
+        const data = d.data();
+        delete data.pinHash;
+        return { id: d.id, ...data };
+      }).sort((a: any, b: any) => {
+        const timeA = a.timestamp?.seconds || (a.date ? new Date(a.date).getTime() / 1000 : 0);
+        const timeB = b.timestamp?.seconds || (b.date ? new Date(b.date).getTime() / 1000 : 0);
+        return timeB - timeA;
+      });
       setAchievements(achievementsData);
       setIsLoading(false);
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [isAdmin]);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -216,20 +237,22 @@ export default function FullRecordPage() {
         if (deptCompare !== 0) return deptCompare;
         return (a.teacherName || '').localeCompare(b.teacherName || '', 'ar');
       });
+      const sanitizeCell = (v: string) => /^[=\+\-\@\t\r]/.test(v) ? `'${v}` : v;
       const rows = sortedData.map(row => {
         const attachmentsText = collectAttachments(row)
           .map((url, i) => `${getAttachmentLabel(url, i + 1)}: ${url}`)
           .join('\n');
         return {
-          'المعلمة': row.teacherName || '',
-          'القسم': row.department || '',
-          'الإنجاز': row.title || '',
-          'التاريخ': row.date || '',
-          'التقييم': getScoreCategory(row.score),
-          'المرفقات': attachmentsText,
+          'المعلمة': sanitizeCell(row.teacherName || ''),
+          'القسم': sanitizeCell(row.department || ''),
+          'الإنجاز': sanitizeCell(row.title || ''),
+          'التاريخ': sanitizeCell(row.date || ''),
+          'التقييم': sanitizeCell(getScoreCategory(row.score)),
+          'المرفقات': sanitizeCell(attachmentsText),
         };
       });
       const ws = XLSX.utils.json_to_sheet(rows);
+
       ws['!cols'] = [{ wch: 20 }, { wch: 14 }, { wch: 40 }, { wch: 12 }, { wch: 14 }, { wch: 60 }];
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'الإنجازات');

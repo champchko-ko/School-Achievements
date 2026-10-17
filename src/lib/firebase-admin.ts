@@ -1,6 +1,7 @@
 // Server-side Firebase Admin SDK — privileged access, no security rules
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { getAppCheck } from 'firebase-admin/app-check';
 
 let adminDb: any = null;
 
@@ -10,13 +11,20 @@ function getDb() {
   const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT;
   if (serviceAccount) {
     try {
-      const parsed = JSON.parse(serviceAccount);
+      let parsed: any;
+      try {
+        parsed = JSON.parse(serviceAccount);
+      } catch {
+        parsed = JSON.parse(Buffer.from(serviceAccount, 'base64').toString('utf8'));
+      }
+      if (parsed && typeof parsed.private_key === 'string') {
+        parsed.private_key = parsed.private_key.replace(/\\n/g, '\n');
+      }
       const app = getApps().length > 0 ? getApps()[0] : initializeApp({ credential: cert(parsed) });
       adminDb = getFirestore(app);
-    } catch {
-      const decoded = JSON.parse(Buffer.from(serviceAccount, 'base64').toString());
-      const app = getApps().length > 0 ? getApps()[0] : initializeApp({ credential: cert(decoded) });
-      adminDb = getFirestore(app);
+    } catch (err: any) {
+      console.error('[Firebase Admin] Failed to initialize with service account:', err?.message);
+      throw err;
     }
   } else {
     console.warn('[Firebase Admin] No FIREBASE_SERVICE_ACCOUNT configured. Using default credentials.');
@@ -84,4 +92,21 @@ export function deleteField() {
 
 export function serverTimestamp() {
   return FieldValue.serverTimestamp();
+}
+
+/**
+ * Verify a Firebase App Check token (from the `X-Firebase-AppCheck` header).
+ * Returns false when the token is missing, invalid, expired, or replayed.
+ */
+export async function verifyAppCheckToken(token: string | null | undefined): Promise<boolean> {
+  if (!token) return false;
+  try {
+    // Ensure the admin app is initialized before requesting App Check.
+    getDb();
+    const result = await getAppCheck().verifyToken(token);
+    return Boolean(result?.appId);
+  } catch (err: any) {
+    console.warn('[AppCheck] Token verification failed:', err?.message);
+    return false;
+  }
 }

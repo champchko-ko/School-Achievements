@@ -27,6 +27,9 @@ yarn-error.log*
 
 # env files
 .env*.local
+*.env
+CLOUDINARY.txt
+/CLOUDINARY.txt
 
 # typescript
 *.tsbuildinfo
@@ -34,3 +37,6 @@ next-env.d.ts
 .vercel
 .env*
 data/
+backups/
+test-results/
+eslint-report.json

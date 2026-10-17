@@ -5,13 +5,15 @@
 //  - action=assets  -> return type/size metadata for given attachment URLs
 
 import { NextResponse } from 'next/server';
-import { logInfo, logError } from '../../../lib/logger';
-import { isAdminSession } from '../../../lib/admin-session';
-import { getAdminDb, collection, deleteField, doc, getDocs, updateDoc } from '../../../lib/firebase-admin';
+import { logInfo, logWarn, logError } from '../../../lib/logger';
+import { isAdminSession, verifyRollbackToken } from '../../../lib/admin-session';
+import { getAdminDb, collection, deleteField, doc, getDoc, getDocs, setDoc, updateDoc } from '../../../lib/firebase-admin';
+
 import {
   cloudinaryConfig,
   collectAttachmentUrls,
   destroyByPublicId,
+  destroyCloudinaryAsset,
   extractCloudinaryAsset,
   listCloudinaryAssets,
 } from '../../../lib/cloudinary';
@@ -35,13 +37,45 @@ function fileNameFromUrl(url: string): string {
 
 export async function POST(request: Request) {
   try {
+    const body = await request.json().catch(() => ({}));
+    const action = body?.action || 'scan';
+
+    // Support action: "rollback" with a list of URLs uploaded in the current session
+    if (action === 'rollback') {
+      const urls = Array.isArray(body.urls) ? (body.urls as string[]) : [];
+      if (urls.length === 0) return NextResponse.json({ ok: true, deletedCount: 0 });
+
+      // Security check (MUST-01): User must be admin OR provide valid signed rollback token for each URL
+      const isAdmin = await isAdminSession();
+      if (!isAdmin) {
+        const tokens: Record<string, string> = body.tokens || {};
+        const items: Array<{ url: string; token: string }> = Array.isArray(body.items) ? body.items : [];
+        if (items.length > 0) {
+          for (const item of items) {
+            if (item?.url && item?.token) tokens[item.url] = item.token;
+          }
+        }
+
+        const allValid = urls.length > 0 && urls.every((url) => verifyRollbackToken(url, tokens[url]));
+        if (!allValid) {
+          logWarn('security', 'Rejected unauthenticated rollback attempt with missing or invalid tokens', { urls }, request);
+          return NextResponse.json({ error: 'غير مصرح بهذا الإجراء. رمز التراجع غير صالح أو منتهي الصلاحية.' }, { status: 401 });
+        }
+
+      }
+
+      // Validate that all URLs are strings and belong to Cloudinary
+      const validUrls = urls.filter((u: any) => typeof u === 'string' && u.includes('cloudinary.com'));
+      const results = await Promise.allSettled(validUrls.map(destroyCloudinaryAsset));
+      const deletedCount = results.filter(r => r.status === 'fulfilled' && (r.value as any)?.ok).length;
+      return NextResponse.json({ ok: true, deletedCount });
+    }
+
+
     const isAdmin = await isAdminSession();
     if (!isAdmin) {
       return NextResponse.json({ error: 'غير مصرح بهذا الإجراء. تسجيل الدخول كمدير مطلوب.' }, { status: 401 });
     }
-
-    const body = await request.json();
-    const action = body?.action || 'scan';
 
     // Return metadata (type + size) for a list of URLs — used in delete confirmations
     if (action === 'assets') {
@@ -148,11 +182,51 @@ export async function POST(request: Request) {
         }
       }
 
+      // 3) Migrate & scrub legacy secrets (MUST-03):
+      // Move any legacy pinHash in achievements to admin/achievementSecrets/{id} and deleteField()
+      let legacyPinsCleaned = 0;
+      for (const { id, data } of achievementDocs) {
+        if (data?.pinHash) {
+          const secretRef = doc(db, 'admin', 'achievementSecrets', id);
+          const secretSnap = await getDoc(secretRef);
+          if (!secretSnap.exists()) {
+            await setDoc(secretRef, { pinHash: data.pinHash });
+          }
+          await updateDoc(doc(db, 'achievements', id), { pinHash: deleteField() });
+          legacyPinsCleaned++;
+        }
+      }
+
+      // Scrub adminPin and adminEmail from settings/global_info if present
+      let settingsCleaned = false;
+      const settingsRef = doc(db, 'settings', 'global_info');
+      const settingsSnap = await getDoc(settingsRef);
+      if (settingsSnap.exists()) {
+        const sData = settingsSnap.data();
+        if (sData?.adminPin || sData?.adminEmail) {
+          const pinConfigRef = doc(db, 'admin', 'pinConfig');
+          const pinConfigSnap = await getDoc(pinConfigRef);
+          const pinData = pinConfigSnap.exists() ? pinConfigSnap.data() : {};
+          const updates: Record<string, any> = {};
+          if (sData.adminEmail && !pinData.adminEmail) updates.adminEmail = sData.adminEmail;
+          if (Object.keys(updates).length > 0) {
+            await setDoc(pinConfigRef, { ...pinData, ...updates });
+          }
+          await updateDoc(settingsRef, {
+            adminPin: deleteField(),
+            adminEmail: deleteField(),
+          });
+          settingsCleaned = true;
+        }
+      }
+
       return NextResponse.json({
         fixedReferences,
         achievementsFixed,
         orphansDeleted,
         storageFreed: formatBytes(orphansDeletedBytes),
+        legacyPinsCleaned,
+        settingsCleaned,
         errors,
       });
     }

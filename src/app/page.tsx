@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Users, Star, Award, Loader2, X, Clock, Trophy, Medal, MapPin, Phone, BookOpen, Eye } from 'lucide-react';
 import AddAchievementModal from '../components/AddAchievementModal';
-import { collection, onSnapshot, query, orderBy, doc, getDoc } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, where, doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { cleanText } from '../lib/clean-text';
@@ -79,7 +79,7 @@ function HomeContent() {
   useEffect(() => {
     let q;
     try {
-      q = query(collection(db, 'achievements'), orderBy('timestamp', 'desc'));
+      q = query(collection(db, 'achievements'), where('status', '==', 'approved'));
     } catch (err) {
       console.error('Error creating query:', err);
       setFirebaseError('فشل في إنشاء الاستعلام');
@@ -90,8 +90,16 @@ function HomeContent() {
     const unsubscribe = onSnapshot(q, 
       (snapshot) => {
         const achievementsData = snapshot.docs
-          .map(d => ({ id: d.id, ...d.data() }))
-          .filter((a: any) => a.status === 'approved' || !a.status);
+          .map(d => {
+            const data = d.data();
+            delete data.pinHash;
+            return { id: d.id, ...data };
+          })
+          .sort((a: any, b: any) => {
+            const timeA = a.timestamp?.seconds || (a.date ? new Date(a.date).getTime() / 1000 : 0);
+            const timeB = b.timestamp?.seconds || (b.date ? new Date(b.date).getTime() / 1000 : 0);
+            return timeB - timeA;
+          });
         setAchievements(achievementsData);
         setIsLoading(false);
       },
@@ -132,8 +140,9 @@ function HomeContent() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }}
       />
+
     <div className="space-y-6 md:space-y-8 pb-10 w-full max-w-full overflow-hidden">
       <Suspense fallback={null}>
         <SearchParamsWatcher onChange={handleParamsChange} />

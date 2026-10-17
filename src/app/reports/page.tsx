@@ -28,13 +28,13 @@ export default function ReportsPage() {
       return;
     }
     setMounted(true);
-    const q = query(collection(db, 'achievements'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setAchievements(data);
-      setIsLoading(false);
-    });
-    return () => unsubscribe();
+    fetch('/api/achievements?all=true')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) setAchievements(data);
+      })
+      .catch(err => console.error("Error fetching achievements:", err))
+      .finally(() => setIsLoading(false));
   }, [isAdmin, adminLoading, router]);
 
   useEffect(() => {

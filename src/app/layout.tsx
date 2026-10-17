@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { headers } from "next/headers";
 import Script from "next/script";
 import { Tajawal } from "next/font/google";
 import "./globals.css";
@@ -73,11 +74,15 @@ export const viewport: Viewport = {
   themeColor: '#46178F',
 };
 
-export default function RootLayout({
+export const dynamic = 'force-dynamic';
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const nonce = (await headers()).get('x-nonce') ?? undefined;
+
   return (
     <html lang="ar" dir="rtl">
       <body className={tajawal.className}>
@@ -109,6 +114,7 @@ export default function RootLayout({
         {process.env.NEXT_PUBLIC_CF_BEACON_TOKEN && (
           <Script
             defer
+            nonce={nonce}
             strategy="afterInteractive"
             src="https://static.cloudflareinsights.com/beacon.min.js"
             data-cf-beacon={JSON.stringify({ token: process.env.NEXT_PUBLIC_CF_BEACON_TOKEN })}

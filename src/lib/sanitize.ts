@@ -29,7 +29,7 @@ export function preventExcelFormula(value: string): string {
  * Use this for all user-supplied text before storing to Firestore.
  */
 const MAX_TEXT_LENGTH = 10000;
-const MAX_ARRAY_LENGTH = 300;
+const MAX_ARRAY_LENGTH = 100;
 
 export function sanitizeText(value: string): string {
   if (!value) return '';
@@ -55,13 +55,14 @@ export function sanitizeAchievementPayload(body: Record<string, any>): Record<st
       body[field] = sanitizeText(body[field]);
     }
   }
-  // attachmentUrls is an array of URLs — validate they look like URLs
+  // attachmentUrls is an array of URLs — restrict strictly to Cloudinary (MUST-09)
   if (body.attachmentUrls && Array.isArray(body.attachmentUrls)) {
     body.attachmentUrls = body.attachmentUrls.filter((url: any) => 
-      typeof url === 'string' && (url.startsWith('http://') || url.startsWith('https://'))
+      typeof url === 'string' && url.startsWith('https://res.cloudinary.com/')
     ).slice(0, MAX_ARRAY_LENGTH);
   }
   return body;
+
 }
 
 /**

@@ -1,5 +1,6 @@
 // src/lib/cloudinary.ts
 // Server-side helpers for Cloudinary's Admin API (listing and deleting assets).
+import crypto from 'crypto';
 
 type CloudinaryConfig = {
   cloudName: string;
@@ -26,6 +27,30 @@ function authHeader(cfg: CloudinaryConfig): string {
   return 'Basic ' + Buffer.from(`${cfg.apiKey}:${cfg.apiSecret}`).toString('base64');
 }
 
+/**
+ * Generate a Cloudinary authentication signature for signed uploads (Finding #5).
+ *
+ * The string to sign is the request parameters (excluding file/api_key/signature)
+ * sorted alphabetically by key, joined with '&', with the API secret appended.
+ * Cloudinary accepts both SHA-1 and SHA-256 by default; we use SHA-256.
+ */
+export function signUploadParams(
+  params: Record<string, string | number>,
+  apiSecret: string,
+  algorithm: 'sha1' | 'sha256' = 'sha256'
+): string {
+  const toSign = Object.keys(params)
+    .filter((key) => {
+      const value = params[key];
+      return value !== undefined && value !== null && value !== '';
+    })
+    .sort()
+    .map((key) => `${key}=${params[key]}`)
+    .join('&');
+
+  return crypto.createHash(algorithm).update(toSign + apiSecret).digest('hex');
+}
+
 // Extracts { publicId, resourceType } from a Cloudinary URL like
 // https://res.cloudinary.com/{cloud}/image/upload/v123/folder/name.jpg
 export function extractCloudinaryAsset(url: string): { publicId: string; resourceType: string } | null {
@@ -48,7 +73,8 @@ export function extractCloudinaryAsset(url: string): { publicId: string; resourc
       }
     }
     if (start >= rest.length) return null;
-    const publicId = rest.slice(start).join('/').replace(/\.[^./]+$/, '');
+    const rawPublicId = rest.slice(start).join('/');
+    const publicId = resourceType === 'raw' ? rawPublicId : rawPublicId.replace(/\.[^./]+$/, '');
     if (!publicId) return null;
     return { publicId, resourceType };
   } catch {

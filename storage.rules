@@ -2,14 +2,10 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-    // Allow public read access to all files
+    // All application media is uploaded to and served from Cloudinary, not Firebase Storage.
+    // Deny unauthenticated reads and always deny writes (Finding #9).
     match /{allPaths=**} {
-      allow read: if true;
-    }
-
-    // Writes are denied — the app uploads files to Cloudinary, not Firebase Storage.
-    // Direct client-side writes to Firebase Storage are blocked for security.
-    match /{allPaths=**} {
+      allow read: if request.auth != null;
       allow write: if false;
     }
   }

@@ -96,11 +96,12 @@ describe('sanitizeAchievementPayload', () => {
     expect(result.department).toBe('Math');
   });
 
-  it('filters invalid URLs from attachmentUrls', () => {
+  it('filters non-Cloudinary URLs from attachmentUrls', () => {
     const result = sanitizeAchievementPayload({
       attachmentUrls: [
-        'https://valid.com/file.pdf',
-        'http://also-valid.com/img.jpg',
+        'https://res.cloudinary.com/demo/file.pdf',
+        'https://res.cloudinary.com/demo/img.jpg',
+        'https://arbitrary-domain.com/evil.exe',
         'javascript:alert(1)',
         'not-a-url',
       ],
@@ -109,7 +110,7 @@ describe('sanitizeAchievementPayload', () => {
   });
 
   it('limits attachmentUrls to MAX_ARRAY_LENGTH', () => {
-    const urls = Array.from({ length: 150 }, (_, i) => `https://example.com/${i}.pdf`);
+    const urls = Array.from({ length: 150 }, (_, i) => `https://res.cloudinary.com/demo/${i}.pdf`);
     const result = sanitizeAchievementPayload({ attachmentUrls: urls });
     expect(result.attachmentUrls.length).toBeLessThanOrEqual(100);
   });

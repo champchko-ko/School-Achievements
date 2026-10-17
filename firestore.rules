@@ -2,20 +2,20 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Achievements: public read, admin-only write
+    // Achievements: only approved achievements are publicly readable (MUST-03)
     match /achievements/{achievementId} {
-      allow read: if true;
+      allow read: if resource.data.status == 'approved';
       allow write: if false; // All writes via Admin SDK server-side only
     }
 
-    // Settings: public read (except adminPin), admin-only write
+    // Settings: public read permitted ONLY if no admin secrets reside in the document (MUST-03)
     match /settings/{docId} {
-      allow read: if true;
+      allow read: if !('adminPin' in resource.data) && !('adminEmail' in resource.data);
       allow write: if false; // All writes via Admin SDK server-side only
     }
 
-    // Admin config: no direct access at all
-    match /admin/{docId} {
+    // Admin collection: secrets, pins, configs, reset tokens — recursive strict deny for all client access
+    match /admin/{docId=**} {
       allow read, write: if false;
     }
 

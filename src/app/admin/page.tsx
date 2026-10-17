@@ -56,7 +56,8 @@ export default function AdminDashboard() {
   }, [notification]);
 
   useEffect(() => {
-    if (!isAdmin && !adminLoading) {
+    if (adminLoading) return;
+    if (!isAdmin) {
       router.replace('/');
       return;
     }
@@ -74,18 +75,24 @@ export default function AdminDashboard() {
     };
     fetchSettings();
 
-    const q = query(collection(db, "achievements"));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setAllAchievements(data);
-      setIsLoading(false);
-    });
+    const fetchAchievements = async () => {
+      try {
+        const res = await fetch('/api/achievements?all=true');
+        if (res.ok) {
+          const data = await res.json();
+          setAllAchievements(data);
+        }
+      } catch (error) {
+        console.error("Error fetching achievements:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchAchievements();
+    const interval = setInterval(fetchAchievements, 20_000);
 
-    return () => unsubscribe();
-  }, [router]);
+    return () => clearInterval(interval);
+  }, [isAdmin, adminLoading, router]);
 
   // --- Derived Data ---
   const pendingAchievements = allAchievements.filter(a => a.status === 'pending');
@@ -129,6 +136,7 @@ export default function AdminDashboard() {
         const errData = await res.json();
         throw new Error(errData.error || 'فشل تحديث الحالة');
       }
+      setAllAchievements(prev => prev.map(a => a.id === id ? { ...a, status } : a));
       setNotification({
         type: 'success',
         message: status === 'approved' ? 'تمت الموافقة على الإنجاز ✓' : 'تم رفض الإنجاز'
@@ -154,6 +162,7 @@ export default function AdminDashboard() {
         const errData = await res.json();
         throw new Error(errData.error || 'فشل التقييم');
       }
+      setAllAchievements(prev => prev.map(a => a.id === id ? { ...a, score } : a));
       setNotification({ type: 'success', message: 'تم التقييم بنجاح ✓' });
     } catch (error: any) {
       console.error("Error updating score:", error);
@@ -188,6 +197,7 @@ export default function AdminDashboard() {
         const errData = await res.json();
         throw new Error(errData.error || 'فشل التحديث');
       }
+      setAllAchievements(prev => prev.map(a => a.id === id ? { ...a, status: 'approved' } : a));
       setReviewScoring(true);
       setNotification({ type: 'success', message: 'تمت الموافقة على الإنجاز ✓' });
     } catch (error: any) {
@@ -212,6 +222,7 @@ export default function AdminDashboard() {
         const errData = await res.json();
         throw new Error(errData.error || 'فشل التحديث');
       }
+      setAllAchievements(prev => prev.map(a => a.id === id ? { ...a, status: 'rejected' } : a));
       setNotification({ type: 'success', message: 'تم رفض الإنجاز' });
       closeReview();
     } catch (error: any) {
@@ -236,6 +247,7 @@ export default function AdminDashboard() {
         const errData = await res.json();
         throw new Error(errData.error || 'فشل التقييم');
       }
+      setAllAchievements(prev => prev.map(a => a.id === id ? { ...a, score } : a));
       setNotification({ type: 'success', message: 'تم التقييم بنجاح ✓' });
       closeReview();
     } catch (error: any) {

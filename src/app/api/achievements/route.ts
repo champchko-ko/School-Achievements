@@ -9,7 +9,9 @@ import { logRateLimitHit } from '../../../lib/logger';
 import { sanitizeAchievementPayload } from '../../../lib/sanitize';
 import { validateDepartmentAndTeacher } from '../../../lib/validate-lists';
 import { pbkdf2Sync } from 'crypto';
-import { getAdminDb, addDoc, collection, doc, serverTimestamp, updateDoc } from '../../../lib/firebase-admin';
+import { getAdminDb, addDoc, collection, doc, serverTimestamp, setDoc } from '../../../lib/firebase-admin';
+import { isValidOrigin } from '../../../lib/csrf';
+import { isAdminSession } from '../../../lib/admin-session';
 
 function getPepper(): string {
   const pepper = process.env.PIN_PEPPER;
@@ -17,31 +19,25 @@ function getPepper(): string {
   return pepper;
 }
 
-function hashPin(pin: string, achievementId: string): string {
+export function hashPin(pin: string, achievementId: string): string {
   const pepper = getPepper();
   const salt = `${achievementId}-${pepper}`;
-  const hash = pbkdf2Sync(pin, salt, 10000, 64, 'sha512');
+  const hash = pbkdf2Sync(pin, salt, 600000, 64, 'sha512');
   return hash.toString('hex');
 }
 
 export async function POST(request: Request) {
   try {
-    // CSRF protection
-    const origin = request.headers.get('origin');
-    const referer = request.headers.get('referer');
-    const host = request.headers.get('host');
-    if (origin && host && !origin.includes(host)) {
+    // CSRF protection (MUST-06)
+    if (!isValidOrigin(request)) {
       logCsrfBlock(request);
       return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
     }
-    if (!origin && referer && host && !referer.includes(host)) {
-      logCsrfBlock(request);
-      return NextResponse.json({ error: 'Invalid referer' }, { status: 403 });
-    }
 
-    // Rate limit: 10 achievements per hour per IP
-    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
-    const { allowed, resetAt } = checkRateLimit(`ach:${ip}`, { maxRequests: 10, windowMs: 3_600_000 });
+    // Rate limit: 10 achievements per hour per IP (leftmost client IP - MUST-14)
+    const rawIp = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+    const ip = rawIp.split(',')[0].trim() || 'unknown';
+    const { allowed, resetAt } = await checkRateLimit(`ach:${ip}`, { maxRequests: 10, windowMs: 3_600_000 });
     if (!allowed) {
       logRateLimitHit(`ach:${ip}`, request);
       return NextResponse.json({ error: 'تم تجاوز الحد المسموح. الرجاء المحاولة لاحقاً.', resetAt }, { status: 429 });
@@ -59,7 +55,11 @@ export async function POST(request: Request) {
     const sAttachmentUrls = sanitized.attachmentUrls;
 
     if (!sTeacherName || !sTitle || !sDesc) {
-      return NextResponse.json({ error: 'teacherName, title, and desc are required' }, { status: 400 });
+      return NextResponse.json({ error: 'اسم المعلمة، عنوان الإنجاز، ووصف الإنجاز حقول مطلوبة.' }, { status: 400 });
+    }
+
+    if (!pin || typeof pin !== 'string' || !/^\d{4}$/.test(pin)) {
+      return NextResponse.json({ error: 'رمز الحماية المكون من 4 أرقام مطلوب.' }, { status: 400 });
     }
 
     // Server-side enforcement: department and teacher must be from settings lists
@@ -80,12 +80,12 @@ export async function POST(request: Request) {
 
     const db = getAdminDb();
 
-    // Create the achievement document
+    // Create the achievement document without exposing pinHash in public collection (MUST-03)
     const docRef = await addDoc(collection(db, "achievements"), {
       teacherName: vTeacherName,
       department: vDepartment,
-      title,
-      desc,
+      title: sTitle,
+      desc: sDesc,
       attachmentUrls: sAttachmentUrls || [],
       score: null,
       status: 'pending',
@@ -93,16 +93,46 @@ export async function POST(request: Request) {
       timestamp: serverTimestamp(),
     });
 
-    // If a PIN was provided, hash it and store in the document
-    if (pin && pin.length === 4 && /^\d{4}$/.test(pin)) {
-      const hash = hashPin(pin, docRef.id);
-      await updateDoc(doc(db, 'achievements', docRef.id), { pinHash: hash });
-    }
+    // Hash the 4-digit PIN and store in server-only collection admin/achievementSecrets/{id} (MUST-03)
+    const hash = hashPin(pin, docRef.id);
+    await setDoc(doc(db, 'admin', 'achievementSecrets', docRef.id), { pinHash: hash });
+
 
     logAchievementCreated(docRef.id, sTeacherName, request);
     return NextResponse.json({ success: true, id: docRef.id });
   } catch (error: any) {
     logError('api', 'Create achievement failed', { error: error?.message }, request);
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+  }
+}
+
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const all = searchParams.get('all') === 'true';
+    const isAdmin = await isAdminSession();
+
+    const db = getAdminDb();
+    const colRef = db.collection('achievements');
+
+    let snap;
+    if (all && isAdmin) {
+      // Admin dashboard requesting all achievements including pending
+      snap = await colRef.orderBy('timestamp', 'desc').get();
+    } else {
+      // Public view: strictly approved achievements
+      snap = await colRef.where('status', '==', 'approved').get();
+    }
+
+    const achievements = snap.docs.map((d: any) => {
+      const data = d.data();
+      delete data.pinHash; // Security guarantee: never return pinHash
+      return { id: d.id, ...data };
+    });
+
+    return NextResponse.json(achievements);
+  } catch (error: any) {
+    logError('api', 'Get achievements failed', { error: error?.message }, request);
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
 }

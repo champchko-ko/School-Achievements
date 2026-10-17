@@ -40,8 +40,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ backups });
     }
 
-    // ── Restore from a stored backup ──
-    if (action === 'restore') {
+    // ── Restore from a stored backup (with dry-run preview & confirm - MUST-16) ──
+    if (action === 'restore' || action === 'preview_restore') {
       const backupId = body.backupId;
       if (!backupId) {
         return NextResponse.json({ error: 'backupId is required' }, { status: 400 });
@@ -54,8 +54,29 @@ export async function POST(request: Request) {
 
       const backupData = backupSnap.data()!;
       const data = backupData.data || {};
-      let restored = 0;
 
+      const summary: Record<string, number> = {};
+      let totalCount = 0;
+      for (const col of COLLECTIONS) {
+        const count = Array.isArray(data[col]) ? data[col].length : 0;
+        summary[col] = count;
+        totalCount += count;
+      }
+
+      // Dry-run preview
+      if (action === 'preview_restore' || body.dryRun === true) {
+        return NextResponse.json({ preview: true, backupId, summary, totalDocuments: totalCount });
+      }
+
+      // Require explicit admin confirmation
+      if (body.confirm !== true) {
+        return NextResponse.json({
+          error: 'تأكيد الاستعادة مطلوب (يرجى إرسال confirm: true بعد معاينة البيانات).',
+          preview: { backupId, summary, totalDocuments: totalCount }
+        }, { status: 400 });
+      }
+
+      let restored = 0;
       for (const col of COLLECTIONS) {
         const docs = data[col] || [];
         for (const doc of docs) {
@@ -68,7 +89,7 @@ export async function POST(request: Request) {
       }
 
       logInfo('system', 'Backup restored', { backupId, restoredDocs: restored }, request);
-      return NextResponse.json({ success: true, restored });
+      return NextResponse.json({ success: true, restored, summary });
     }
 
     // ── Default: Download backup as JSON (existing behavior) ──
@@ -86,6 +107,11 @@ export async function POST(request: Request) {
             plain[key] = val.toDate().toISOString();
           }
         }
+        // Strip secrets from downloadable backup payload (MUST-22)
+        delete plain.pinHash;
+        delete plain.tokenHash;
+        delete plain.adminPin;
+        delete plain.adminEmail;
         return plain;
       });
       totalDocs += snap.size;
@@ -101,6 +127,7 @@ export async function POST(request: Request) {
     };
 
     return NextResponse.json(backupPayload);
+
   } catch (error: any) {
     logError('system', 'Backup operation failed', { error: error?.message }, request);
     return NextResponse.json({ error: 'Backup operation failed' }, { status: 500 });

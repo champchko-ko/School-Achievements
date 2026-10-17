@@ -5,6 +5,7 @@ import { Settings, Building, Phone, User, UploadCloud, Save, Loader2, Image as I
 import { useRouter } from 'next/navigation';
 import { useAdmin } from '../../lib/useAdmin';
 import TeacherListByDept from '../../components/TeacherListByDept';
+import { getAppCheckToken } from '../../lib/firebase';
 
 export default function SettingsPage() {
   const [formData, setFormData] = useState<{
@@ -159,7 +160,12 @@ export default function SettingsPage() {
       if (selectedFile) {
         const cloudData = new FormData();
         cloudData.append("file", selectedFile);
-        const uploadRes = await fetch('/api/upload', { method: "POST", body: cloudData });
+        const appCheckToken = await getAppCheckToken();
+        const uploadRes = await fetch('/api/upload', {
+          method: "POST",
+          body: cloudData,
+          ...(appCheckToken ? { headers: { 'X-Firebase-AppCheck': appCheckToken } } : {}),
+        });
         const cloudResponseData = await uploadRes.json();
         
         if (cloudResponseData.secure_url) {

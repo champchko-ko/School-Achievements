@@ -24,18 +24,25 @@ export function useAdmin() {
         localStorage.removeItem('isAdmin');
       }
     } catch {
-      // Fallback to localStorage if API is unavailable
-      setIsAdmin(localStorage.getItem('isAdmin') === 'true');
+      // Fail closed on error (MUST-08)
+      setIsAdmin(false);
+      localStorage.removeItem('isAdmin');
     } finally {
+
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    checkAdmin();
+    // Defer the initial check out of the synchronous effect body so React does
+    // not treat it as a setState-during-commit (react-hooks/set-state-in-effect).
+    const kickoff = setTimeout(() => { void checkAdmin(); }, 0);
     // Periodically check session to detect idle timeout
     const interval = setInterval(checkAdmin, CHECK_INTERVAL);
-    return () => clearInterval(interval);
+    return () => {
+      clearTimeout(kickoff);
+      clearInterval(interval);
+    };
   }, [checkAdmin]);
 
   return { isAdmin, loading, checkAdmin };

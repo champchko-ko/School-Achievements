@@ -29,6 +29,9 @@ function startFlushTimer() {
   flushTimer = setInterval(() => {
     flushBuffer();
   }, FLUSH_INTERVAL_MS);
+  if (flushTimer && typeof flushTimer.unref === 'function') {
+    flushTimer.unref();
+  }
 }
 
 async function flushBuffer() {
@@ -56,8 +59,10 @@ if (typeof process !== 'undefined') {
 
 function extractRequestInfo(request?: Request): { ip?: string; userAgent?: string; endpoint?: string; method?: string } {
   if (!request) return {};
+  const forwarded = request.headers.get('x-forwarded-for');
+  const ip = forwarded ? forwarded.split(',')[0].trim() : (request.headers.get('x-real-ip') || 'unknown');
   return {
-    ip: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
+    ip,
     userAgent: request.headers.get('user-agent') || 'unknown',
     endpoint: request.url || 'unknown',
     method: request.method || 'unknown',
@@ -65,13 +70,24 @@ function extractRequestInfo(request?: Request): { ip?: string; userAgent?: strin
 }
 
 function bufferLog(entry: LogEntry) {
+  // Synchronous console output ensures immediate capture in serverless runtimes (MUST-15)
+  const logPrefix = `[${entry.level.toUpperCase()}][${entry.category}]`;
+  if (entry.level === 'error' || entry.level === 'security') {
+    console.error('%s %s', logPrefix, entry.message, entry.details || '');
+  } else if (entry.level === 'warn') {
+    console.warn('%s %s', logPrefix, entry.message, entry.details || '');
+  } else {
+    console.log('%s %s', logPrefix, entry.message, entry.details || '');
+  }
+
   LOG_BUFFER.push(entry);
   startFlushTimer();
   // Flush immediately on errors and security events
   if (entry.level === 'error' || entry.level === 'security') {
-    flushBuffer();
+    flushBuffer().catch(() => {});
   }
 }
+
 
 // ── Public API ──
 

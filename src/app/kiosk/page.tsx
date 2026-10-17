@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { collection, onSnapshot, query, orderBy, doc, getDoc } from "firebase/firestore";
+import { collection, onSnapshot, query, orderBy, where, doc, getDoc } from "firebase/firestore";
 import { db } from "../../lib/firebase";
 import { Trophy, Medal, Sparkles, User, Building, Loader2, Star, Maximize, Calendar, Paperclip, Image as ImageIcon, Play, Pause, SkipBack, SkipForward, MonitorPlay, Hand } from "lucide-react";
 
@@ -76,12 +76,19 @@ export default function KioskModePage() {
     };
     fetchSettings();
 
-    // Fetch live achievements — all approved, score is irrelevant
-    const q = query(collection(db, "achievements"), orderBy("timestamp", "desc"));
+    // Fetch live achievements — strictly approved achievements
+    const q = query(collection(db, "achievements"), where('status', '==', 'approved'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Record<string, any>));
-      const approved = data.filter(a => a.status === 'approved' || !a.status);
-      setAchievements(approved);
+      const data = snapshot.docs.map(doc => {
+        const d = doc.data();
+        delete d.pinHash;
+        return { id: doc.id, ...d } as Record<string, any>;
+      }).sort((a, b) => {
+        const timeA = a.timestamp?.seconds || (a.date ? new Date(a.date).getTime() / 1000 : 0);
+        const timeB = b.timestamp?.seconds || (b.date ? new Date(b.date).getTime() / 1000 : 0);
+        return timeB - timeA;
+      });
+      setAchievements(data);
       setIsLoading(false);
     });
 
