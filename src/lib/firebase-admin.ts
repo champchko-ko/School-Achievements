@@ -1,7 +1,6 @@
 // Server-side Firebase Admin SDK — privileged access, no security rules
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
-import { getAppCheck } from 'firebase-admin/app-check';
 
 let adminDb: any = null;
 
@@ -109,6 +108,7 @@ export async function verifyAppCheckToken(token: string | null | undefined): Pro
   try {
     // Ensure the admin app is initialized before requesting App Check.
     getDb();
+    const { getAppCheck } = await import('firebase-admin/app-check');
     const result = await getAppCheck().verifyToken(token);
     return Boolean(result?.appId);
   } catch (err: any) {
