@@ -8,7 +8,7 @@
 [![Cloudinary](https://img.shields.io/badge/Cloudinary-Signed_Uploads-3448C5?style=flat&logo=cloudinary)](https://cloudinary.com/)
 [![Tests](https://img.shields.io/badge/Vitest-83%2F83_Passing-brightgreen?style=flat&logo=vitest)](https://vitest.dev/)
 [![E2E Tests](https://img.shields.io/badge/Playwright-6%2F6_Passing-45ba4b?style=flat&logo=playwright)](https://playwright.dev/)
-[![Security Audit](https://img.shields.io/badge/Security_Audit-100%25_Remediated-success?style=flat&logo=shield)](./RESUME.md)
+[![Security Audit](https://img.shields.io/badge/Security_Audit-100%25_Remediated-success?style=flat&logo=shield)](#-hardened-security-architecture)
 
 A modern, secure, and production-ready school achievements management system built with Next.js 16 App Router, React 19, Firebase Firestore, and Cloudinary. Designed for schools, academies, and educational institutions to record, showcase, certify, and celebrate student and educator accomplishments with real-time updates, interactive kiosk displays, automated certificates, and multi-layered enterprise security.
 
@@ -42,7 +42,7 @@ A modern, secure, and production-ready school achievements management system bui
 
 ## 🛡️ Hardened Security Architecture
 
-The platform has been audited and remediated across all 19 security, architectural, and quality standards defined in [`RESUME.md`](file:///c:/Users/ahmed/Desktop/School-Achievements/RESUME.md):
+The platform has been audited and hardened across enterprise security, architectural, and quality standards:
 
 | Security Layer | Implementation Details |
 |---|---|
