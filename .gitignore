@@ -1,4 +1,6 @@
-# dependencies
+# ==============================================================================
+# Dependencies
+# ==============================================================================
 /node_modules
 /.pnp
 .pnp.*
@@ -9,15 +11,19 @@
 !.yarn/schemas
 !.yarn/versions
 
-# next.js
+# ==============================================================================
+# Next.js & Production Build
+# ==============================================================================
 /.next/
 /out/
-
-# production
 /build
+.vercel
+*.tsbuildinfo
+next-env.d.ts
 
-# misc
-# env files and secrets
+# ==============================================================================
+# Environment Variables & Secrets (NEVER COMMIT)
+# ==============================================================================
 .env*
 !.env.example
 *.env
@@ -33,13 +39,49 @@
 CLOUDINARY.txt
 /CLOUDINARY.txt
 
-# backups & temporary files
+# ==============================================================================
+# Backups, Database Dumps & Local Data
+# ==============================================================================
+backups/
+data/
 *.bak
 *.backup
-*.tsbuildinfo
-next-env.d.ts
-.vercel
-data/
-backups/
+*backup*.json
+*backup*.zip
+
+# ==============================================================================
+# Testing, Coverage & Audit Reports
+# ==============================================================================
 test-results/
+playwright-report/
+blob-report/
+coverage/
+.nyc_output/
+*.lcov
 eslint-report.json
+lighthouse-report.json
+
+# ==============================================================================
+# Logs & Debug Output
+# ==============================================================================
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ==============================================================================
+# Editor & Operating System
+# ==============================================================================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ==============================================================================
+# Agent & Tool Workspace Configurations
+# ==============================================================================
+.agents/
+.gemini/
+.claude/
