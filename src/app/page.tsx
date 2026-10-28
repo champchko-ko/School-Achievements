@@ -135,15 +135,14 @@ function HomeContent() {
     '@type': 'EducationalOrganization',
     name: schoolSettings?.schoolName || 'المدرسة',
     description: 'منصة عرض إنجازات الطلاب والأنشطة المدرسية.',
-    url: typeof window !== 'undefined' && window.location.origin 
-      ? window.location.origin 
-      : (process.env.NEXT_PUBLIC_APP_URL || 'https://school-achievements-six.vercel.app'),
+    url: process.env.NEXT_PUBLIC_APP_URL || 'https://school-achievements-six.vercel.app',
   };
 
   return (
     <>
       <script
         type="application/ld+json"
+        suppressHydrationWarning
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }}
       />
 
