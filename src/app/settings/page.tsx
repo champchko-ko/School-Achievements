@@ -46,6 +46,8 @@ export default function SettingsPage() {
   const [newDept, setNewDept] = useState('');
   const [newTeacher, setNewTeacher] = useState('');
   const [newTeacherDept, setNewTeacherDept] = useState('');
+  const [deptError, setDeptError] = useState<string | null>(null);
+  const [teacherError, setTeacherError] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -135,11 +137,19 @@ export default function SettingsPage() {
         const res = await fetch('/api/settings');
         if (res.ok) {
           const data = await res.json();
+          const normalizedTeachers = Array.isArray(data.teachers)
+            ? data.teachers.map((t: any) =>
+                typeof t === 'string'
+                  ? { name: t.trim(), department: '' }
+                  : { name: String(t?.name || '').trim(), department: String(t?.department || '').trim() }
+              ).filter((t: any) => Boolean(t.name))
+            : prevTeachersList(prev => prev.teachers);
+
           setFormData(prev => ({
             ...prev,
             ...data,
-            departments: data.departments || prev.departments,
-            teachers: data.teachers || prev.teachers
+            departments: Array.isArray(data.departments) ? data.departments : prev.departments,
+            teachers: normalizedTeachers
           }));
         }
       } catch (error) {
@@ -150,6 +160,57 @@ export default function SettingsPage() {
     };
     fetchSettings();
   }, []);
+
+  const prevTeachersList = (getter: (prev: typeof formData) => typeof formData.teachers) => {
+    return formData.teachers;
+  };
+
+  const handleAddDept = () => {
+    const trimmedDept = newDept.trim();
+    if (!trimmedDept) {
+      setDeptError('يرجى كتابة اسم القسم.');
+      return;
+    }
+    if (formData.departments.some(d => d.trim().toLowerCase() === trimmedDept.toLowerCase())) {
+      setDeptError(`القسم "${trimmedDept}" موجود بالفعل.`);
+      return;
+    }
+    setFormData(prev => ({
+      ...prev,
+      departments: [...prev.departments, trimmedDept]
+    }));
+    setNewDept('');
+    setDeptError(null);
+  };
+
+  const handleAddTeacher = () => {
+    const trimmedName = newTeacher.trim();
+    if (!trimmedName) {
+      setTeacherError('يرجى كتابة اسم المعلمة.');
+      return;
+    }
+    if (!newTeacherDept) {
+      setTeacherError('يجب اختيار القسم التابعة له المعلمة أولاً.');
+      return;
+    }
+    const alreadyExists = formData.teachers.some(t => {
+      const name = (typeof t === 'string' ? t : t?.name || '').trim();
+      const dept = (typeof t === 'string' ? '' : t?.department || '').trim();
+      return name.toLowerCase() === trimmedName.toLowerCase() && dept === newTeacherDept;
+    });
+    if (alreadyExists) {
+      setTeacherError(`المعلمة "${trimmedName}" مضافة بالفعل ضمن قسم "${newTeacherDept}".`);
+      return;
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      teachers: [...prev.teachers, { name: trimmedName, department: newTeacherDept }]
+    }));
+    setNewTeacher('');
+    setNewTeacherDept('');
+    setTeacherError(null);
+  };
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -175,16 +236,40 @@ export default function SettingsPage() {
       }
 
       const finalDepartments = [...formData.departments];
-      if (newDept.trim() && !finalDepartments.includes(newDept.trim())) {
+      if (newDept.trim() && !finalDepartments.some(d => d.trim().toLowerCase() === newDept.trim().toLowerCase())) {
         finalDepartments.push(newDept.trim());
         setNewDept('');
+        setDeptError(null);
       }
 
       const finalTeachers = [...formData.teachers];
-      if (newTeacher.trim() && newTeacherDept && !finalTeachers.some(t => t.name === newTeacher.trim() && t.department === newTeacherDept)) {
-        finalTeachers.push({ name: newTeacher.trim(), department: newTeacherDept });
-        setNewTeacher('');
-        setNewTeacherDept('');
+      if (newTeacher.trim()) {
+        if (!newTeacherDept) {
+          // User entered a teacher name but did not specify a department.
+          // Do NOT silently drop it while claiming success!
+          setActiveTab('lists');
+          setTeacherError('تنبيه: قمت بكتابة اسم معلمة دون تحديد القسم! يرجى اختيار القسم والضغط على "إضافة"، أو مسح الحقل للمتابعة.');
+          setNotification({
+            type: "error",
+            message: "تنبيه: يوجد اسم معلمة لم تحدد قسماً لها. اختر القسم ثم اضغط إضافة."
+          });
+          setIsSaving(false);
+          return;
+        } else {
+          // Both teacher name and department are present: auto-include it
+          const trimmed = newTeacher.trim();
+          const alreadyExists = finalTeachers.some(t => {
+            const name = (typeof t === 'string' ? t : t?.name || '').trim();
+            const dept = (typeof t === 'string' ? '' : t?.department || '').trim();
+            return name.toLowerCase() === trimmed.toLowerCase() && dept === newTeacherDept;
+          });
+          if (!alreadyExists) {
+            finalTeachers.push({ name: trimmed, department: newTeacherDept });
+          }
+          setNewTeacher('');
+          setNewTeacherDept('');
+          setTeacherError(null);
+        }
       }
 
       const finalData = {
@@ -208,9 +293,9 @@ export default function SettingsPage() {
       setNotification({ type: "success", message: "تم حفظ الإعدادات بنجاح! ✅" });
       setSelectedFile(null);
       setFormData(finalData);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving settings:", error);
-      setNotification({ type: "error", message: "حدث خطأ أثناء حفظ البيانات." });
+      setNotification({ type: "error", message: error?.message || "حدث خطأ أثناء حفظ البيانات." });
     } finally {
       setIsSaving(false);
     }
@@ -513,30 +598,28 @@ export default function SettingsPage() {
               {/* Departments Management */}
               <div className="bg-purple-50/30 p-6 rounded-3xl border-2 border-purple-100 min-w-0">
                 <h4 className="font-black text-gray-800 mb-4 flex items-center gap-2"><BookOpen size={18} className="text-[#0087ed]" /> الأقسام الدراسية</h4>
-                <div className="flex flex-col sm:flex-row gap-2 mb-4">
+                <div className="flex flex-col sm:flex-row gap-2 mb-2">
                   <input 
                     type="text" 
                     value={newDept} 
-                    onChange={e => setNewDept(e.target.value)} 
+                    onChange={e => { setNewDept(e.target.value); if (deptError) setDeptError(null); }} 
                     onKeyDown={e => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
-                        if (newDept.trim() && !formData.departments.includes(newDept.trim())) {
-                          setFormData(prev => ({...prev, departments: [...prev.departments, newDept.trim()]}));
-                          setNewDept('');
-                        }
+                        handleAddDept();
                       }
                     }}
                     placeholder="اسم القسم الجديد" 
                     className="w-full sm:flex-1 min-w-0 bg-white border-2 border-purple-100 rounded-2xl p-3 font-bold focus:ring-4 focus:ring-purple-200 focus:border-[#46178f] outline-none text-sm" 
                   />
-                  <button type="button" onClick={() => { if(newDept.trim() && !formData.departments.includes(newDept.trim())) { setFormData({...formData, departments: [...formData.departments, newDept.trim()]}); setNewDept(''); } }} className="shrink-0 w-full sm:w-auto bg-[#0087ed] text-white px-5 py-2.5 rounded-2xl font-black hover:bg-[#0073cc] transition-all shadow-md">إضافة</button>
+                  <button type="button" onClick={handleAddDept} className="shrink-0 w-full sm:w-auto bg-[#0087ed] text-white px-5 py-2.5 rounded-2xl font-black hover:bg-[#0073cc] transition-all shadow-md">إضافة</button>
                 </div>
+                {deptError && <p className="text-xs text-red-600 font-bold mb-3 bg-red-50 p-2 rounded-xl border border-red-200">⚠️ {deptError}</p>}
                 <div className="flex flex-wrap gap-2 max-h-52 overflow-y-auto p-2 border-2 border-dashed border-purple-200 rounded-2xl bg-white">
                   {formData.departments.map(dept => (
                     <span key={dept} className="bg-purple-50 border-2 border-purple-200 text-gray-700 text-sm font-black px-3 py-2 rounded-xl flex items-center gap-2 shadow-sm">
                       {dept}
-                      <button type="button" onClick={() => setFormData({...formData, departments: formData.departments.filter(d => d !== dept)})} className="text-red-400 hover:text-red-600 transition-colors"><Trash2 size={16} /></button>
+                      <button type="button" onClick={() => setFormData(prev => ({ ...prev, departments: prev.departments.filter(d => d !== dept) }))} className="text-red-400 hover:text-red-600 transition-colors" title="حذف القسم"><Trash2 size={16} /></button>
                     </span>
                   ))}
                   {formData.departments.length === 0 && <p className="text-xs text-gray-400 p-3 font-bold">لا توجد أقسام مضافة.</p>}
@@ -551,37 +634,43 @@ export default function SettingsPage() {
                     <input 
                       type="text" 
                       value={newTeacher} 
-                      onChange={e => setNewTeacher(e.target.value)} 
+                      onChange={e => { setNewTeacher(e.target.value); if (teacherError) setTeacherError(null); }} 
                       onKeyDown={e => {
                         if (e.key === 'Enter') {
                           e.preventDefault();
-                          if (newTeacher.trim() && newTeacherDept && !formData.teachers.some(t => t.name === newTeacher.trim() && t.department === newTeacherDept)) {
-                            setFormData(prev => ({...prev, teachers: [...prev.teachers, { name: newTeacher.trim(), department: newTeacherDept }]}));
-                            setNewTeacher('');
-                          }
+                          handleAddTeacher();
                         }
                       }}
                       placeholder="اسم المعلمة الجديدة" 
-                      className="w-full sm:flex-1 min-w-0 bg-white border-2 border-purple-100 rounded-2xl p-3 font-bold focus:ring-4 focus:ring-purple-200 focus:border-[#46178f] outline-none text-sm" 
+                      className={`w-full sm:flex-1 min-w-0 bg-white border-2 rounded-2xl p-3 font-bold focus:ring-4 focus:ring-purple-200 focus:border-[#46178f] outline-none text-sm ${teacherError && !newTeacher.trim() ? 'border-red-300' : 'border-purple-100'}`} 
                     />
                     <select
                       value={newTeacherDept}
-                      onChange={e => setNewTeacherDept(e.target.value)}
-                      className="w-full sm:w-48 bg-white border-2 border-purple-100 rounded-2xl p-3 font-bold focus:ring-4 focus:ring-purple-200 focus:border-[#46178f] outline-none text-sm"
+                      onChange={e => { setNewTeacherDept(e.target.value); if (teacherError) setTeacherError(null); }}
+                      className={`w-full sm:w-48 bg-white border-2 rounded-2xl p-3 font-bold focus:ring-4 focus:ring-purple-200 focus:border-[#46178f] outline-none text-sm ${teacherError && !newTeacherDept ? 'border-red-400 bg-red-50/30' : 'border-purple-100'}`}
                     >
-                      <option value="">اختر القسم</option>
+                      <option value="">اختر القسم *</option>
                       {formData.departments.map(dept => (
                         <option key={dept} value={dept}>{dept}</option>
                       ))}
                     </select>
-                    <button type="button" onClick={() => { if(newTeacher.trim() && newTeacherDept && !formData.teachers.some(t => t.name === newTeacher.trim() && t.department === newTeacherDept)) { setFormData({...formData, teachers: [...formData.teachers, { name: newTeacher.trim(), department: newTeacherDept }]}); setNewTeacher(''); setNewTeacherDept(''); } }} className="shrink-0 w-full sm:w-auto bg-[#26890c] text-white px-5 py-2.5 rounded-2xl font-black hover:bg-[#20730a] transition-all shadow-md">إضافة</button>
+                    <button type="button" onClick={handleAddTeacher} className="shrink-0 w-full sm:w-auto bg-[#26890c] text-white px-5 py-2.5 rounded-2xl font-black hover:bg-[#20730a] transition-all shadow-md">إضافة</button>
                   </div>
-                  {!newTeacherDept && newTeacher.trim() && <p className="text-xs text-amber-600 font-bold">⚠️ يجب اختيار القسم أولاً</p>}
+                  {teacherError && (
+                    <p className="text-xs text-red-600 font-bold bg-red-50 p-2.5 rounded-xl border border-red-200">
+                      ⚠️ {teacherError}
+                    </p>
+                  )}
+                  {!teacherError && !newTeacherDept && newTeacher.trim() && (
+                    <p className="text-xs text-amber-600 font-bold bg-amber-50 p-2 rounded-xl border border-amber-200">
+                      ⚠️ يرجى اختيار القسم من القائمة المنسدلة ثم الضغط على &quot;إضافة&quot;
+                    </p>
+                  )}
                 </div>
                 <TeacherListByDept
                   teachers={formData.teachers}
                   departments={formData.departments}
-                  onRemove={(idx) => setFormData({...formData, teachers: formData.teachers.filter((_, i) => i !== idx)})}
+                  onRemove={(idx) => setFormData(prev => ({ ...prev, teachers: prev.teachers.filter((_, i) => i !== idx) }))}
                 />
               </div>
             </div>

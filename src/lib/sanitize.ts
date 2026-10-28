@@ -30,6 +30,7 @@ export function preventExcelFormula(value: string): string {
  */
 const MAX_TEXT_LENGTH = 10000;
 const MAX_ARRAY_LENGTH = 100;
+const MAX_TEACHERS_LENGTH = 1000;
 
 export function sanitizeText(value: string): string {
   if (!value) return '';
@@ -71,6 +72,7 @@ export function sanitizeAchievementPayload<T extends Record<string, any>>(body: 
 export function sanitizeSettingsPayload<T extends Record<string, any>>(body: T): T {
   const textFields = [
     'schoolName', 'managerName', 'viceManagerName', 'assistantManager2',
+    'computerDeptTeacher', 'computerDeptHead',
     'vision', 'message', 'address', 'phone'
   ];
   for (const field of textFields) {
@@ -84,12 +86,12 @@ export function sanitizeSettingsPayload<T extends Record<string, any>>(body: T):
     (body as Record<string, any>).departments = sanitizeStringArray(body.departments).slice(0, MAX_ARRAY_LENGTH);
   }
   if (Array.isArray(body.teachers)) {
-    const teachersList = (body.teachers as any[]).slice(0, MAX_ARRAY_LENGTH);
+    const teachersList = (body.teachers as any[]).slice(0, MAX_TEACHERS_LENGTH);
     (body as Record<string, any>).teachers = teachersList.map((t: any) =>
       typeof t === 'string'
-        ? sanitizeText(t)
-        : { name: sanitizeText(t.name || ''), department: sanitizeText(t.department || '') }
-    ).filter((t: any) => typeof t === 'string' ? Boolean(t) : Boolean(t.name));
+        ? { name: sanitizeText(t), department: '' }
+        : { name: sanitizeText(t?.name || ''), department: sanitizeText(t?.department || '') }
+    ).filter((t: any) => Boolean(t.name));
   }
   return body;
 }

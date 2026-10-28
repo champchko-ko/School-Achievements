@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { stripHtml, preventExcelFormula, sanitizeText, sanitizeStringArray, sanitizeAchievementPayload } from './sanitize';
+import { stripHtml, preventExcelFormula, sanitizeText, sanitizeStringArray, sanitizeAchievementPayload, sanitizeSettingsPayload } from './sanitize';
 
 describe('stripHtml', () => {
   it('removes HTML tags', () => {
@@ -113,5 +113,42 @@ describe('sanitizeAchievementPayload', () => {
     const urls = Array.from({ length: 150 }, (_, i) => `https://res.cloudinary.com/demo/${i}.pdf`);
     const result = sanitizeAchievementPayload({ attachmentUrls: urls });
     expect(result.attachmentUrls.length).toBeLessThanOrEqual(100);
+  });
+});
+
+describe('sanitizeSettingsPayload', () => {
+  it('normalizes legacy string teachers and object teachers', () => {
+    const result = sanitizeSettingsPayload({
+      teachers: [
+        'أمل',
+        { name: '<b>سارة</b>', department: '<i>الرياضيات</i>' },
+        { name: '', department: 'العلوم' },
+        '   ',
+      ],
+    });
+    expect(result.teachers).toEqual([
+      { name: 'أمل', department: '' },
+      { name: 'سارة', department: 'الرياضيات' },
+    ]);
+  });
+
+  it('allows more than 100 teachers up to 1000', () => {
+    const teachersList = Array.from({ length: 250 }, (_, i) => ({
+      name: `Teacher ${i}`,
+      department: 'Dept',
+    }));
+    const result = sanitizeSettingsPayload({ teachers: teachersList });
+    expect(result.teachers).toHaveLength(250);
+  });
+
+  it('sanitizes leadership fields including computer dept fields', () => {
+    const result = sanitizeSettingsPayload({
+      schoolName: '<b>مدرسة الأمل</b>',
+      computerDeptTeacher: '<b>أمل</b>',
+      computerDeptHead: '=SUM(1,2) رئيس القسم',
+    });
+    expect(result.schoolName).toBe('مدرسة الأمل');
+    expect(result.computerDeptTeacher).toBe('أمل');
+    expect(result.computerDeptHead).toBe('\t=SUM(1,2) رئيس القسم');
   });
 });
