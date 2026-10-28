@@ -182,7 +182,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error('Update achievement error:', error?.message || error);
-    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+    return NextResponse.json({ error: error?.message || 'Internal error' }, { status: 500 });
   }
 }
 
@@ -282,7 +282,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     return NextResponse.json({ success: true });
   } catch (error: any) {
     logError('api', 'Delete achievement failed', { error: error?.message, achievementId: id }, request);
-    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+    return NextResponse.json({ error: error?.message || 'Internal error' }, { status: 500 });
   }
 }
 

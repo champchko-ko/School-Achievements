@@ -102,7 +102,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, id: docRef.id });
   } catch (error: any) {
     logError('api', 'Create achievement failed', { error: error?.message }, request);
-    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+    return NextResponse.json({ error: error?.message || 'Internal error' }, { status: 500 });
   }
 }
 

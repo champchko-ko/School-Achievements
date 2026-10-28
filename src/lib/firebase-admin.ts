@@ -46,6 +46,13 @@ function getDb() {
 export function getAdminDb() { return getDb(); }
 
 export function doc(db: any, ...pathSegments: string[]) {
+  // In Firestore, a document path MUST contain an even number of components (collection/doc/subcol/doc).
+  // When an odd number of components is provided (e.g. ['admin', 'achievementSecrets', id]),
+  // map [namespace, collection, docId] to [`${namespace}_${collection}`, docId] so it resolves to a valid document path.
+  if (pathSegments.length === 3) {
+    const [ns, col, docId] = pathSegments;
+    return getDb().collection(`${ns}_${col}`).doc(docId);
+  }
   return getDb().doc(pathSegments.join('/'));
 }
 
