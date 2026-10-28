@@ -268,33 +268,107 @@ export default function AddAchievementModal({
     const rollbackTokens: Record<string, string> = {};
 
     try {
-      // 2. Upload Files to Cloudinary (Tracking each successful URL for atomic rollback)
+      // 2. Upload Files to Cloudinary (Direct signed upload to bypass serverless 4.5MB limit, with fallback)
       if (files.length > 0) {
         const appCheckToken = await getAppCheckToken();
         const uploadHeaders: Record<string, string> = appCheckToken
           ? { 'X-Firebase-AppCheck': appCheckToken }
           : {};
-        for (const file of files) {
-          const fd = new FormData();
-          fd.append('file', file);
-          const res = await fetch('/api/upload', { method: 'POST', body: fd, headers: uploadHeaders });
-          const data = await res.json().catch(() => ({}));
 
-          if (!res.ok) {
-            throw {
-              stage: 'upload',
-              title: 'فشل في رفع الملفات',
-              message: data.error || `تعذر رفع الملف "${file.name}".`,
-              howToAvoid: [
-                'تحقق من أن حجم الملف لا يتجاوز الحدود المسموحة (الصور 10MB، الفيديوهات 100MB، المستندات 20MB).',
-                'تأكد من صيغة الملف وأن اتصالك بالإنترنت مستقر.',
-                'إذا تكرر الخطأ، جرب تقليل حجم الملف أو تحويله إلى صيغة PDF أو JPEG.'
-              ]
-            };
+        for (const file of files) {
+          let secureUrl = '';
+          let rollbackToken = '';
+
+          // Normalize mime type and fallback to extension if empty
+          let fileType = file.type;
+          if (!fileType) {
+            const ext = file.name.split('.').pop()?.toLowerCase();
+            if (ext === 'mp4') fileType = 'video/mp4';
+            else if (ext === 'mov') fileType = 'video/quicktime';
+            else if (ext === 'webm') fileType = 'video/webm';
+            else if (ext === 'jpg' || ext === 'jpeg') fileType = 'image/jpeg';
+            else if (ext === 'png') fileType = 'image/png';
+            else if (ext === 'pdf') fileType = 'application/pdf';
           }
-          newlyUploadedUrls.push(data.secure_url);
-          if (data.rollback_token) {
-            rollbackTokens[data.secure_url] = data.rollback_token;
+
+          // Step 2a: Request signed direct upload parameters (bypasses Vercel 4.5MB serverless limit)
+          const signRes = await fetch('/api/upload', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...uploadHeaders },
+            body: JSON.stringify({
+              action: 'sign',
+              fileName: file.name,
+              fileType,
+              fileSize: file.size,
+            }),
+          });
+          const signData = await signRes.json().catch(() => ({}));
+
+          if (signRes.ok && signData.signature && signData.cloudName) {
+            // Direct upload from browser to Cloudinary
+            const cloudFd = new FormData();
+            cloudFd.append('file', file);
+            cloudFd.append('api_key', signData.apiKey);
+            cloudFd.append('timestamp', String(signData.timestamp));
+            cloudFd.append('upload_preset', signData.uploadPreset);
+            cloudFd.append('signature', signData.signature);
+
+            const resourceType = signData.resourceType || (fileType?.startsWith('video/') ? 'video' : 'auto');
+            const cloudRes = await fetch(
+              `https://api.cloudinary.com/v1_1/${signData.cloudName}/${resourceType}/upload`,
+              { method: 'POST', body: cloudFd }
+            );
+            const cloudData = await cloudRes.json().catch(() => ({}));
+
+            if (!cloudRes.ok) {
+              throw {
+                stage: 'upload',
+                title: 'فشل في رفع الملفات',
+                message: cloudData.error?.message || `تعذر رفع الملف "${file.name}".`,
+                howToAvoid: [
+                  'تحقق من أن حجم الملف لا يتجاوز الحدود المسموحة (الصور 10MB، الفيديوهات 100MB، المستندات 20MB).',
+                  'تأكد من صيغة الملف وأن اتصالك بالإنترنت مستقر.',
+                  'إذا تكرر الخطأ، جرب تقليل حجم الملف أو تحويله إلى صيغة PDF أو JPEG.'
+                ]
+              };
+            }
+
+            secureUrl = cloudData.secure_url;
+
+            // Register URL for atomic rollback token
+            const regRes = await fetch('/api/upload', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', ...uploadHeaders },
+              body: JSON.stringify({ action: 'register', url: secureUrl }),
+            });
+            const regData = await regRes.json().catch(() => ({}));
+            rollbackToken = regData.rollback_token || '';
+          } else {
+            // Fallback to proxy route
+            const fd = new FormData();
+            fd.append('file', file);
+            const res = await fetch('/api/upload', { method: 'POST', body: fd, headers: uploadHeaders });
+            const data = await res.json().catch(() => ({}));
+
+            if (!res.ok) {
+              throw {
+                stage: 'upload',
+                title: 'فشل في رفع الملفات',
+                message: data.error || signData.error || `تعذر رفع الملف "${file.name}".`,
+                howToAvoid: [
+                  'تحقق من أن حجم الملف لا يتجاوز الحدود المسموحة (الصور 10MB، الفيديوهات 100MB، المستندات 20MB).',
+                  'تأكد من صيغة الملف وأن اتصالك بالإنترنت مستقر.',
+                  'إذا تكرر الخطأ، جرب تقليل حجم الملف أو تحويله إلى صيغة PDF أو JPEG.'
+                ]
+              };
+            }
+            secureUrl = data.secure_url;
+            rollbackToken = data.rollback_token || '';
+          }
+
+          newlyUploadedUrls.push(secureUrl);
+          if (rollbackToken) {
+            rollbackTokens[secureUrl] = rollbackToken;
           }
         }
       }

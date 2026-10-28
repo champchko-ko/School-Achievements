@@ -77,8 +77,11 @@ function validateMagicBytes(buffer: Buffer, mimeType: string): boolean {
   // Video
   if (mimeType === 'video/mp4' || mimeType === 'video/quicktime') {
     if (buffer.length < 8) return false;
-    const typeStr = buffer.subarray(4, 8).toString('ascii');
-    return typeStr === 'ftyp' || typeStr === 'moov';
+    const slice = buffer.subarray(0, Math.min(buffer.length, 128));
+    const validFourCCs = ['ftyp', 'moov', 'wide', 'mdat', 'free', 'skip'];
+    const firstType = slice.subarray(4, 8).toString('ascii');
+    if (validFourCCs.includes(firstType)) return true;
+    return slice.includes(Buffer.from('ftyp')) || slice.includes(Buffer.from('moov'));
   }
   if (mimeType === 'video/webm') {
     return buffer[0] === 0x1A && buffer[1] === 0x45 && buffer[2] === 0xDF && buffer[3] === 0xA3;
@@ -120,6 +123,69 @@ export async function POST(request: Request) {
       }, { status: 429 });
     }
 
+    const contentType = request.headers.get('content-type') || '';
+
+    // Direct Upload Flow (Sign & Register): Bypasses Vercel Serverless Function 4.5MB payload limit
+    if (contentType.includes('application/json')) {
+      const body = await request.json().catch(() => ({}));
+      const action = body?.action;
+
+      if (action === 'register') {
+        const url = body?.url;
+        if (!url || typeof url !== 'string') {
+          return NextResponse.json({ error: 'URL مطلوب' }, { status: 400 });
+        }
+        const rollbackToken = createRollbackToken(url);
+        return NextResponse.json({ rollback_token: rollbackToken });
+      }
+
+      if (action === 'sign') {
+        const { fileName, fileType, fileSize } = body;
+        const normalizedType = ((fileType || '') as string).split(';')[0].trim().toLowerCase();
+
+        if (!ALLOWED_MIME_TYPES.includes(normalizedType)) {
+          logWarn('upload', 'Rejected file type during signing', { fileName, fileType: normalizedType }, request);
+          return NextResponse.json({
+            error: `نوع الملف غير مدعوم: ${fileType || fileName}. الأنواع المسموحة: صور، فيديوهات، PDF، مستندات Word، ملفات نصية، أرشيفات ZIP/RAR`
+          }, { status: 400 });
+        }
+
+        const category = normalizedType.split('/')[0] || '';
+        const maxSize = SIZE_LIMITS[category] || DEFAULT_MAX;
+        if (typeof fileSize === 'number' && fileSize > maxSize) {
+          const fileMB = (fileSize / (1024 * 1024)).toFixed(1);
+          const maxMB = (maxSize / (1024 * 1024)).toFixed(0);
+          logWarn('upload', 'Rejected oversized file during signing', { fileName, fileSize, maxSize }, request);
+          return NextResponse.json({
+            error: `حجم الملف كبير جداً (${fileMB} MB). الحد الأقصى لهذا النوع هو ${maxMB} MB`
+          }, { status: 400 });
+        }
+
+        const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+        const uploadPreset = process.env.CLOUDINARY_UPLOAD_PRESET;
+        const apiKey = process.env.CLOUDINARY_API_KEY;
+        const apiSecret = process.env.CLOUDINARY_API_SECRET;
+
+        if (!cloudName || !uploadPreset || !apiKey || !apiSecret) {
+          return NextResponse.json({ error: 'Cloudinary not configured' }, { status: 500 });
+        }
+
+        const timestamp = Math.floor(Date.now() / 1000);
+        const signature = signUploadParams({ timestamp, upload_preset: uploadPreset }, apiSecret, 'sha256');
+
+        return NextResponse.json({
+          cloudName,
+          apiKey,
+          uploadPreset,
+          timestamp,
+          signature,
+          resourceType: category === 'video' ? 'video' : 'auto',
+        });
+      }
+
+      return NextResponse.json({ error: 'إجراء غير مدعوم' }, { status: 400 });
+    }
+
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
 
@@ -128,7 +194,8 @@ export async function POST(request: Request) {
     }
 
     // Validate file type server-side
-    if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+    const baseMime = (file.type || '').split(';')[0].trim().toLowerCase();
+    if (!ALLOWED_MIME_TYPES.includes(baseMime)) {
       logWarn('upload', 'Rejected file type', { fileName: file.name, fileType: file.type }, request);
       return NextResponse.json({
         error: `نوع الملف غير مدعوم: ${file.type}. الأنواع المسموحة: صور، فيديوهات، PDF، مستندات Word، ملفات نصية، أرشيفات ZIP/RAR`
@@ -194,7 +261,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ secure_url: cloudData.secure_url, rollback_token: rollbackToken });
   } catch (error: any) {
     logError('upload', 'Upload failed', { error: error?.message }, request);
-    return NextResponse.json({ error: 'فشل رفع الملف' }, { status: 500 });
+    return NextResponse.json({ error: error?.message || 'فشل رفع الملف' }, { status: 500 });
   }
 }
 
