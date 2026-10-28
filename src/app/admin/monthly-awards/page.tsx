@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useMemo } from 'react';
 import { db } from '../../../lib/firebase';
-import { collection, query, onSnapshot } from 'firebase/firestore';
+import { collection, query, onSnapshot, where } from 'firebase/firestore';
 import { Trophy, Medal, Award, Loader2, Star, ArrowRight, X } from 'lucide-react';
 import { useAdmin } from '../../../lib/useAdmin';
 import { useRouter } from 'next/navigation';
@@ -53,11 +53,11 @@ export default function MonthlyAwardsAdmin() {
   }, [notification]);
 
   useEffect(() => {
-    const q = query(collection(db, "achievements"));
+    const q = query(collection(db, "achievements"), where("status", "==", "approved"));
     const unsub = onSnapshot(q, (snap) => {
       setAchievements(snap.docs.map(d => ({ id: d.id, ...d.data() })));
       setIsLoading(false);
-    });
+    }, (err) => { console.error("[MonthlyAwards] Snapshot error:", err); setIsLoading(false); });
     return () => unsub();
   }, []);
 

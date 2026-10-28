@@ -15,9 +15,17 @@ export default function HonorRoll() {
     
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const teacherStats: Record<string, any> = {};
+      const currentMonth = new Date().toISOString().slice(0, 7);
+
+      // Filter for current month achievements (matching "هذا الشهر"); fallback to all-time if month has no data
+      const monthDocs = snapshot.docs.filter((doc) => {
+        const d = doc.data();
+        return d.date && typeof d.date === 'string' && d.date.startsWith(currentMonth);
+      });
+      const docsToProcess = monthDocs.length > 0 ? monthDocs : snapshot.docs;
 
       // 1. Group achievements by teacherName (only count approved)
-      snapshot.docs.forEach((doc) => {
+      docsToProcess.forEach((doc) => {
         const data = doc.data();
         const name = data.teacherName;
         if (!name) return;
@@ -46,6 +54,9 @@ export default function HonorRoll() {
       if (sorted[2]) constructedPodium.push({ id: 3, ...sorted[2], rank: 3, height: "h-24", color: "bg-[#CD7F32]", textColor: "text-white", icon: <Award size={28} className="text-[#CD7F32]" /> });
 
       setPodiumData(constructedPodium);
+      setIsLoading(false);
+    }, (error) => {
+      console.error("[HonorRoll] Snapshot error:", error);
       setIsLoading(false);
     });
 

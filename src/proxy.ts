@@ -22,7 +22,7 @@ function buildCsp(nonce: string): string {
     media-src 'self' blob: https://res.cloudinary.com;
     font-src 'self' https://fonts.gstatic.com data:;
     connect-src 'self' https://*.firebaseio.com https://*.googleapis.com https://api.cloudinary.com https://res.cloudinary.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://static.cloudflareinsights.com https://www.google.com https://recaptcha.google.com;
-    frame-src 'self' https://www.google.com https://recaptcha.google.com;
+    frame-src 'self' https://www.google.com https://recaptcha.google.com https://docs.google.com;
     object-src 'none';
     base-uri 'self';
     form-action 'self';

@@ -64,6 +64,9 @@ export default function MonthlyAwardsPage() {
     const unsub = onSnapshot(q, (snap) => {
       setAchievements(snap.docs.map(d => ({ id: d.id, ...d.data() })));
       setIsLoading(false);
+    }, (err) => {
+      console.error("[MonthlyAwards] Snapshot error:", err);
+      setIsLoading(false);
     });
     return () => unsub();
   }, []);

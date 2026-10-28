@@ -90,6 +90,9 @@ export default function KioskModePage() {
       });
       setAchievements(data);
       setIsLoading(false);
+    }, (err) => {
+      console.error("[Kiosk] Snapshot error:", err);
+      setIsLoading(false);
     });
 
     return () => unsubscribe();

@@ -143,13 +143,13 @@ export default function SettingsPage() {
                   ? { name: t.trim(), department: '' }
                   : { name: String(t?.name || '').trim(), department: String(t?.department || '').trim() }
               ).filter((t: any) => Boolean(t.name))
-            : prevTeachersList(prev => prev.teachers);
+            : null;
 
           setFormData(prev => ({
             ...prev,
             ...data,
             departments: Array.isArray(data.departments) ? data.departments : prev.departments,
-            teachers: normalizedTeachers
+            teachers: normalizedTeachers !== null ? normalizedTeachers : prev.teachers
           }));
         }
       } catch (error) {
@@ -160,11 +160,6 @@ export default function SettingsPage() {
     };
     fetchSettings();
   }, []);
-
-  const prevTeachersList = (getter: (prev: typeof formData) => typeof formData.teachers) => {
-    return formData.teachers;
-  };
-
   const handleAddDept = () => {
     const trimmedDept = newDept.trim();
     if (!trimmedDept) {

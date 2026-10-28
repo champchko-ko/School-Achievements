@@ -87,6 +87,9 @@ export default function FullRecordPage() {
       });
       setAchievements(achievementsData);
       setIsLoading(false);
+    }, (err) => {
+      console.error("[FullRecord] Snapshot error:", err);
+      setIsLoading(false);
     });
 
     return () => {

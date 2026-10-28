@@ -1,6 +1,8 @@
 // Server-side Firebase Admin SDK — privileged access, no security rules
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
-import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { getFirestore, FieldValue, Timestamp } from 'firebase-admin/firestore';
+
+export { Timestamp };
 
 let adminDb: any = null;
 
@@ -26,6 +28,9 @@ function getDb() {
       throw err;
     }
   } else {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('[Firebase Admin] FIREBASE_SERVICE_ACCOUNT is required in production environment.');
+    }
     console.warn('[Firebase Admin] No FIREBASE_SERVICE_ACCOUNT configured. Using default credentials.');
     const app = getApps().length > 0 ? getApps()[0] : initializeApp();
     adminDb = getFirestore(app);

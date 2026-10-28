@@ -8,7 +8,7 @@ import { isAdminSession } from '../../../../lib/admin-session';
 import { logInfo, logError } from '../../../../lib/logger';
 import { scrubSensitiveFields } from '../../../../lib/backup-sanitize';
 
-const COLLECTIONS = ['achievements', 'settings', 'admin', 'logs'];
+const COLLECTIONS = ['achievements', 'settings', 'admin', 'admin_achievementSecrets'];
 const MAX_BACKUPS = 8;
 
 export async function GET(request: Request) {
@@ -51,6 +51,8 @@ export async function GET(request: Request) {
           }
         }
         // Strip sensitive auth fields/PII before persisting the backup (Finding #17)
+        if (col === 'admin_achievementSecrets') return plain;
+        if (col === 'admin' && d.id === 'pinConfig') { delete plain.tokenHash; return plain; }
         return scrubSensitiveFields(plain);
       });
       totalDocs += snap.size;

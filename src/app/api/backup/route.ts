@@ -4,10 +4,10 @@
 // GET: Check backup status / collection counts
 import { NextResponse } from 'next/server';
 import { isAdminSession } from '../../../lib/admin-session';
-import { getAdminDb } from '../../../lib/firebase-admin';
+import { getAdminDb, Timestamp } from '../../../lib/firebase-admin';
 import { logInfo, logError } from '../../../lib/logger';
 
-const COLLECTIONS = ['achievements', 'settings', 'admin', 'logs'];
+const COLLECTIONS = ['achievements', 'settings', 'admin', 'admin_achievementSecrets'];
 
 // POST: Export backup, list backups, or restore from backup
 export async function POST(request: Request) {
@@ -82,7 +82,15 @@ export async function POST(request: Request) {
         for (const doc of docs) {
           const { id, ...docData } = doc;
           if (id) {
-            await db.collection(col).doc(id).set(docData, { merge: true });
+            // Restore Firestore Timestamp instances so downstream code (like .toDate() / .seconds) works
+            const hydratedData: Record<string, any> = { ...docData };
+            for (const key of Object.keys(hydratedData)) {
+              const val = hydratedData[key];
+              if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(val)) {
+                hydratedData[key] = Timestamp.fromDate(new Date(val));
+              }
+            }
+            await db.collection(col).doc(id).set(hydratedData, { merge: true });
             restored++;
           }
         }

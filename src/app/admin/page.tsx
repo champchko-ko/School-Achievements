@@ -326,7 +326,7 @@ export default function AdminDashboard() {
       const res = await fetch('/api/backup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'restore', backupId }),
+        body: JSON.stringify({ action: 'restore', backupId, confirm: true }),
       });
       if (!res.ok) throw new Error('Restore failed');
       const data = await res.json();

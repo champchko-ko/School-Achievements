@@ -158,9 +158,11 @@ Copy `.env.example` to `.env.local` for local development. In production (e.g. V
 | `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` | Public | **Yes** | Firebase Storage bucket URI. |
 | `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | Public | **Yes** | Firebase Cloud Messaging sender ID. |
 | `NEXT_PUBLIC_FIREBASE_APP_ID` | Public | **Yes** | Firebase Web Application ID. |
-| `FIREBASE_PROJECT_ID` | Server | **Yes** | Google Cloud Project ID for Firebase Admin SDK. |
-| `FIREBASE_CLIENT_EMAIL` | Server | **Yes** | Service account client email. |
-| `FIREBASE_PRIVATE_KEY` | Server | **Yes** | Service account private key (including `-----BEGIN PRIVATE KEY-----`). |
+| `FIREBASE_SERVICE_ACCOUNT` | Server | **Yes** | Single JSON string or base64-encoded string of Google Cloud service account credentials. |
+| `SMTP_HOST` | Server | **Yes** | SMTP server host for sending admin PIN reset emails (e.g. `smtp.gmail.com`). |
+| `SMTP_PORT` | Server | **Yes** | SMTP server port (e.g. `465` or `587`). |
+| `SMTP_USER` | Server | **Yes** | SMTP username / email address. |
+| `SMTP_PASS` | Server | **Yes** | SMTP password / app-specific password. |
 | `CRON_SECRET` | Server | **Yes** | Secret bearer token authorizing scheduled weekly backups (`/api/cron/weekly-backup`). |
 | `UPSTASH_REDIS_REST_URL` | Server | Recommended | Upstash Redis REST URL for distributed rate limiting. |
 | `UPSTASH_REDIS_REST_TOKEN` | Server | Recommended | Upstash Redis REST Token. |
