@@ -8,10 +8,9 @@
 //       Needs only the key — no Firebase credentials.
 //
 //   node scripts/restore-backup.mjs --file <path.enc> --target emulator --confirm-restore
-//       Restore into the local Firestore Emulator.
+//       Restore into the local Firestore Emulator (uses the client SDK — no credentials needed).
 //       Start it first:  npx firebase emulators:start --only firestore
-//       and set:         FIRESTORE_EMULATOR_HOST=127.0.0.1:8080
-//       Project id defaults to 'school-achievements-restore' (or pass --project-id).
+//       Port:            --emulator-port <n> (default 8080, or FIRESTORE_EMULATOR_HOST)
 //
 //   node scripts/restore-backup.mjs --file <path.enc> --target firestore --project-id <id> --confirm-restore
 //       Restore into a real Firebase project (scratch project for the retirement gate).
@@ -109,21 +108,24 @@ if (target !== 'emulator' && target !== 'firestore') {
 }
 
 // ── 5. Connect to the target ──
-let db;
+// emulator  → Firebase CLIENT SDK + connectFirestoreEmulator (no credentials; rules are
+//             whatever the emulator was started with — use a permissive test config).
+// firestore → Firebase ADMIN SDK + FIREBASE_SERVICE_ACCOUNT (real project: scratch for the
+//             retirement gate, production only with explicit intent).
+let writeDoc;
 try {
-  const { initializeApp, getApps } = await import('firebase-admin/app');
-  const { getFirestore } = await import('firebase-admin/firestore');
   if (target === 'emulator') {
-    if (!process.env.FIRESTORE_EMULATOR_HOST) {
-      console.error('Error: FIRESTORE_EMULATOR_HOST is not set.');
-      console.error('Start the emulator:  npx firebase emulators:start --only firestore');
-      console.error('Then set:            FIRESTORE_EMULATOR_HOST=127.0.0.1:8080');
-      process.exit(2);
-    }
+    const hostPort = process.env.FIRESTORE_EMULATOR_HOST || '127.0.0.1:8080';
+    const [host, portStr] = hostPort.split(':');
+    const port = Number(args['emulator-port'] || portStr || 8080);
     const projectId = args['project-id'] || 'school-achievements-restore';
-    const app = getApps().length ? getApps()[0] : initializeApp({ projectId });
-    db = getFirestore(app);
-    console.log(`Target: Firestore Emulator (${process.env.FIRESTORE_EMULATOR_HOST}, project "${projectId}")`);
+    const { initializeApp, getApps } = await import('firebase/app');
+    const { getFirestore, connectFirestoreEmulator, doc, setDoc } = await import('firebase/firestore');
+    const app = getApps().length ? getApps()[0] : initializeApp({ projectId, apiKey: 'emulator-demo-key' });
+    const fsdb = getFirestore(app);
+    connectFirestoreEmulator(fsdb, host, port);
+    writeDoc = (col, id, data) => setDoc(doc(fsdb, col, id), data, { merge: true });
+    console.log(`Target: Firestore Emulator (${host}:${port}, project "${projectId}")`);
   } else {
     const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT;
     if (!serviceAccount) {
@@ -141,9 +143,11 @@ try {
       parsed = JSON.parse(Buffer.from(serviceAccount, 'base64').toString('utf8'));
     }
     if (typeof parsed.private_key === 'string') parsed.private_key = parsed.private_key.replace(/\\n/g, '\n');
-    const { cert } = await import('firebase-admin/app');
+    const { initializeApp, cert, getApps } = await import('firebase-admin/app');
+    const { getFirestore, Timestamp } = await import('firebase-admin/firestore');
     const app = getApps().length ? getApps()[0] : initializeApp({ credential: cert(parsed), projectId: args['project-id'] });
-    db = getFirestore(app);
+    const adb = getFirestore(app);
+    writeDoc = (col, id, data) => adb.collection(col).doc(id).set(data, { merge: true });
     console.log(`Target: Firebase project "${args['project-id']}" — verify this is NOT production unless you intend it.`);
   }
 } catch (e) {
@@ -152,23 +156,28 @@ try {
 }
 
 // ── 6. Restore (merge upsert, Timestamp hydration identical to /api/backup) ──
-const { Timestamp } = await import('firebase-admin/firestore');
 let restored = 0;
 const restoredCounts = {};
 try {
   for (const [col, docs] of Object.entries(payload.data)) {
     restoredCounts[col] = 0;
-    for (const doc of docs) {
-      const { id, ...docData } = doc;
+    for (const docEntry of docs) {
+      const { id, ...docData } = docEntry;
       if (!id) continue;
       const hydrated = { ...docData };
       for (const k of Object.keys(hydrated)) {
         const val = hydrated[k];
         if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(val)) {
-          hydrated[k] = Timestamp.fromDate(new Date(val));
+          if (target === 'emulator') {
+            const { Timestamp } = await import('firebase/firestore');
+            hydrated[k] = Timestamp.fromDate(new Date(val));
+          } else {
+            const { Timestamp } = await import('firebase-admin/firestore');
+            hydrated[k] = Timestamp.fromDate(new Date(val));
+          }
         }
       }
-      await db.collection(col).doc(id).set(hydrated, { merge: true });
+      await writeDoc(col, id, hydrated);
       restored++;
       restoredCounts[col]++;
     }
