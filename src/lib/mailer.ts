@@ -31,3 +31,34 @@ export async function sendPinResetEmail(to: string, resetUrl: string): Promise<v
     `,
   });
 }
+
+/**
+ * Email an encrypted backup archive to the backup destinations.
+ * Returns the SMTP envelope result: `accepted` are recipients the server accepted
+ * (submission — NOT confirmed delivery), `rejected` are recipients refused by the server.
+ */
+export async function sendBackupEmail(
+  to: string[],
+  subject: string,
+  filename: string,
+  content: Buffer
+): Promise<{ accepted: string[]; rejected: string[] }> {
+  const info = await transporter.sendMail({
+    from: `"إنجازات المدرسة" <${process.env.SMTP_USER}>`,
+    to: to.join(', '),
+    subject,
+    text: 'نسخة احتياطية مشفّرة (AES-256-GCM) من نظام إنجازات المدرسة. لا يمكن فك تشفير المرفق إلا بمفتاح النسخ الاحتياطي الخاص بالمشرف.',
+    attachments: [
+      {
+        filename,
+        content,
+        contentType: 'application/octet-stream',
+      },
+    ],
+  });
+  const toAddress = (a: string | { address: string }) => (typeof a === 'string' ? a : a.address);
+  return {
+    accepted: ((info as { accepted?: Array<string | { address: string }> }).accepted || []).map(toAddress),
+    rejected: ((info as { rejected?: Array<string | { address: string }> }).rejected || []).map(toAddress),
+  };
+}

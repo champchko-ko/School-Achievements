@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { db } from '../../lib/firebase';
 import { collection, query, onSnapshot, doc, getDoc } from 'firebase/firestore';
-import { ShieldCheck, Trophy, Medal, Award, Loader2, CheckCircle2, TrendingUp, Files, UserX, Clock, ThumbsUp, ThumbsDown, ShieldAlert, RefreshCw, ChevronLeft, X, Paperclip, Calendar, User, Download } from 'lucide-react';
+import { ShieldCheck, Trophy, Medal, Award, Loader2, CheckCircle2, TrendingUp, Files, UserX, Clock, ThumbsUp, ThumbsDown, ShieldAlert, RefreshCw, ChevronLeft, X, Paperclip, Calendar, User, Download, Mail, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 import { useAdmin } from '../../lib/useAdmin';
 import { useRouter } from 'next/navigation';
@@ -44,6 +44,8 @@ export default function AdminDashboard() {
   const [storedBackups, setStoredBackups] = useState<any[]>([]);
   const [storedBackupsLoading, setStoredBackupsLoading] = useState(false);
   const [backupRestoreLoading, setBackupRestoreLoading] = useState<string | null>(null);
+  const [backupStatus, setBackupStatus] = useState<any>(null);
+  const [backupEmailLoading, setBackupEmailLoading] = useState(false);
   const [reviewItem, setReviewItem] = useState<any | null>(null);
   const [reviewScoring, setReviewScoring] = useState(false);
   const router = useRouter();
@@ -338,9 +340,54 @@ export default function AdminDashboard() {
     }
   };
 
+  // Fetch email-backup status (metadata only; never contains backup contents)
+  const fetchBackupStatus = async () => {
+    try {
+      const res = await fetch('/api/backup');
+      if (!res.ok) return;
+      const data = await res.json();
+      const s = data.status || null;
+      // Staleness is computed here (not during render): stale = never succeeded, or
+      // last SMTP-accepted success older than 14 days, or the last attempt failed.
+      const stale = !s || s.status === 'failed' || s.status === 'partial' ||
+        !s.lastSuccessAt || (Date.now() - Date.parse(s.lastSuccessAt) > 14 * 24 * 60 * 60 * 1000);
+      setBackupStatus(s ? { ...s, stale } : null);
+    } catch (e) {
+      console.error('Failed to fetch backup status:', e);
+    }
+  };
+
+  // Send an encrypted backup to the configured email destinations (manual action)
+  const handleEmailBackup = async () => {
+    if (!confirm('سيتم إنشاء نسخة احتياطية مشفّرة وإرسالها إلى بريد المشرف. متابعة؟')) return;
+    setBackupEmailLoading(true);
+    try {
+      const res = await fetch('/api/backup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'email' }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setNotification({ type: 'error', message: data.error || 'فشل إرسال النسخة الاحتياطية.' });
+      } else if (data.status === 'submitted') {
+        setNotification({ type: 'success', message: `تم إرسال النسخة الاحتياطية بنجاح (${(data.accepted || []).length} بريد). تحقق من وصولها في صندوق البريد.` });
+      } else if (data.status === 'partial') {
+        setNotification({ type: 'error', message: `إرسال جزئي: قُبل ${(data.accepted || []).length} وفُرض ${(data.rejected || []).length}. تحقق من صندوق البريد.` });
+      } else {
+        setNotification({ type: 'error', message: 'فشل إرسال النسخة الاحتياطية.' });
+      }
+      void fetchBackupStatus();
+    } catch (e) {
+      console.error('Email backup failed:', e);
+      setNotification({ type: 'error', message: 'فشل إرسال النسخة الاحتياطية.' });
+    } finally {
+      setBackupEmailLoading(false);
+    }
+  };
   // Load stored backups on mount
   useEffect(() => {
-    const timer = setTimeout(() => { void fetchStoredBackups(); }, 0);
+    const timer = setTimeout(() => { void fetchStoredBackups(); void fetchBackupStatus(); }, 0);
     return () => clearTimeout(timer);
   }, []);
 
@@ -557,6 +604,19 @@ export default function AdminDashboard() {
         )}
       </div>
 
+      {/* ── Email Backup Alert (stale > 14 days or failed) ── */}
+      {backupStatus?.stale && (
+        <div className="bg-amber-50 border-2 border-amber-300 rounded-2xl p-4 flex items-start gap-3">
+          <AlertTriangle size={22} className="text-amber-600 shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-sm font-black text-amber-800 mb-1">تحذير: لم يتم التحقق من نجاح النسخ الاحتياطي الآلي خلال المدة المحددة. يرجى إرسال نسخة احتياطية جديدة والتحقق من وصولها.</p>
+            <p className="text-xs text-amber-700 font-bold">
+              {backupStatus.lastSuccessAt ? `آخر إرسال ناجح: ${new Date(backupStatus.lastSuccessAt).toLocaleString('ar-SA')}` : 'لم يُسجل أي إرسال ناجح بعد.'}
+              {backupStatus.lastError ? ` — آخر خطأ: ${backupStatus.lastError}` : ''}
+            </p>
+          </div>
+        </div>
+      )}
       {/* ── Database Backup ── */}
       <div className="${panel} p-5 md:p-6">
         <div className="flex items-center gap-3 mb-3">
@@ -579,6 +639,35 @@ export default function AdminDashboard() {
           </button>
         </div>
 
+        {/* ── Email backup: status + manual send ── */}
+        <div className="mt-4 pt-4 border-t border-gray-700">
+          <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+            <div>
+              <h4 className="text-sm font-black text-gray-300">النسخة الاحتياطية بالبريد الإلكتروني (مشفّرة)</h4>
+              <p className="text-[10px] text-gray-500 font-bold mt-0.5">
+                {backupStatus?.lastSuccessAt
+                  ? `آخر إرسال ناجح: ${new Date(backupStatus.lastSuccessAt).toLocaleString('ar-SA')}`
+                  : 'لم يُسجل أي إرسال ناجح بعد.'}
+                {backupStatus?.status ? ` · الحالة: ${backupStatus.status === 'submitted' ? 'تم الإرسال' : backupStatus.status === 'partial' ? 'إرسال جزئي' : backupStatus.status === 'failed' ? 'فشل' : 'جارية'}` : ''}
+              </p>
+              {backupStatus?.lastError && (
+                <p className="text-[10px] text-red-400 font-bold mt-0.5">آخر خطأ: {backupStatus.lastError}</p>
+              )}
+            </div>
+            <button
+              onClick={handleEmailBackup}
+              disabled={backupEmailLoading}
+              className={`flex items-center gap-2 px-4 py-2 rounded-2xl font-black text-xs transition-all ${
+                backupEmailLoading
+                  ? 'bg-gray-600 cursor-not-allowed'
+                  : 'bg-green-600 hover:bg-green-700 text-white border-b-4 border-green-800 active:border-b-0 active:translate-y-1'
+              }`}
+            >
+              {backupEmailLoading ? <Loader2 className="animate-spin" size={14} /> : <Mail size={14} />}
+              {backupEmailLoading ? 'جاري الإرسال...' : 'إرسال نسخة احتياطية إلى البريد'}
+            </button>
+          </div>
+        </div>
         {/* Stored Backups History */}
         <div className="mt-4 pt-4 border-t border-gray-700">
           <div className="flex items-center justify-between mb-3">

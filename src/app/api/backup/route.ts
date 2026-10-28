@@ -1,11 +1,15 @@
 // POST: Export all Firestore collections as downloadable JSON (admin required)
 // POST { action: "list" } : List stored backups from backups collection
 // POST { action: "restore", backupId: "..." } : Restore from a stored backup
-// GET: Check backup status / collection counts
+// POST { action: "email" } : Encrypt + email a backup to the configured destinations (manual admin action)
+// GET: Check backup status / collection counts / email-backup status
 import { NextResponse } from 'next/server';
 import { isAdminSession } from '../../../lib/admin-session';
-import { getAdminDb, Timestamp } from '../../../lib/firebase-admin';
+import { getAdminDb, doc, getDoc, Timestamp } from '../../../lib/firebase-admin';
 import { logInfo, logError } from '../../../lib/logger';
+import { isValidOrigin } from '../../../lib/csrf';
+import { checkRateLimit, getClientIp } from '../../../lib/rate-limit';
+import { runEmailBackup } from '../../../lib/backup-email';
 
 const COLLECTIONS = ['achievements', 'settings', 'admin', 'admin_achievementSecrets'];
 
@@ -26,6 +30,37 @@ export async function POST(request: Request) {
     }
 
     const action = body.action || 'download';
+
+    // ── Email an encrypted backup to the configured destinations (manual admin action) ──
+    if (action === 'email') {
+      // CSRF: this action exports and transmits data, so it requires a trusted origin.
+      if (!isValidOrigin(request)) {
+        return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
+      }
+      const ip = getClientIp(request);
+      const { allowed } = await checkRateLimit(`backup-email:${ip}`, { maxRequests: 5, windowMs: 3_600_000 });
+      if (!allowed) {
+        return NextResponse.json({ error: 'محاولات كثيرة جداً. الرجاء المحاولة لاحقاً.' }, { status: 429 });
+      }
+      try {
+        const result = await runEmailBackup(db, { trigger: 'manual' });
+        return NextResponse.json({
+          success: true,
+          runId: result.runId,
+          status: result.status,
+          accepted: result.accepted,
+          rejected: result.rejected,
+          sizeBytes: result.sizeBytes,
+          filename: result.filename,
+          totalDocuments: result.totalDocuments,
+        });
+      } catch (err: any) {
+        if (err?.code === 'IN_PROGRESS') {
+          return NextResponse.json({ error: 'جارية عملية نسخ احتياطي أخرى. حاول بعد بضع دقائق.' }, { status: 409 });
+        }
+        return NextResponse.json({ error: String(err?.message || 'فشل إرسال النسخة الاحتياطية').slice(0, 200) }, { status: 500 });
+      }
+    }
 
     // ── List stored backups ──
     if (action === 'list') {
@@ -157,7 +192,11 @@ export async function GET(request: Request) {
       counts[col] = snap.data().count;
     }
 
-    return NextResponse.json({ collections: COLLECTIONS, counts });
+    // Metadata-only status of the email-backup pipeline (admin/backupStatus).
+    const statusSnap = await getDoc(doc(db, 'admin', 'backupStatus'));
+    const status = statusSnap.exists() ? statusSnap.data() : null;
+
+    return NextResponse.json({ collections: COLLECTIONS, counts, status });
   } catch (error: any) {
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }

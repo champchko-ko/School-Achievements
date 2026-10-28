@@ -1,14 +1,17 @@
 // Weekly automated backup - triggered by Vercel cron (vercel.json)
-// Exports all Firestore collections and stores them in the backups collection
-// with a rolling window of 8 weeks. Protected by CRON_SECRET + admin session.
+// Two sinks, one snapshot:
+//   1. Firestore `backups` collection (legacy channel — remains in place until the
+//      email pipeline passes its retirement gate; see ANNOTATED-BACKUP-SPEC-2026-10-28.md).
+//   2. Encrypted email to BACKUP_DESTINATION_EMAILS (new primary off-site channel).
+// Protected by CRON_SECRET (constant-time) + admin session.
 import { NextResponse } from 'next/server';
 import { timingSafeEqual } from 'crypto';
 import { getAdminDb } from '../../../../lib/firebase-admin';
 import { isAdminSession } from '../../../../lib/admin-session';
 import { logInfo, logError } from '../../../../lib/logger';
-import { scrubSensitiveFields } from '../../../../lib/backup-sanitize';
+import { exportCollectionsForBackup, BACKUP_COLLECTIONS } from '../../../../lib/backup-export';
+import { runEmailBackup } from '../../../../lib/backup-email';
 
-const COLLECTIONS = ['achievements', 'settings', 'admin', 'admin_achievementSecrets'];
 const MAX_BACKUPS = 8;
 
 export async function GET(request: Request) {
@@ -34,40 +37,18 @@ export async function GET(request: Request) {
 
     const db = getAdminDb();
 
-    // Export all collections
-    const backup: Record<string, any[]> = {};
-    let totalDocs = 0;
+    // Export all collections once; the same snapshot feeds both backup sinks.
+    const { data, startedAt, endedAt, totalDocuments } = await exportCollectionsForBackup(db);
 
-    for (const col of COLLECTIONS) {
-      const snap = await db.collection(col).get();
-      backup[col] = snap.docs.map((d: any) => {
-        const data = d.data();
-        const plain: Record<string, any> = { id: d.id, ...data };
-        // Convert Firestore timestamps to ISO strings for portability
-        for (const key of Object.keys(plain)) {
-          const val = plain[key];
-          if (val && typeof val === 'object' && typeof val.toDate === 'function') {
-            plain[key] = val.toDate().toISOString();
-          }
-        }
-        // Strip sensitive auth fields/PII before persisting the backup (Finding #17)
-        if (col === 'admin_achievementSecrets') return plain;
-        if (col === 'admin' && d.id === 'pinConfig') { delete plain.tokenHash; return plain; }
-        return scrubSensitiveFields(plain);
-      });
-      totalDocs += snap.size;
-    }
-
-    const createdAt = new Date().toISOString();
     const backupPayload = {
-      createdAt,
+      createdAt: new Date().toISOString(),
       source: 'cron',
-      collections: COLLECTIONS,
-      totalDocuments: totalDocs,
-      data: backup,
+      collections: [...BACKUP_COLLECTIONS],
+      totalDocuments,
+      data,
     };
 
-    // Store the backup in the backups collection
+    // Store the backup in the backups collection (legacy sink — removed in Stage 6)
     await db.collection('backups').add(backupPayload);
 
     // Prune old backups (keep the most recent MAX_BACKUPS)
@@ -79,8 +60,30 @@ export async function GET(request: Request) {
       }
     }
 
-    logInfo('system', 'Weekly backup completed', { totalDocs, stored: true }, request);
-    return NextResponse.json({ success: true, createdAt, totalDocuments: totalDocs });
+    logInfo('system', 'Weekly backup completed', { totalDocuments, stored: true }, request);
+
+    // New: email the same snapshot, encrypted. Failure here must not lose the
+    // Firestore sink result; the status doc + admin banner surface the failure.
+    let email: Record<string, unknown>;
+    try {
+      const result = await runEmailBackup(db, { data, startedAt, endedAt, trigger: 'cron' });
+      email = { status: result.status, accepted: result.accepted.length, rejected: result.rejected, runId: result.runId };
+    } catch (err: any) {
+      email = {
+        status: 'failed',
+        error: err?.code === 'IN_PROGRESS'
+          ? 'another backup is in progress'
+          : String(err?.message || 'email backup failed').slice(0, 200),
+      };
+    }
+
+    return NextResponse.json({
+      success: true,
+      createdAt: backupPayload.createdAt,
+      totalDocuments,
+      stored: true,
+      email,
+    });
   } catch (error: any) {
     logError('system', 'Weekly backup failed', error?.message || error, request);
     return NextResponse.json({ error: 'Weekly backup failed' }, { status: 500 });
