@@ -25,14 +25,19 @@ export default function HonorRoll() {
         if (!approved) return;
 
         if (!teacherStats[name]) {
-          teacherStats[name] = { name, dept: data.department || 'غير محدد', points: 0 };
+          teacherStats[name] = { name, dept: data.department || 'غير محدد', points: 0, count: 0 };
         }
-        // Award 10 points per achievement (you can change this scoring logic later)
-        teacherStats[name].points += 10;
+        teacherStats[name].count += 1;
+        // Real score calculation: accumulate actual evaluated achievement score
+        const scoreVal = typeof data.score === 'number' && !isNaN(data.score) ? data.score : 0;
+        teacherStats[name].points += scoreVal;
       });
 
-      // 2. Sort teachers by points (Descending)
-      const sorted = Object.values(teacherStats).sort((a, b) => b.points - a.points);
+      // 2. Sort teachers by points (Descending), tie-breaker by total approved achievements
+      const sorted = Object.values(teacherStats).sort((a, b) => {
+        if (b.points !== a.points) return b.points - a.points;
+        return b.count - a.count;
+      });
 
       // 3. Construct Podium Array: [Silver(2), Gold(1), Bronze(3)]
       const constructedPodium = [];
@@ -83,7 +88,7 @@ export default function HonorRoll() {
                
                {/* Points Badge */}
                <div className="absolute -top-3 -right-3 md:-right-4 bg-[#eb1f36] text-white text-xs md:text-sm font-black px-3 py-1 rounded-full shadow-lg border-2 border-white">
-                 {teacher.points} pt
+                 {teacher.points > 0 ? `${teacher.points} pt` : `${teacher.count} إنجاز`}
                </div>
             </div>
 

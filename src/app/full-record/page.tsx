@@ -112,7 +112,7 @@ export default function FullRecordPage() {
 
   // Extract unique departments from both the settings and the fetched data
   const availableDepartments = Array.from(new Set([
-    ...(schoolSettings?.departments || ['الرياضيات', 'العلوم', 'اللغة العربية', 'الحاسب الآلي', 'التربية البدنية']),
+    ...(schoolSettings?.departments || []),
     ...achievements.map(a => a.department).filter(Boolean)
   ])) as string[];
 
@@ -335,6 +335,7 @@ export default function FullRecordPage() {
         const errData = await res.json();
         throw new Error(errData.error || 'فشل الحذف');
       }
+      setAchievements(prev => prev.filter(a => a.id !== pendingDeleteId));
       setNotification({ type: "success", message: "تم حذف الإنجاز بنجاح! 🗑️" });
     } catch (error: any) {
       console.error("Error deleting document:", error);
@@ -653,6 +654,16 @@ export default function FullRecordPage() {
               onClose={() => {
                 setShowEditModal(false);
                 setSelectedDoc(null);
+              }}
+              onSuccess={() => {
+                if (isAdmin) {
+                  fetch('/api/achievements?all=true')
+                    .then(res => res.json())
+                    .then(data => {
+                      if (Array.isArray(data)) setAchievements(data);
+                    })
+                    .catch(err => console.error("Error refreshing achievements:", err));
+                }
               }}
               verifiedPin={verifiedPin}
               initialData={selectedDoc} docId={selectedDoc.id}

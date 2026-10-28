@@ -44,8 +44,12 @@ export async function POST(request: Request) {
       adminEmail = settingsSnap.exists() ? (settingsSnap.data()?.adminEmail || '').trim().toLowerCase() : '';
     }
 
-    // Security: always return the same message whether or not the email matches (prevents enumeration)
-    if (!adminEmail || adminEmail !== email.trim().toLowerCase()) {
+    if (!adminEmail) {
+      return NextResponse.json({ error: 'لم يتم تعيين بريد إلكتروني للمشرف في الإعدادات بعد.' }, { status: 400 });
+    }
+
+    // Security: always return success if admin email is configured (prevents email enumeration)
+    if (adminEmail !== email.trim().toLowerCase()) {
       return NextResponse.json({ success: true });
     }
 

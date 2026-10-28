@@ -125,9 +125,9 @@ const SelectIcon = () => (
 );
 
 export default function AddAchievementModal({
-  isOpen, onClose, initialData, docId, verifiedPin,
+  isOpen, onClose, initialData, docId, verifiedPin, onSuccess,
 }: {
-  isOpen: boolean; onClose: () => void; initialData?: any; docId?: string; verifiedPin?: string;
+  isOpen: boolean; onClose: () => void; initialData?: any; docId?: string; verifiedPin?: string; onSuccess?: () => void;
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<File[]>([]);
@@ -350,6 +350,7 @@ export default function AddAchievementModal({
       }
 
       // 4. Success: Show confirmation and exit
+      onSuccess?.();
       if (!docId) {
         setSuccessMsg('تم إرسال إنجازك بنجاح! سيتم مراجعته من قبل الإدارة.');
         setTimeout(() => { setSuccessMsg(null); onClose(); }, 2500);

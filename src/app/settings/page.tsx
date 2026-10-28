@@ -37,7 +37,7 @@ export default function SettingsPage() {
     phone: '',
     logoUrl: '',
     adminEmail: '',
-    departments: ['الرياضيات', 'العلوم', 'اللغة العربية', 'الحاسب الآلي', 'التربية البدنية'],
+    departments: [] as string[],
     teachers: [] as { name: string; department: string }[],
     adminPin: ""
   });
