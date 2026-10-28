@@ -85,3 +85,8 @@ Thumbs.db
 .agents/
 .gemini/
 .claude/
+
+# ── Encrypted backup archives & emulator artifacts (NEVER COMMIT) ──
+*.enc
+firestore-debug.log
+firebase-export/
