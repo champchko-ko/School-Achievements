@@ -269,3 +269,35 @@ npm run build
 ## 📄 License
 
 This project is proprietary software developed for educational institution management. All rights reserved.
+
+---
+
+## Email Backup & Recovery (AES-256-GCM)
+
+The weekly cron and a manual admin action both send an **encrypted** full backup (all collections, including the PIN-secret collection, so a restore recovers authentication) to `BACKUP_DESTINATION_EMAILS` (default: `bayanschool2026@gmail.com,elnewahy@gmail.com` — each recipient receives its own copy).
+
+**Setup (Vercel environment variables):**
+| Variable | Purpose |
+|---|---|
+| `BACKUP_ENCRYPTION_KEY` | 32-byte hex key for AES-256-GCM. Generate with `openssl rand -hex 32`. Keep one offline recovery copy (password manager). Losing both copies = emailed backups are unrecoverable. |
+| `BACKUP_DESTINATION_EMAILS` | Comma-separated recipient list. |
+| `BACKUP_MAX_ATTACHMENT_BYTES` | Optional size guard (default 20 MB; Gmail limit 25 MB). Fail-closed: oversized backups are not sent. |
+
+**Status & alerts:** every attempt updates the metadata-only `admin/backupStatus` document (`lastAttemptAt`, `lastSuccessAt`, sanitized `lastError`, checksum, size, per-recipient result). The admin dashboard shows an Arabic warning when the last SMTP-accepted success is older than 14 days or the last attempt failed. **"Submitted" means the SMTP server accepted the message — it is not confirmed delivery.** Check monthly that the newest backup email actually arrived in the mailbox.
+
+**Restore / verify (decryption needs `BACKUP_ENCRYPTION_KEY`):**
+```bash
+# Validate only (no credentials, nothing written):
+node scripts/restore-backup.mjs --file School-Achievements-Backup-2026-10-28.enc --key <64-hex>
+
+# Restore into the local Firestore Emulator (isolated, repeatable):
+npx firebase emulators:start --only firestore
+set FIRESTORE_EMULATOR_HOST=127.0.0.1:8080
+node scripts/restore-backup.mjs --file backup.enc --target emulator --confirm-restore
+
+# Restore into a scratch Firebase project (the retirement-gate test):
+node scripts/restore-backup.mjs --file backup.enc --target firestore --project-id <scratch-project-id> --confirm-restore
+```
+The script aborts on tampering (GCM auth), checksum mismatch, and `PIN_PEPPER` mismatches (unless `--force-pepper`). Restore is a merge upsert identical to `/api/backup` restore.
+
+**Retention & retirement:** all backup emails are kept in Gmail (primary off-site archive — monitor mailbox capacity periodically). The legacy Firestore `backups` collection remains in parallel until the retirement gate passes (2–4 successful weekly emails + one successful isolated restore), then it is removed (see ANNOTATED-BACKUP-SPEC-2026-10-28.md). Key rotation: set a new `BACKUP_ENCRYPTION_KEY`; the file header stores `keyVersion`, and older emails decrypt only with the key era that created them.
